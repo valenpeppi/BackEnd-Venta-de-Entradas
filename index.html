@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestión de Usuario con Pestañas</title>
+    <style>
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        .tab-buttons button {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gestión de Usuario</h1>
+
+    <div class="tab-buttons">
+        <button onclick="showTab('crear')">Crear Usuario</button>
+        <button onclick="showTab('ver')">Ver Usuario</button>
+        <button onclick="showTab('actualizar')">Actualizar Usuario</button>
+        <button onclick="showTab('eliminar')">Eliminar Usuario</button>
+    </div>
+
+    <!-- Crear -->
+    <div id="crear" class="tab active">
+        <h2>Crear Usuario</h2>
+        <label for="nameAndsurname">Nombre y Apellido:</label>
+        <input type="text" id="nameAndsurname"><br><br>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email"><br><br>
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password"><br><br>
+
+        <label for="dni">DNI:</label>
+        <input type="text" id="dni"><br><br>
+
+        <label for="birthdate">Fecha de Nacimiento:</label>
+        <input type="date" id="birthdate"><br><br>
+
+        <button onclick="handleCreateUser()">Crear Usuario</button>
+    </div>
+
+    <!-- Ver -->
+    <div id="ver" class="tab">
+        <h2>Ver Usuario</h2>
+        <button onclick="handleReadUser()">Mostrar Información</button>
+        <pre id="readResult"></pre>
+    </div>
+
+    <!-- Actualizar -->
+    <div id="actualizar" class="tab">
+        <h2>Actualizar Usuario</h2>
+        <label for="newEmail">Nuevo Email:</label>
+        <input type="email" id="newEmail"><br><br>
+
+        <label for="newPassword">Nueva Contraseña:</label>
+        <input type="password" id="newPassword"><br><br>
+
+        <button onclick="handleUpdateUser()">Actualizar</button>
+        <p id="updateResult"></p>
+    </div>
+
+    <!-- Eliminar -->
+    <div id="eliminar" class="tab">
+        <h2>Eliminar Usuario</h2>
+        <button onclick="handleDeleteUser()">Eliminar</button>
+        <p id="deleteResult"></p>
+    </div>
+
+    <script src="CRUD-_Usuario.js"></script>
+</body>
+</html>
