@@ -93,3 +93,21 @@ function handleDeleteUser() {
         output.textContent = "No hay usuario para eliminar.";
     }
 }
+
+// CRUD TIPO EVENTO
+
+function createTypeEvent() {
+    const idTypeEvent = document.getElementById("idTypeEvent").value;
+    const nameTypeEvent = document.getElementById("nameTypeEvent").value;
+    return { idTypeEvent, nameTypeEvent };
+}
+
+function readTypeEvent(typeEvent) {
+    return `ID: ${typeEvent.idTypeEvent}
+Nombre: ${typeEvent.nameTypeEvent}`;
+}
+
+function deleteTypeEvent(typeEvent) {
+    // borrar el evento
+    return null;
+}
