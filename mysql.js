@@ -1,19 +1,21 @@
-const mysql = require('mysql2');
 require('dotenv').config();
-// Configuración de la conexión a MySQL
+const mysql = require('mysql2');
+
+// Crear conexión
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'casla', // poné tu contraseña si tenés
-  database: 'fasticketsell'
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
 
-connection.connect(err => {
+// Probar conexión
+connection.connect((err) => {
   if (err) {
-    console.error('❌ Error al conectar con MySQL:', err);
+    console.error('❌ Error al conectar con MySQL:', err.message);
     return;
   }
-  console.log('✅ Conexión a MySQL exitosa');
+  console.log('✅ Conectado a la base de datos MySQL');
 });
 
 module.exports = connection;
