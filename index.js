@@ -1,30 +1,13 @@
-// Importar Express
-require('dotenv').config();
 const express = require('express');
 const app = express();
-const db = require('./mysql');
-
-const PORT = process.env.PORT || 3000;
+const userRoutes = require('./src/routes/users.router');
 
 app.use(express.json());
 
-// Ruta raíz
-app.get('/', (req, res) => {
-  res.send('🎟️ Bienvenido a la API de FastTicketSell');
-});
+// Montar las rutas en /api/users
+app.use('/api/users', userRoutes);
 
-// Ruta para obtener todos los usuarios
-app.get('/users', (req, res) => {
-  db.query('SELECT * FROM users', (err, results) => {
-    if (err) {
-      console.error('❌ Error al obtener usuarios:', err.message);
-      return res.status(500).json({ error: 'Error al obtener usuarios' });
-    }
-    res.json(results);
-  });
-});
-
-// Iniciar servidor
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
