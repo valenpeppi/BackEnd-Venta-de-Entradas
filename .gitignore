@@ -1,0 +1,13 @@
+# Módulos de Node
+node_modules/
+
+# Variables sensibles
+.env
+
+# Archivos de log o temporales
+*.log
+.DS_Store
+*.sqlite
+
+# Opcional para VSCode
+.vscode/
