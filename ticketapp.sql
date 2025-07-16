@@ -117,6 +117,10 @@ CREATE TABLE seats (
   CONSTRAINT fk_seat_sector FOREIGN KEY (idSector, idPlace) REFERENCES sectors(idSector, idPlace)
 );
 
+ALTER TABLE seats
+ADD INDEX idx_seats_place_sector_seat (idPlace, idSector, idSeat);
+
+
 -- Tabla ticket
 CREATE TABLE ticket (
   idEvent INT NOT NULL,
