@@ -1,27 +1,32 @@
-const { pool } = require('../db/mysql');
-// Catalog Controller for handling catalog-related requests
-const CatalogController = {
+const db = require('../db/mysql');
+// Catalog Controller for handling catalog-related requests= {
   // Event Types
-  getEventTypes: async (req, res) => {
-    const [rows] = await pool.query('SELECT * FROM eventtype');
+ 
+ 
+  const getEventTypes = async (req, res) => {
+    const [rows] = await db.query('SELECT * FROM eventtype');
     res.json(rows);
-  },
+  }
 
   // Places
-  getPlaces: async (req, res) => {
-    const [rows] = await pool.query('SELECT * FROM places');
+  const getPlaces = async (req, res) => {
+    const [rows] = await db.query('SELECT * FROM places');
     res.json(rows);
-  },
+  }
 
   // Sectors by Place
-  getSectorsByPlace: async (req, res) => {
+  const getSectorsByPlace = async (req, res) => {
     const { idPlace } = req.params;
-    const [rows] = await pool.query(
+    const [rows] = await db.query(
       'SELECT * FROM sectors WHERE idPlace = ?', 
       [idPlace]
     );
     res.json(rows);
   }
-};
 
-module.exports = CatalogController;
+
+module.exports = {
+  getEventTypes,
+  getPlaces,
+  getSectorsByPlace
+};
