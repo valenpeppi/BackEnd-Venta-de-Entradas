@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const { pool } = require('../db/mysql');
 // Catalog Controller for handling catalog-related requests
 const CatalogController = {
   // Event Types

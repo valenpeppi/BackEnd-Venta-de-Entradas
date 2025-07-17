@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const { pool } = require('../db/mysql');
 
 
   // Crear un nuevo evento

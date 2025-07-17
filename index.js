@@ -1,4 +1,6 @@
 const express = require('express');
+const cors = require('cors');
+const morgan = require('morgan');
 const app = express();
 const userRoutes = require('./src/routes/users.router');
 const eventRoutes = require('./src/routes/events.router');
@@ -23,8 +25,7 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
 // Montar las rutas en /api/seats
 app.use('/api/seats', seatsRoutes);
-// Montar las rutas de autenticación
-app.use('/api/auth', authRoutes);
+
 // Manejo de errores
 app.use((err, req, res, next) => {
   console.error(err.stack);

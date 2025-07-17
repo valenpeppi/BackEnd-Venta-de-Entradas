@@ -1,4 +1,4 @@
-const { db } = require('../config/db');
+const { db } = require('../db/mysql');
 
 const SeatsController = {
   // Consultar disponibilidad
