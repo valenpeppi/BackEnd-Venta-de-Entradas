@@ -5,9 +5,9 @@ const app = express();
 const userRoutes = require('./src/routes/users.router');
 const eventRoutes = require('./src/routes/events.router');
 const salesRoutes = require('./src/routes/sales.router');
-const catalogRoutes = require('./src/routes/catalog.router');
+const catalogRoutes= require('./src/routes/catalog.router');
 const seatsRoutes = require('./src/routes/seats.router');
-const authRoutes = require('./src/routes/auth.router');
+//const authRoutes = require('./src/routes/auth.router');
 
 
 // Middleware
@@ -21,8 +21,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 // Montar las rutas en /api/sales
 app.use('/api/sales', salesRoutes);
-// Montar las rutas en /api/catalog
-app.use('/api/catalog', catalogRoutes);
+// Montar las rutas en /api/catalog 
+app.use('/api/catalog', catalogRoutes); 
 // Montar las rutas en /api/seats
 app.use('/api/seats', seatsRoutes);
 
@@ -37,3 +37,11 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
 });
+
+// Configuración de CORS
+// Permitir solicitudes desde el frontend
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173/',
+  credentials: true
+}));
