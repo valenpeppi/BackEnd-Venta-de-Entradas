@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { pool } from '../db/mysql'; // Importa el pool de conexiones
+import { db } from '../db/mysql'; // Importa el pool de conexiones
 
 class SeatsController {
   public async getAvailableSeats(req: Request, res: Response): Promise<void> {
@@ -23,7 +23,7 @@ class SeatsController {
         queryParams.push(Number(sectorId));
       }
 
-      const [rows] = await pool.query(query, queryParams);
+      const [rows] = await db.query(query, queryParams);
       res.status(200).json(rows);
     } catch (error: any) {
       console.error('Error al obtener asientos disponibles:', error);
@@ -38,7 +38,7 @@ class SeatsController {
     try {
       // Ejemplo de actualización del estado de un asiento
       // Ajusta los campos y la tabla según tu base de datos (ej. 'seats' o 'event_seats')
-      const [result] = await pool.query(
+      const [result] = await db.query(
         'UPDATE seats SET is_available = ?, status = ? WHERE id_place = ? AND id_sector = ? AND id = ?',
         [is_available, status, idPlace, idSector, idSeat]
       );

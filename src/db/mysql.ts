@@ -12,12 +12,12 @@ const dbConfig: ConnectionOptions = {
 };
 
 // Crea un pool de conexiones
-export const pool: Pool = mysql.createPool(dbConfig);
+export const db: Pool = mysql.createPool(dbConfig);
 
 // Función para probar la conexión del pool
 export async function testDbConnection(): Promise<void> {
   try {
-    const connection = await pool.getConnection(); // Obtiene una conexión del pool
+    const connection = await db.getConnection(); // Obtiene una conexión del pool
     console.log('✅ Conectado a la base de datos MySQL exitosa!');
     connection.release(); // Libera la conexión de vuelta al pool
   } catch (error) {
