@@ -9,10 +9,6 @@ const dbConfig: ConnectionOptions = {
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'ticketapp_db',
-  waitForConnections: true, // Si hay un pico de peticiones, las pone en cola
-  connectionLimit: 10,      // Número máximo de conexiones en el pool
-  queueLimit: 0             // Límite de conexiones en cola (0 = sin límite)
-  // ssl: { rejectUnauthorized: false } // Descomentar si se requiere SSL y es autofirmado/desarrollo
 };
 
 // Crea un pool de conexiones
