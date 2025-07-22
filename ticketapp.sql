@@ -1,14 +1,11 @@
--- 1. Configuración inicial
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET TIME_ZONE = "+00:00";
 
--- 2. Crear la base de datos si no existe
 CREATE DATABASE IF NOT EXISTS ticketapp DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE ticketapp;
 
--- 3. Tablas básicas (sin dependencias)
--- 3.1 Tabla users
+-- Tablas básicas (sin dependencias)
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
   dni int NOT NULL,
@@ -21,7 +18,6 @@ CREATE TABLE users (
   UNIQUE KEY mail_UNIQUE (mail)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 3.2 Tabla eventtype
 DROP TABLE IF EXISTS eventtype;
 CREATE TABLE eventtype (
   idType int NOT NULL AUTO_INCREMENT,
@@ -30,7 +26,6 @@ CREATE TABLE eventtype (
   UNIQUE KEY idType_UNIQUE (idType)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 3.3 Tabla places
 DROP TABLE IF EXISTS places;
 CREATE TABLE places (
   idPlace int NOT NULL AUTO_INCREMENT,
@@ -41,8 +36,7 @@ CREATE TABLE places (
   UNIQUE KEY idPlace_UNIQUE (idPlace)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 4. Tablas intermedias
--- 4.1 Tabla event
+-- Tablas intermedias
 DROP TABLE IF EXISTS event;
 CREATE TABLE event (
   idEvent int NOT NULL AUTO_INCREMENT,
@@ -60,7 +54,6 @@ CREATE TABLE event (
   CONSTRAINT fk_event_idEventType FOREIGN KEY (idEventType) REFERENCES eventtype (idType)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 4.2 Tabla sectors
 DROP TABLE IF EXISTS sectors;
 CREATE TABLE sectors (
   idSector int NOT NULL,
@@ -72,8 +65,7 @@ CREATE TABLE sectors (
   CONSTRAINT fk_sectors_places FOREIGN KEY (idPlace) REFERENCES places (idPlace)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5. Tablas dependientes
--- 5.1 Tabla seats
+-- Tablas dependientes
 DROP TABLE IF EXISTS seats;
 CREATE TABLE seats (
   idSeat int NOT NULL,
@@ -86,7 +78,6 @@ CREATE TABLE seats (
   CONSTRAINT fk_seats_sectors FOREIGN KEY (idSector, idPlace) REFERENCES sectors (idSector, idPlace)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5.2 Tabla sales
 DROP TABLE IF EXISTS sales;
 CREATE TABLE sales (
   idSale int NOT NULL AUTO_INCREMENT,
@@ -98,7 +89,6 @@ CREATE TABLE sales (
   CONSTRAINT fk_sales_users FOREIGN KEY (dniClient) REFERENCES users (dni)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5.3 Tabla event_sector
 DROP TABLE IF EXISTS event_sector;
 CREATE TABLE event_sector (
   idEvent int NOT NULL,
@@ -110,7 +100,6 @@ CREATE TABLE event_sector (
   CONSTRAINT fk_eventsector_sector FOREIGN KEY (idSector, idPlace) REFERENCES sectors (idSector, idPlace)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5.4 Tabla saleitem
 DROP TABLE IF EXISTS saleitem;
 CREATE TABLE saleitem (
   idSale int NOT NULL,
@@ -121,7 +110,6 @@ CREATE TABLE saleitem (
   CONSTRAINT fk_saleitem_sales FOREIGN KEY (idSale) REFERENCES sales (idSale)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5.5 Tabla prices
 DROP TABLE IF EXISTS prices;
 CREATE TABLE prices (
   idEvent int NOT NULL,
@@ -133,7 +121,6 @@ CREATE TABLE prices (
   CONSTRAINT fk_prices_eventsector FOREIGN KEY (idEvent, idPlace, idSector) REFERENCES event_sector (idEvent, idPlace, idSector)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 5.6 Tabla ticket
 DROP TABLE IF EXISTS ticket;
 CREATE TABLE ticket (
   idEvent int NOT NULL,
@@ -152,8 +139,7 @@ CREATE TABLE ticket (
   CONSTRAINT fk_ticket_saleitem FOREIGN KEY (idSale, dateSaleItem) REFERENCES saleitem (idSale, dateSaleItem)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- 6. Insertar datos
--- 6.1 Insertar usuarios
+-- Insertar datos
 INSERT INTO users (dni, name, surname, mail, birthDate, password) VALUES
 (11223344, 'Martín', 'López', 'martin.lopez@mail.com', '1988-03-15', 'qwerty'),
 (12345678, 'Juan', 'Peppino', 'juan.perez@mail.com', '1990-05-10', '1234'),
@@ -161,7 +147,6 @@ INSERT INTO users (dni, name, surname, mail, birthDate, password) VALUES
 (55667788, 'Ana', 'Rodríguez', 'ana.rodriguez@mail.com', '1992-08-30', 'test123'),
 (87654321, 'Lucía', 'Gómez', 'lucia.gomez@mail.com', '1995-11-22', 'abcd');
 
--- 6.2 Insertar tipos de evento
 INSERT INTO eventtype (idType, name) VALUES
 (1, 'Concierto'),
 (2, 'Stand Up'),
@@ -170,14 +155,12 @@ INSERT INTO eventtype (idType, name) VALUES
 (5, 'Evento Deportivo'),
 (6, 'Arte');
 
--- 6.3 Insertar lugares
 INSERT INTO places (idPlace, name, totalCap, address) VALUES
 (1, 'Anfiteatro', 100, 'Av. Belgrano 100 bis'),
 (2, 'Estadio Gigante de Arroyito', 200, 'Av. Génova 640'),
 (3, 'Bioceres Arena', 50, 'Cafferata 729'),
 (4, 'El Ateneo', 25, 'Cordoba 1473');
 
--- 6.4 Insertar sectores
 INSERT INTO sectors (idSector, idPlace, name, capacity) VALUES
 (1, 1, 'Anfiteatro', 100),
 (1, 2, 'Campo', 100),
@@ -193,7 +176,6 @@ INSERT INTO sectors (idSector, idPlace, name, capacity) VALUES
 (6, 2, 'Popular Baja', 25),
 (7, 2, 'Popular Alta', 25);
 
--- 6.5 Insertar asientos
 INSERT INTO seats (idSeat, idSector, idPlace, state) VALUES 
 (1, 2, 2, 'D'), (1, 2, 3, 'D'), (1, 3, 2, 'D'), (1, 3, 3, 'D'), (1, 4, 2, 'D'),
 (1, 4, 3, 'D'), (1, 5, 2, 'D'), (1, 6, 2, 'D'), (1, 7, 2, 'D'), (2, 2, 2, 'D'),
@@ -241,8 +223,8 @@ INSERT INTO seats (idSeat, idSector, idPlace, state) VALUES
 (24, 7, 2, 'D'), (25, 2, 2, 'D'), (25, 2, 3, 'D'), (25, 3, 2, 'D'), (25, 3, 3, 'D'),
 (25, 4, 2, 'D'), (25, 4, 3, 'D'), (25, 5, 2, 'D'), (25, 6, 2, 'D'), (25, 7, 2, 'D');
 
--- 7. Reactivar restricciones
+-- Reactivar restricciones
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 8. Mensaje de confirmación
+-- Mensaje de confirmación
 SELECT 'Base de datos y datos importados correctamente' AS Resultado;
