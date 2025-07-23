@@ -74,3 +74,71 @@ export const register = async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error en el servidor', error });
     }
   };
+
+  export const registerCompany = async (req: Request, res: Response) => {
+    const { dniOrganiser, company_name, cuil, contactEmail, password, phone, adress } = req.body;
+
+    if (!dniOrganiser || !company_name || !cuil || !contactEmail || !password || !phone || !adress) {
+      return res.status(400).json({ message: 'Todos los campos son requeridos' });
+    }
+  
+    try {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.query(
+        'INSERT INTO companies (dniOrganiser, company_name , cuil, contactEmail, password, phone, adress) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [dniOrganiser, company_name, cuil, contactEmail, hashedPassword, phone, adress]
+      );
+      res.status(201).json({ message: 'Empresa registrada exitosamente' });
+    } catch (error) {
+      console.error('[Auth] Error en registro de empresa:', error);
+      res.status(500).json({ message: 'Error en el servidor', error });
+    }
+  };
+
+  export const loginCompany = async (req: Request, res: Response) => {
+    const { contactEmail, password } = req.body;
+
+    if (!contactEmail || !password) {
+      return res.status(400).json({ message: 'Email y contraseña requeridos' });
+    }
+
+    try {
+      const [rows]: any = await db.query(
+        'SELECT id, dniOrganiser, company_name, cuil, contactEmail, password, phone, adress FROM companies WHERE contactEmail = ?',
+        [contactEmail]
+      );
+
+      if (!rows.length) {
+        return res.status(401).json({ message: 'Credenciales inválidas' });
+      }
+
+      const company = rows[0];
+      const validPassword = await bcrypt.compare(password, company.password);
+
+      if (!validPassword) {
+        return res.status(401).json({ message: 'Credenciales inválidas' });
+      }
+
+      const token = jwt.sign(
+        { contactEmail: company.contactEmail, companyId: company.id },
+        process.env.JWT_SECRET || 'fallback_secret',
+        { expiresIn: '1h' }
+      );
+
+      res.json({
+        token,
+        company: {
+          id: company.id,
+          dniOrganiser: company.dniOrganiser,
+          company_name: company.company_name,
+          cuil: company.cuil,
+          contactEmail: company.contactEmail,
+          phone: company.phone,
+          adress: company.adress
+        }
+      });
+    } catch (error) {
+      console.error('[Auth] Error en login de empresa:', error);
+      res.status(500).json({ message: 'Error en el servidor', error });
+    }
+  };
