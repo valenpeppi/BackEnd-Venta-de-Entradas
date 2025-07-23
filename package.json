@@ -16,7 +16,7 @@
     "@types/morgan": "^1.9.10",
     "@types/node": "^20.19.9",
     "nodemon": "^3.1.10",
-    "ts-node": "^10.x.x",
+    "ts-node": "^10.9.2",
     "typescript": "^5.x.x"
   },
   "scripts": {
