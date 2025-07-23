@@ -1,8 +1,8 @@
 import { Router } from 'express';
+import { login, register } from '../controllers/auth.controller';
 const router: Router = Router();
 
-// Aquí irían tus rutas de autenticación cuando las implementes
-// router.post('/login', authController.login);
-// router.post('/register', authController.register);
+router.post('/login', login);
+router.post('/register', register);
 
 export default router;
