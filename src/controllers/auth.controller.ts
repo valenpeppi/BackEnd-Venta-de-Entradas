@@ -6,18 +6,17 @@ import { db } from '../db/mysql';
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-    console.log('[Auth] Login para:', email);
+    const { mail, password } = req.body;
+    console.log('[Auth] Login para:', mail);
   
-    if (!email || !password) {
+    if (!mail || !password) {
       return res.status(400).json({ message: 'Email y contraseña requeridos' });
     }
   
     try {
-      // 👇 Cambia 'id' por 'dni' en la consulta
       const [rows]: any = await db.query(
-        'SELECT dni, email, password, name FROM users WHERE email = ?', 
-        [email]
+        'SELECT dni, mail, password, name FROM users WHERE mail = ?', 
+        [mail]
       );
   
       if (!rows.length) {
@@ -25,16 +24,16 @@ export const login = async (req: Request, res: Response) => {
       }
   
       const user = rows[0];
-      console.log('[Auth] Usuario DB:', user); // Verifica que trae 'dni'
+      console.log('[Auth] Usuario DB:', user);
   
-      const validPassword = await bcrypt.compare(password, user.password);
+      // const validPassword = await bcrypt.compare(password, user.password);
+      const validPassword = password === user.password;
       if (!validPassword) {
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
   
-      // 👇 Usa 'dni' en lugar de 'id' para el token
       const token = jwt.sign(
-        { dni: user.dni, email: user.email }, // ¡Clave cambiada aquí!
+        { mail: user.mail },
         process.env.JWT_SECRET || 'fallback_secret',
         { expiresIn: '1h' }
       );
@@ -42,8 +41,8 @@ export const login = async (req: Request, res: Response) => {
       res.json({
         token,
         user: {
-          dni: user.dni, // 👈 Actualizado
-          email: user.email,
+          dni: user.dni,
+          mail: user.mail,
           name: user.name
         }
       });
@@ -53,18 +52,19 @@ export const login = async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error en el servidor', error });
     }
   };
-  export const register = async (req: Request, res: Response) => {
-    const { dni, name, email, password } = req.body; // 👈 Agrega 'dni'
+
+export const register = async (req: Request, res: Response) => {
+    const { dni, name, mail, password } = req.body;
     
-    if (!dni || !email || !password || !name) {
+    if (!dni || !mail || !password || !name) {
       return res.status(400).json({ message: 'Todos los campos son requeridos' });
     }
   
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
       await db.query(
-        'INSERT INTO users (dni, name, email, password) VALUES (?, ?, ?, ?)', // 👈 Incluye 'dni'
-        [dni, name, email, hashedPassword]
+        'INSERT INTO users (dni, name, mail, password) VALUES (?, ?, ?, ?)',
+        [dni, name, mail, hashedPassword]
       );
       res.status(201).json({ message: 'Usuario registrado' });
     } catch (error) {
