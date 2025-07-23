@@ -14,7 +14,7 @@ import eventRoutes from './src/routes/events.router';
 import salesRoutes from './src/routes/sales.router';
 import catalogRoutes from './src/routes/catalog.router';
 import seatsRoutes from './src/routes/seats.router';
-import authRoutes from './src/routes/auth.router'; // Si lo vas a usar, descomenta
+import authRoutes from './src/routes/auth.router';
 
 // Middleware
 app.use(express.json()); // Parse JSON bodies
@@ -32,7 +32,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/seats', seatsRoutes);
-app.use('/api/auth', authRoutes); // Descomentar si usas auth
+app.use('/api/auth', authRoutes); // Ruta de autenticación
 
 // Manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

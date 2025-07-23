@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
-import { pool } from '../db/mysql'; // Importa el pool de conexiones
+import { db } from '../db/mysql'; // Importa el pool de conexiones
 
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     // Ejemplo de obtención de todos los usuarios desde la tabla 'users'
-    const [rows] = await pool.query('SELECT * FROM users');
+    const [rows] = await db.query('SELECT * FROM users');
     res.status(200).json(rows);
   } catch (error: any) {
     console.error('Error al obtener todos los usuarios:', error);
@@ -17,7 +17,7 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   try {
     // Ejemplo de inserción de un usuario en la tabla 'users'
     // Asegúrate de que los campos en userData coincidan con las columnas de tu tabla
-    const [result] = await pool.query('INSERT INTO users SET ?', [userData]);
+    const [result] = await db.query('INSERT INTO users SET ?', [userData]);
     res.status(201).json({
       message: 'Usuario creado exitosamente',
       userId: (result as any).insertId // 'insertId' está disponible para inserciones
