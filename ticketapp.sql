@@ -113,6 +113,7 @@ CREATE TABLE `organiser_company` (
   `company_name` varchar(100) DEFAULT NULL,
   `cuil` varchar(20) DEFAULT NULL,
   `contact_email` varchar(100) DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `address` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`idOrganiser`),
