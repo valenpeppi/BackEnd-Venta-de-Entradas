@@ -5,6 +5,7 @@ import { db } from '../db/mysql';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
+// Registro de usuario
 export const register = async (req: Request, res: Response) => {
     const { dni, name, mail, password } = req.body;
     
@@ -25,7 +26,7 @@ export const register = async (req: Request, res: Response) => {
     }
   };
 
-
+// Login de usuario
   export const login = async (req: Request, res: Response) => {
     const { mail, password } = req.body;
     console.log('[Auth] Login para:', mail);
@@ -74,7 +75,7 @@ export const register = async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error en el servidor', error });
     }
   };
-
+  // Registro de empresa
   export const registerCompany = async (req: Request, res: Response) => {
     const { dniOrganiser, company_name, cuil, contactEmail, password, phone, adress } = req.body;
 
@@ -95,6 +96,7 @@ export const register = async (req: Request, res: Response) => {
     }
   };
 
+  // Login de empresa
   export const loginCompany = async (req: Request, res: Response) => {
     const { contactEmail, password } = req.body;
 
