@@ -15,8 +15,8 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as { dni: string };
-    req.user = { dni: decoded.dni }; // 👈 Usa 'dni' aquí
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as { mail: string };
+    req.user = { mail: decoded.mail };
     next();
   } catch (error) {
     return res.status(403).json({ message: 'Token inválido' });
