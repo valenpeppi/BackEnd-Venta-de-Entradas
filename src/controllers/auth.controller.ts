@@ -7,27 +7,31 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
-    const { dni, name, mail, password } = req.body;
-    
-    if (!dni || !mail || !password || !name) {
-      return res.status(400).json({ message: 'Todos los campos son requeridos' });
+  const { dni, name, surname, mail, password, birthDate ,} = req.body;
+
+  if (!dni || !mail || !password || !name || !birthDate) {
+    return res.status(400).json({ message: 'Todos los campos son requeridos' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.query(
+      `INSERT INTO users (dni, name, surname, mail, password, birthDate)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [dni, name, surname, mail, hashedPassword, birthDate, ]
+    );
+
+    res.status(201).json({ message: 'Usuario registrado' });
+  } catch (error: any) {
+    console.error('[Auth] Error en registro:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
     }
-  
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await db.query(
-        'INSERT INTO users (dni, name, mail, password) VALUES (?, ?, ?, ?)',
-        [dni, name, mail, hashedPassword]
-      );
-      res.status(201).json({ message: 'Usuario registrado' });
-    } catch (error: any) { // Añadido :any para acceder a error.code
-      console.error('[Auth] Error en registro:', error);
-      if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
-      }
-      res.status(500).json({ message: 'Error en el servidor', error });
-    }
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
 };
+
 
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
