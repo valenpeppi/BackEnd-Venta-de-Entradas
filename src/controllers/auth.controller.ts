@@ -7,27 +7,31 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
-    const { dni, name, mail, password } = req.body;
-    
-    if (!dni || !mail || !password || !name) {
-      return res.status(400).json({ message: 'Todos los campos son requeridos' });
+  const { dni, name, surname, mail, password, birthDate ,} = req.body;
+
+  if (!dni || !mail || !password || !name || !birthDate) {
+    return res.status(400).json({ message: 'Todos los campos son requeridos' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await db.query(
+      `INSERT INTO users (dni, name, surname, mail, password, birthDate)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [dni, name, surname, mail, hashedPassword, birthDate, ]
+    );
+
+    res.status(201).json({ message: 'Usuario registrado' });
+  } catch (error: any) {
+    console.error('[Auth] Error en registro:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
     }
-  
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await db.query(
-        'INSERT INTO users (dni, name, mail, password) VALUES (?, ?, ?, ?)',
-        [dni, name, mail, hashedPassword]
-      );
-      res.status(201).json({ message: 'Usuario registrado' });
-    } catch (error: any) { // Añadido :any para acceder a error.code
-      console.error('[Auth] Error en registro:', error);
-      if (error.code === 'ER_DUP_ENTRY') {
-        return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
-      }
-      res.status(500).json({ message: 'Error en el servidor', error });
-    }
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
 };
+
 
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
@@ -80,11 +84,10 @@ export const login = async (req: Request, res: Response) => {
 
 // Registro de empresa
 export const registerCompany = async (req: Request, res: Response) => {
-    // Eliminado 'dniOrganiser' de la desestructuración, ya que no es una columna en organiser_company
-    const { company_name, cuil, contactEmail, password, phone, address } = req.body; // Corregido 'adress' a 'address'
+    const { company_name, cuil, contactEmail, password, phone, address } = req.body; 
 
-    // Validaciones: ahora no se valida 'dniOrganiser'
-    if (!company_name || !contactEmail || !password || !phone || !address) {
+    
+    if (!company_name || !contactEmail || !password || !phone || !address || !cuil) {
       return res.status(400).json({ message: 'Todos los campos obligatorios (Nombre de Empresa, Email, Contraseña, Teléfono, Dirección) son requeridos para registrar la empresa.' });
     }
  
@@ -123,16 +126,16 @@ export const registerCompany = async (req: Request, res: Response) => {
 
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
-    const { contactEmail, password } = req.body;
+    const { contact_email, password } = req.body;
 
-    if (!contactEmail || !password) {
+    if (!contact_email || !password) {
       return res.status(400).json({ message: 'Email y contraseña requeridos' });
     }
 
     try {
       const [rows]: any = await db.query(
-        'SELECT idOrganiser, company_name, cuil, contact_email, password, phone, address FROM organiser_company WHERE contact_email = ?', // Corregido 'id' a 'idOrganiser' y 'adress' a 'address', y contactEmail a contact_email
-        [contactEmail]
+        'SELECT idOrganiser, company_name, cuil, contact_email, password, phone, address FROM organiser_company WHERE contact_email = ?',
+        [contact_email]
       );
 
       if (!rows.length) {
@@ -147,7 +150,7 @@ export const loginCompany = async (req: Request, res: Response) => {
       }
 
       const token = jwt.sign(
-        { contactEmail: company.contact_email, companyId: company.idOrganiser }, // Corregido 'id' a 'idOrganiser' y 'contactEmail' a 'contact_email'
+        { contact_email: company.contact_email, companyId: company.idOrganiser }, // Corregido 'id' a 'idOrganiser' y 'contactEmail' a 'contact_email'
         process.env.JWT_SECRET || 'fallback_secret',
         { expiresIn: '1h' }
       );
@@ -155,12 +158,12 @@ export const loginCompany = async (req: Request, res: Response) => {
       res.json({
         token,
         company: {
-          idOrganiser: company.idOrganiser, // Corregido 'id' a 'idOrganiser'
+          idOrganiser: company.idOrganiser, 
           company_name: company.company_name,
           cuil: company.cuil,
-          contact_email: company.contact_email, // Corregido 'contactEmail' a 'contact_email'
+          contact_email: company.contact_email,
           phone: company.phone,
-          address: company.address // Corregido 'adress' a 'address'
+          address: company.address 
         }
       });
     } catch (error) {
