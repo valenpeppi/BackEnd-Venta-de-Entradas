@@ -8,7 +8,7 @@ const dbConfig: ConnectionOptions = {
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'ticketapp_db',
+  database: process.env.DB_NAME || 'ticketapp',
 };
 
 // Crea un pool de conexiones

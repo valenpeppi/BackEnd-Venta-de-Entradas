@@ -2,9 +2,9 @@ import express, { Application, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { testDbConnection } from './src/db/mysql'; // Importa la función para probar la conexión
+import { testDbConnection } from './src/db/mysql';
 
-dotenv.config(); // Carga las variables de entorno al inicio
+dotenv.config();
 
 const app: Application = express();
 
@@ -17,14 +17,13 @@ import seatsRoutes from './src/routes/seats.router';
 import authRoutes from './src/routes/auth.router';
 
 // Middleware
-app.use(express.json()); // Parse JSON bodies
-app.use(morgan('dev')); // Log requests to the console
-
-// Configuración de CORS
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
+app.use(morgan('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Montar las rutas
 app.use('/api/users', userRoutes);
@@ -32,7 +31,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/seats', seatsRoutes);
-app.use('/api/auth', authRoutes); // Ruta de autenticación
+app.use('/api/auth', authRoutes);
 
 // Manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -42,12 +41,11 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 const PORT: number = Number(process.env.PORT) || 3000;
 
-// Iniciar el servidor solo después de probar la conexión a la base de datos
 testDbConnection().then(() => {
   app.listen(PORT, () => {
     console.log(`Servidor escuchando en http://localhost:${PORT}`);
   });
 }).catch((error) => {
   console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
-  process.exit(1); // Salir si la conexión a la DB falla
+  process.exit(1);
 });

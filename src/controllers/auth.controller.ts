@@ -1,27 +1,50 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { db } from '../db/mysql'; // Asegúrate de que esta ruta sea correcta para tu `mysql.ts`
+import axios from 'axios'; // Se importa axios
+import { db } from '../db/mysql';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY; // Se carga la clave secreta
+
+// Función para verificar el token de reCAPTCHA
+const verifyRecaptcha = async (token: string): Promise<boolean> => {
+  if (!RECAPTCHA_SECRET) {
+    console.error('La clave secreta de reCAPTCHA no está configurada en .env');
+    return false;
+  }
+  try {
+    const response = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
+    );
+    return response.data.success;
+  } catch (error) {
+    console.error('Error al verificar reCAPTCHA:', error);
+    return false;
+  }
+};
 
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
-  const { dni, name, surname, mail, password, birthDate ,} = req.body;
+  const { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
 
+  // 1. Verificar CAPTCHA
+  const isCaptchaValid = await verifyRecaptcha(captchaToken);
+  if (!isCaptchaValid) {
+    return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
+  }
+
+  // 2. Lógica de registro
   if (!dni || !mail || !password || !name || !birthDate) {
     return res.status(400).json({ message: 'Todos los campos son requeridos' });
   }
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     await db.query(
-      `INSERT INTO users (dni, name, surname, mail, password, birthDate)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [dni, name, surname, mail, hashedPassword, birthDate, ]
+      `INSERT INTO users (dni, name, surname, mail, password, birthDate) VALUES (?, ?, ?, ?, ?, ?)`,
+      [dni, name, surname, mail, hashedPassword, birthDate]
     );
-
     res.status(201).json({ message: 'Usuario registrado' });
   } catch (error: any) {
     console.error('[Auth] Error en registro:', error);
@@ -32,12 +55,54 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+// Registro de empresa
+export const registerCompany = async (req: Request, res: Response) => {
+  const { company_name, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
+
+  // 1. Verificar CAPTCHA
+  const isCaptchaValid = await verifyRecaptcha(captchaToken);
+  if (!isCaptchaValid) {
+    return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
+  }
+
+  // 2. Lógica de registro
+  if (!company_name || !contactEmail || !password || !phone || !address || !cuil) {
+    return res.status(400).json({ message: 'Todos los campos obligatorios son requeridos.' });
+  }
+
+  try {
+    const [existingCompany]: any = await db.query(
+      'SELECT cuil, contact_email FROM organiser_company WHERE cuil = ? OR contact_email = ?',
+      [cuil, contactEmail]
+    );
+
+    if (existingCompany.length > 0) {
+      if (existingCompany[0].cuil === cuil) {
+        return res.status(409).json({ message: 'El CUIL ya está registrado para otra empresa.' });
+      }
+      if (existingCompany[0].contact_email === contactEmail) {
+        return res.status(409).json({ message: 'El Email de contacto ya está registrado para otra empresa.' });
+      }
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.query(
+      'INSERT INTO organiser_company (company_name, cuil, contact_email, password, phone, address) VALUES (?, ?, ?, ?, ?, ?)',
+      [company_name, cuil, contactEmail, hashedPassword, phone, address]
+    );
+    res.status(201).json({ message: 'Empresa registrada exitosamente' });
+  } catch (error: any) {
+    console.error('[Auth] Error en registro de empresa:', error);
+    if (error.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ message: 'Ya existe una empresa con ese CUIL o Email de contacto.' });
+    }
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
+};
 
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
     const { mail, password } = req.body;
-    console.log('[Auth] Login para:', mail);
-  
     if (!mail || !password) {
       return res.status(400).json({ message: 'Email y contraseña requeridos' });
     }
@@ -53,16 +118,14 @@ export const login = async (req: Request, res: Response) => {
       }
   
       const user = rows[0];
-      console.log('[Auth] Usuario DB:', user);
-  
-      const validPassword = await bcrypt.compare(password, user.password); // Usando bcrypt.compare
+      const validPassword = await bcrypt.compare(password, user.password);
       if (!validPassword) {
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
   
       const token = jwt.sign(
-        { mail: user.mail, role: user.role, dni: user.dni }, // Incluye el rol y DNI en el token
-        process.env.JWT_SECRET || 'fallback_secret',
+        { mail: user.mail, role: user.role, dni: user.dni },
+        JWT_SECRET,
         { expiresIn: '1h' }
       );
   
@@ -78,48 +141,6 @@ export const login = async (req: Request, res: Response) => {
   
     } catch (error) {
       console.error('[Auth] Error:', error);
-      res.status(500).json({ message: 'Error en el servidor', error });
-    }
-};
-
-// Registro de empresa
-export const registerCompany = async (req: Request, res: Response) => {
-    const { company_name, cuil, contactEmail, password, phone, address } = req.body; 
-
-    
-    if (!company_name || !contactEmail || !password || !phone || !address || !cuil) {
-      return res.status(400).json({ message: 'Todos los campos obligatorios (Nombre de Empresa, Email, Contraseña, Teléfono, Dirección) son requeridos para registrar la empresa.' });
-    }
- 
-    try {
-      // 1. Verificar si el CUIL o el email de contacto ya existen
-      const [existingCompany]: any = await db.query(
-        'SELECT cuil, contact_email FROM organiser_company WHERE cuil = ? OR contact_email = ?', // Corregido contactEmail a contact_email
-        [cuil, contactEmail]
-      );
-
-      if (existingCompany.length > 0) {
-        if (existingCompany[0].cuil === cuil) {
-            return res.status(409).json({ message: 'El CUIL ya está registrado para otra empresa.' });
-        }
-        if (existingCompany[0].contact_email === contactEmail) { // Corregido contactEmail a contact_email
-            return res.status(409).json({ message: 'El Email de contacto ya está registrado para otra empresa.' });
-        }
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await db.query(
-        // Asegúrate de que los nombres de las columnas coincidan exactamente con tu esquema de DB
-        'INSERT INTO organiser_company (company_name, cuil, contact_email, password, phone, address) VALUES (?, ?, ?, ?, ?, ?)', // Eliminado dniOrganiser, corregido contactEmail a contact_email, y adress a address
-        [company_name, cuil, contactEmail, hashedPassword, phone, address]
-      );
-      res.status(201).json({ message: 'Empresa registrada exitosamente' });
-    } catch (error: any) {
-      console.error('[Auth] Error en registro de empresa:', error);
-      if (error.code === 'ER_DUP_ENTRY') {
-        // Este caso ya debería ser manejado por la verificación previa, pero se mantiene como fallback
-        return res.status(409).json({ message: 'Ya existe una empresa con ese CUIL o Email de contacto.' });
-      }
       res.status(500).json({ message: 'Error en el servidor', error });
     }
 };
@@ -150,8 +171,8 @@ export const loginCompany = async (req: Request, res: Response) => {
       }
 
       const token = jwt.sign(
-        { contact_email: company.contact_email, companyId: company.idOrganiser }, // Corregido 'id' a 'idOrganiser' y 'contactEmail' a 'contact_email'
-        process.env.JWT_SECRET || 'fallback_secret',
+        { contact_email: company.contact_email, companyId: company.idOrganiser },
+        JWT_SECRET,
         { expiresIn: '1h' }
       );
 
