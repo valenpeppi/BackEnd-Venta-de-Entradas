@@ -3,7 +3,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { testDbConnection } from './src/db/mysql';
-
+import path from 'path';
 dotenv.config();
 
 const app: Application = express();
@@ -22,8 +22,13 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('dev'));
+
+// Configuración correcta para parsear JSON y datos de formulario
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Servir archivos estáticos de la carpeta "uploads"
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Montar las rutas
 app.use('/api/users', userRoutes);
