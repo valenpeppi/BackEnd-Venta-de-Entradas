@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import axios from 'axios'; // Se importa axios
+import axios from 'axios';
 import { db } from '../db/mysql';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY; // Se carga la clave secreta
+const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
 // Función para verificar el token de reCAPTCHA
 const verifyRecaptcha = async (token: string): Promise<boolean> => {
@@ -28,13 +28,11 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
 export const register = async (req: Request, res: Response) => {
   const { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
 
-  // 1. Verificar CAPTCHA
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
   if (!isCaptchaValid) {
     return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
   }
 
-  // 2. Lógica de registro
   if (!dni || !mail || !password || !name || !birthDate) {
     return res.status(400).json({ message: 'Todos los campos son requeridos' });
   }
@@ -59,13 +57,11 @@ export const register = async (req: Request, res: Response) => {
 export const registerCompany = async (req: Request, res: Response) => {
   const { company_name, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
 
-  // 1. Verificar CAPTCHA
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
   if (!isCaptchaValid) {
     return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
   }
 
-  // 2. Lógica de registro
   if (!company_name || !contactEmail || !password || !phone || !address || !cuil) {
     return res.status(400).json({ message: 'Todos los campos obligatorios son requeridos.' });
   }
@@ -99,6 +95,9 @@ export const registerCompany = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error en el servidor', error });
   }
 };
+
+
+
 
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
@@ -144,6 +143,9 @@ export const login = async (req: Request, res: Response) => {
       res.status(500).json({ message: 'Error en el servidor', error });
     }
 };
+
+
+
 
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
