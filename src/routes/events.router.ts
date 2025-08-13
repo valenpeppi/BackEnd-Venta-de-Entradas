@@ -2,11 +2,12 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { verifyToken, isCompany } from '../middlewares/auth';
 import { createEvent, getAllEvents, getAllEventTypes } from '../controllers/event.controller';
 
 const router = Router();
 
-// === Multer config ===
+// === Configuración de Multer ===
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
@@ -22,11 +23,30 @@ const storage = multer.diskStorage({
     cb(null, `event-${unique}${ext}`);
   },
 });
-const upload = multer({ storage });
 
-// Rutas
-router.post('/createEvent', upload.single('image'), createEvent);
-router.get('/', getAllEvents);
-router.get('/types', getAllEventTypes);
+const upload = multer({ 
+  storage,
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    allowedTypes.includes(file.mimetype) 
+      ? cb(null, true)
+      : cb(new Error('Tipo de archivo no permitido'));
+  },
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
+
+// === Rutas Protegidas ===
+router.post(
+  '/createEvent',
+  verifyToken,  // <-- Middleware de autenticación
+  isCompany,    // <-- Solo para empresas
+  upload.single('image'),
+  createEvent
+);
+
+router.get('/', verifyToken, getAllEvents); // Requiere autenticación
+
+// === Rutas Públicas ===
+router.get('/types', getAllEventTypes); // <-- Sin verifyToken, accesible públicamente
 
 export default router;

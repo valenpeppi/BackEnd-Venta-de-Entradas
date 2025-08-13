@@ -170,12 +170,13 @@ export const loginCompany = async (req: Request, res: Response) => {
       // Se añade el idOrganiser al token para identificar a la empresa
       const token = jwt.sign(
         { 
+          idOrganiser: company.idOrganiser,
           contact_email: company.contact_email, 
-          idOrganiser: company.idOrganiser, // <-- Se añade el ID del organizador
-          role: 'company' // Se añade un rol para diferenciarlo
+          role: 'company',
+          type: 'company'
         },
         JWT_SECRET,
-        { expiresIn: '1h' }
+        { expiresIn: '8h' }
       );
 
       res.json({
