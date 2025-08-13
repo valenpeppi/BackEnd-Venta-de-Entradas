@@ -1,97 +1,81 @@
 import { Request, Response } from 'express';
 import { db } from '../db/mysql';
-import path from 'path';
 import fs from 'fs';
 
 export const createEvent = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { name, description, date, idEventType, dniOrganiser } = req.body;
-    const state = 'active'; // Estado por defecto
+    const { name, description, date, idEventType } = req.body;
+    const state = 'Pendiente';
 
-    // Validación básica
-    if (!name || !description || !date || !idEventType || !dniOrganiser) {
+    const idOrganiser = (req as any).user?.companyId; // ❌ Evita esto en producción
+    if (!idOrganiser) {
+      res.status(403).json({ message: 'No autorizado: falta idOrganiser' });
+      return;
+    }
+
+
+    if (!name || !description || !date || !idEventType) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
       return;
     }
 
-    // Validar longitud de campos
     if (name.length > 45) {
-      res.status(400).json({ message: 'El nombre no puede exceder los 45 caracteres' });
+      res.status(400).json({ message: 'El nombre no puede exceder 45 caracteres' });
       return;
     }
 
     if (description.length > 60) {
-      res.status(400).json({ message: 'La descripción no puede exceder los 60 caracteres' });
+      res.status(400).json({ message: 'La descripción no puede exceder 60 caracteres' });
       return;
     }
 
-    // Validar que el organizador existe
-    const [organiser]: any = await db.query(
-      'SELECT * FROM users WHERE dni = ?',
-      [dniOrganiser]
-    );
-
-    if (organiser.length === 0) {
+    // Validar que el organizador exista
+    const [org]: any = await db.query('SELECT idOrganiser FROM organiser_company WHERE idOrganiser = ?', [idOrganiser]);
+    if (!Array.isArray(org) || org.length === 0) {
       res.status(400).json({ message: 'El organizador no existe' });
       return;
     }
 
-    // Validar que el tipo de evento existe
-    const [eventType]: any = await db.query(
-      'SELECT * FROM eventTypes WHERE idEventType = ?',
-      [idEventType]
-    );
-
-    if (eventType.length === 0) {
+    // Validar tipo de evento
+    const [etype]: any = await db.query('SELECT idType FROM eventtype WHERE idType = ?', [idEventType]);
+    if (!Array.isArray(etype) || etype.length === 0) {
       res.status(400).json({ message: 'El tipo de evento no existe' });
       return;
     }
 
-    // Manejo de la imagen
-    let imagePath = null;
+    // Imagen
+    let imagePath: string | null = null;
     if (req.file) {
-      // Validar que sea una imagen
-      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-      if (!validTypes.includes(req.file.mimetype)) {
-        fs.unlinkSync(req.file.path); // Eliminar el archivo subido
-        res.status(400).json({ message: 'Solo se permiten imágenes (JPEG, JPG, PNG, GIF)' });
+      const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!valid.includes(req.file.mimetype)) {
+        fs.unlinkSync(req.file.path);
+        res.status(400).json({ message: 'Solo imágenes válidas' });
         return;
       }
-
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-    // Insertar en la base de datos
+    // Insertar evento
     const [result]: any = await db.query(
-      `INSERT INTO events 
-       (name, description, date, state, idEventType, dniOrganiser, image) 
+      `INSERT INTO event (name, description, date, state, idEventType, idOrganiser, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, description, date, state, idEventType, dniOrganiser, imagePath]
+      [name, description, date, state, idEventType, idOrganiser, imagePath]
     );
 
-    res.status(201).json({
-      message: 'Evento creado exitosamente',
-      eventId: result.insertId
-    });
+    res.status(201).json({ message: 'Evento creado exitosamente', eventId: result.insertId });
   } catch (error: any) {
-    console.error('Error al crear el evento:', error);
-    
-    // Eliminar la imagen si hubo error después de subirla
+    console.error('Error al crear evento:', error);
     if (req.file?.path) {
-      fs.unlinkSync(req.file.path);
+      try { fs.unlinkSync(req.file.path); } catch {}
     }
-    
-    res.status(500).json({ 
-      error: 'Error interno del servidor', 
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 };
 
-export const getAllEvents = async (req: Request, res: Response): Promise<void> => {
+export const getAllEvents = async (_req: Request, res: Response): Promise<void> => {
   try {
     const [rows]: any = await db.query(`
-      SELECT 
+      SELECT
         e.idEvent,
         e.name,
         e.description,
@@ -100,43 +84,27 @@ export const getAllEvents = async (req: Request, res: Response): Promise<void> =
         e.image,
         et.name AS eventType,
         u.name AS organiserName,
-        u.lastName AS organiserLastName,
-        DATE_FORMAT(e.date, '%Y-%m-%d') as dateOnly,
-        DATE_FORMAT(e.date, '%H:%i:%s') as timeOnly
-      FROM events e
-      JOIN eventTypes et ON e.idEventType = et.idEventType
+        u.surname AS organiserSurname,
+        DATE_FORMAT(e.date, '%Y-%m-%d') AS dateOnly,
+        DATE_FORMAT(e.date, '%H:%i:%s') AS timeOnly
+      FROM event e
+      JOIN eventtype et ON e.idEventType = et.idType
       JOIN users u ON e.dniOrganiser = u.dni
       ORDER BY e.date ASC
     `);
     res.status(200).json(rows);
   } catch (error: any) {
-    console.error('Error al obtener todos los eventos:', error);
-    res.status(500).json({ 
-      error: 'Error interno del servidor', 
-      details: error.message 
-    });
+    console.error('Error al obtener eventos:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 };
 
-  export const getAllEventTypes = async (req: Request, res: Response): Promise<void> => {
+export const getAllEventTypes = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const [rows] = await db.query('SELECT * FROM eventTypes');
+    const [rows]: any = await db.query('SELECT idType, name FROM eventtype ORDER BY name ASC');
     res.status(200).json(rows);
   } catch (error: any) {
     console.error('Error al obtener tipos de evento:', error);
-    res.status(500).json({ 
-      error: 'Error interno del servidor', 
-      details: error.message 
-    });
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 };
-
-
-
-
-
-
-
-
-
-
