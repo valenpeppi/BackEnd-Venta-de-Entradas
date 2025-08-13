@@ -1,15 +1,17 @@
 import { Response } from 'express';
 import { db } from '../db/mysql';
 import fs from 'fs';
-import { AuthRequest } from '../middlewares/auth'; // Importa la interfaz extendida
+import { AuthRequest } from '../middlewares/auth'; 
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, description, date, idEventType } = req.body;
     const state = 'Pendiente';
+    console.log('Datos recibidos:', req.body);
+    console.log('Archivo recibido:', req.file); 
 
     // Se obtiene el idOrganiser del usuario autenticado a través del token
-    const idOrganiser = req.user?.idOrganiser;
+    const idOrganiser = req.auth?.idOrganiser;
 
     if (!idOrganiser) {
       res.status(403).json({ message: 'No autorizado: el token no pertenece a un organizador válido.' });
