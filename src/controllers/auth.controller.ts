@@ -96,9 +96,6 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
     const { mail, password } = req.body;
@@ -144,9 +141,6 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-
-
-
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
     const { contact_email, password } = req.body;
@@ -172,8 +166,14 @@ export const loginCompany = async (req: Request, res: Response) => {
         return res.status(401).json({ message: 'Credenciales inválidas' });
       }
 
+      // --- MODIFICACIÓN AQUÍ ---
+      // Se añade el idOrganiser al token para identificar a la empresa
       const token = jwt.sign(
-        { contact_email: company.contact_email, companyId: company.idOrganiser },
+        { 
+          contact_email: company.contact_email, 
+          idOrganiser: company.idOrganiser, // <-- Se añade el ID del organizador
+          role: 'company' // Se añade un rol para diferenciarlo
+        },
         JWT_SECRET,
         { expiresIn: '1h' }
       );

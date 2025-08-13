@@ -3,22 +3,30 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
+// Se extiende la interfaz para incluir el usuario decodificado del token
 export interface AuthRequest extends Request {
-  user?: any;
+  user?: {
+    mail?: string;
+    dni?: number;
+    idOrganiser?: number;
+    role?: string;
+  };
 }
 
 export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const token = req.headers['authorization']?.split(' ')[1];
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
   
   if (!token) {
-    return res.status(401).json({ message: 'Token no proporcionado' });
+    return res.status(401).json({ message: 'Token no proporcionado. Acceso denegado.' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret') as { mail: string };
-    req.user = { mail: decoded.mail };
+    // Se decodifica el token completo y se adjunta al objeto req.user
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded as { mail?: string; idOrganiser?: number; role?: string; };
     next();
   } catch (error) {
-    return res.status(403).json({ message: 'Token inválido' });
+    return res.status(403).json({ message: 'Token inválido o expirado.' });
   }
 };
