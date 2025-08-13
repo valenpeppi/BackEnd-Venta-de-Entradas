@@ -27,8 +27,8 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir archivos estáticos de la carpeta "uploads"
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Servir /uploads como estático
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Montar las rutas
 app.use('/api/users', userRoutes);

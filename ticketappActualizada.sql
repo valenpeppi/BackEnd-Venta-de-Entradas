@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
--- Host: localhost    Database: ticketapp
+-- Host: 127.0.0.1    Database: ticketapp
 -- ------------------------------------------------------
--- Server version	9.3.0
+-- Server version	8.4.5
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -29,14 +29,15 @@ CREATE TABLE `event` (
   `date` datetime NOT NULL,
   `state` varchar(45) NOT NULL,
   `idEventType` int NOT NULL,
-  `dniOrganiser` int NOT NULL,
+  `idOrganiser` int NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`idEvent`),
   UNIQUE KEY `idEvent_UNIQUE` (`idEvent`),
-  KEY `dniOrganiser_idx` (`dniOrganiser`),
+  KEY `dniOrganiser_idx` (`idOrganiser`),
   KEY `idEventType_idx` (`idEventType`),
-  CONSTRAINT `fk_event_dniOrganiser` FOREIGN KEY (`dniOrganiser`) REFERENCES `users` (`dni`),
-  CONSTRAINT `fk_event_idEventType` FOREIGN KEY (`idEventType`) REFERENCES `eventtype` (`idType`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_event_idEventType` FOREIGN KEY (`idEventType`) REFERENCES `eventtype` (`idType`),
+  CONSTRAINT `fk_event_idOrganiser` FOREIGN KEY (`idOrganiser`) REFERENCES `organiser_company` (`idOrganiser`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,6 +46,7 @@ CREATE TABLE `event` (
 
 LOCK TABLES `event` WRITE;
 /*!40000 ALTER TABLE `event` DISABLE KEYS */;
+INSERT INTO `event` VALUES (1,'Bad Bunny','Bad Bunny en Argentina!','2025-12-31 00:00:00','Aceptado',1,1,NULL),(2,'la vela puerca','la vela en Rosario!','2025-10-31 20:00:00','Aceptado',1,1,'/uploads/event-1755092653867-52272554.jpg');
 /*!40000 ALTER TABLE `event` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -117,7 +119,7 @@ CREATE TABLE `organiser_company` (
   `address` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`idOrganiser`),
   UNIQUE KEY `cuit` (`cuil`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,7 +128,7 @@ CREATE TABLE `organiser_company` (
 
 LOCK TABLES `organiser_company` WRITE;
 /*!40000 ALTER TABLE `organiser_company` DISABLE KEYS */;
-INSERT INTO `organiser_company` VALUES (1,'Eventos SRL','30-12345678-9','contacto@eventos.com','password_hash_ejemplo','3411234567','Av. San Martín 123');
+INSERT INTO `organiser_company` VALUES (1,'Eventos SRL','30-12345678-9','contacto@eventos.com','password_hash_ejemplo','3411234567','Av. San Martín 123'),(2,'peppi SRL','2046497046','sbrolla@gmail.com','$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG','03465654471','GODINO 887'),(3,'gian SRL','20-46187000-1','gian@hotmail.com','$2b$10$nGs0vxZ66jyQE4bMELcTBOKorrT62lQfuZsbPTRT7aC8fQZhOkNFm','3465656777','zeballos 14453');
 /*!40000 ALTER TABLE `organiser_company` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -353,7 +355,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (45500050,'peppi','','peppi@gmail.com','2005-04-14','$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG','admin'),(46187000,'gian','','gian@hotmail.com','2005-01-02','$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a','user');
+INSERT INTO `users` VALUES (45500050,'peppi','','peppi@gmail.com','2005-04-14','$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG','admin'),(46187000,'gian','','gian@hotmail.com','2005-01-02','$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a','user'),(46497046,'Valen','','maiusbrolla@gmail.com','2005-03-31','$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO','user');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -366,4 +368,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-08-08 12:54:28
+-- Dump completed on 2025-08-13 11:01:41
