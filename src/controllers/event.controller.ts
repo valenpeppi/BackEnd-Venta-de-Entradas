@@ -1,18 +1,20 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { db } from '../db/mysql';
 import fs from 'fs';
+import { AuthRequest } from '../middlewares/auth'; // Importa la interfaz extendida
 
-export const createEvent = async (req: Request, res: Response): Promise<void> => {
+export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, description, date, idEventType } = req.body;
     const state = 'Pendiente';
 
-    const idOrganiser = (req as any).user?.companyId; // ❌ Evita esto en producción
+    // Se obtiene el idOrganiser del usuario autenticado a través del token
+    const idOrganiser = req.user?.idOrganiser;
+
     if (!idOrganiser) {
-      res.status(403).json({ message: 'No autorizado: falta idOrganiser' });
+      res.status(403).json({ message: 'No autorizado: el token no pertenece a un organizador válido.' });
       return;
     }
-
 
     if (!name || !description || !date || !idEventType) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
@@ -29,21 +31,18 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Validar que el organizador exista
     const [org]: any = await db.query('SELECT idOrganiser FROM organiser_company WHERE idOrganiser = ?', [idOrganiser]);
     if (!Array.isArray(org) || org.length === 0) {
       res.status(400).json({ message: 'El organizador no existe' });
       return;
     }
 
-    // Validar tipo de evento
     const [etype]: any = await db.query('SELECT idType FROM eventtype WHERE idType = ?', [idEventType]);
     if (!Array.isArray(etype) || etype.length === 0) {
       res.status(400).json({ message: 'El tipo de evento no existe' });
       return;
     }
 
-    // Imagen
     let imagePath: string | null = null;
     if (req.file) {
       const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -55,7 +54,6 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-    // Insertar evento
     const [result]: any = await db.query(
       `INSERT INTO event (name, description, date, state, idEventType, idOrganiser, image)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -72,7 +70,7 @@ export const createEvent = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getAllEvents = async (_req: Request, res: Response): Promise<void> => {
+export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const [rows]: any = await db.query(`
       SELECT
@@ -83,13 +81,12 @@ export const getAllEvents = async (_req: Request, res: Response): Promise<void> 
         e.state,
         e.image,
         et.name AS eventType,
-        u.name AS organiserName,
-        u.surname AS organiserSurname,
+        oc.company_name AS organiserName,
         DATE_FORMAT(e.date, '%Y-%m-%d') AS dateOnly,
         DATE_FORMAT(e.date, '%H:%i:%s') AS timeOnly
       FROM event e
       JOIN eventtype et ON e.idEventType = et.idType
-      JOIN users u ON e.dniOrganiser = u.dni
+      JOIN organiser_company oc ON e.idOrganiser = oc.idOrganiser
       ORDER BY e.date ASC
     `);
     res.status(200).json(rows);
@@ -99,7 +96,7 @@ export const getAllEvents = async (_req: Request, res: Response): Promise<void> 
   }
 };
 
-export const getAllEventTypes = async (_req: Request, res: Response): Promise<void> => {
+export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const [rows]: any = await db.query('SELECT idType, name FROM eventtype ORDER BY name ASC');
     res.status(200).json(rows);
