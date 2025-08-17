@@ -44,9 +44,6 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
     if (error.code === 'P2002') {
       // P2002 es el código de error de Prisma para violaciones de unicidad
       res.status(409).json({ error: 'El usuario ya existe (DNI o email duplicado).' });
-    } else if (error.code === 'P2025') {
-      // P2025 es para registros no encontrados (aunque no aplica aquí, es bueno conocerlo)
-      res.status(404).json({ error: 'Registro no encontrado.' });
     } else {
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
