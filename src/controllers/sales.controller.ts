@@ -1,34 +1,30 @@
 // src/controllers/sales.controller.ts
 import { Request, Response } from 'express';
-// Se actualiza la importación para usar el pool de conexiones 'db'
-import { db } from '../db/mysql';
+import { prisma } from '../db/mysql';
 
 class SalesController {
   /**
-   * Crea una nueva venta en la base de datos.
+   * Crea una nueva venta en la base de datos usando Prisma.
    */
   public async createSale(req: Request, res: Response): Promise<void> {
-    // El cuerpo de la solicitud debe contener 'date' y 'dniClient'
     const { date, dniClient } = req.body;
 
-    // Validamos que los datos necesarios estén presentes
     if (!date || !dniClient) {
       res.status(400).json({ error: 'Faltan datos requeridos (date, dniClient)' });
       return;
     }
 
     try {
-      // Creamos la consulta SQL para insertar una nueva venta.
-      // Usamos '?' como marcadores de posición para prevenir inyección SQL.
-      const sql = 'INSERT INTO sales (date, dniClient) VALUES (?, ?)';
-      
-      // Ejecutamos la consulta usando db.query, como en tu ejemplo.
-      const [result]: any = await db.query(sql, [date, dniClient]);
+      const sale = await prisma.sales.create({
+        data: {
+          date: new Date(date),
+          dniClient: dniClient
+        }
+      });
 
-      // Enviamos una respuesta exitosa con el ID de la nueva venta
-      res.status(201).json({ 
-        message: 'Venta creada exitosamente', 
-        data: { idSale: result.insertId, ...req.body } 
+      res.status(201).json({
+        message: 'Venta creada exitosamente',
+        data: { idSale: sale.idSale, ...req.body }
       });
 
     } catch (error: any) {
@@ -38,20 +34,17 @@ class SalesController {
   }
 
   /**
-   * Obtiene todas las ventas de un cliente específico por su DNI.
+   * Obtiene todas las ventas de un cliente específico por su DNI usando Prisma.
    */
   public async getSalesByClient(req: Request, res: Response): Promise<void> {
     const { dniClient } = req.params;
 
     try {
-      // Creamos la consulta SQL para seleccionar las ventas.
-      const sql = 'SELECT * FROM sales WHERE dniClient = ?';
+      const sales = await prisma.sales.findMany({
+        where: { dniClient: dniClient }
+      });
 
-      // Ejecutamos la consulta usando db.query
-      const [rows] = await db.query(sql, [dniClient]);
-
-      // Enviamos los resultados encontrados
-      res.status(200).json(rows);
+      res.status(200).json(sales);
 
     } catch (error: any) {
       console.error(`Error al obtener ventas para el cliente ${dniClient}:`, error);
