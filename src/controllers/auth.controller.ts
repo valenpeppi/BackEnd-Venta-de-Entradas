@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
-import { db } from '../db/mysql';
+import { prisma } from '../db/mysql';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
@@ -39,14 +39,20 @@ export const register = async (req: Request, res: Response) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.query(
-      `INSERT INTO users (dni, name, surname, mail, password, birthDate) VALUES (?, ?, ?, ?, ?, ?)`,
-      [dni, name, surname, mail, hashedPassword, birthDate]
-    );
+    await prisma.user.create({
+      data: {
+        dni,
+        name,
+        surname,
+        mail,
+        password: hashedPassword,
+        birthDate: new Date(birthDate)
+      }
+    });
     res.status(201).json({ message: 'Usuario registrado' });
   } catch (error: any) {
     console.error('[Auth] Error en registro:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (error.code === 'P2002') {
       return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
     }
     res.status(500).json({ message: 'Error en el servidor', error });
@@ -67,29 +73,39 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    const [existingCompany]: any = await db.query(
-      'SELECT cuil, contact_email FROM organiser_company WHERE cuil = ? OR contact_email = ?',
-      [cuil, contactEmail]
-    );
+    const existingCompany = await prisma.organiser_company.findFirst({
+      where: {
+        OR: [
+          { cuil: cuil },
+          { contact_email: contactEmail }
+        ]
+      }
+    });
 
-    if (existingCompany.length > 0) {
-      if (existingCompany[0].cuil === cuil) {
+    if (existingCompany) {
+      if (existingCompany.cuil === cuil) {
         return res.status(409).json({ message: 'El CUIL ya está registrado para otra empresa.' });
       }
-      if (existingCompany[0].contact_email === contactEmail) {
+      if (existingCompany.contact_email === contactEmail) {
         return res.status(409).json({ message: 'El Email de contacto ya está registrado para otra empresa.' });
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await db.query(
-      'INSERT INTO organiser_company (company_name, cuil, contact_email, password, phone, address) VALUES (?, ?, ?, ?, ?, ?)',
-      [company_name, cuil, contactEmail, hashedPassword, phone, address]
-    );
+    await prisma.organiser_company.create({
+      data: {
+        company_name,
+        cuil,
+        contact_email: contactEmail,
+        password: hashedPassword,
+        phone,
+        address
+      }
+    });
     res.status(201).json({ message: 'Empresa registrada exitosamente' });
   } catch (error: any) {
     console.error('[Auth] Error en registro de empresa:', error);
-    if (error.code === 'ER_DUP_ENTRY') {
+    if (error.code === 'P2002') {
       return res.status(409).json({ message: 'Ya existe una empresa con ese CUIL o Email de contacto.' });
     }
     res.status(500).json({ message: 'Error en el servidor', error });
@@ -98,100 +114,90 @@ export const registerCompany = async (req: Request, res: Response) => {
 
 // Login de usuario
 export const login = async (req: Request, res: Response) => {
-    const { mail, password } = req.body;
-    if (!mail || !password) {
-      return res.status(400).json({ message: 'Email y contraseña requeridos' });
+  const { mail, password } = req.body;
+  if (!mail || !password) {
+    return res.status(400).json({ message: 'Email y contraseña requeridos' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { mail } });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
-  
-    try {
-      const [rows]: any = await db.query(
-        'SELECT dni, mail, password, name, role FROM users WHERE mail = ?', 
-        [mail]
-      );
-  
-      if (!rows.length) {
-        return res.status(401).json({ message: 'Credenciales inválidas' });
-      }
-  
-      const user = rows[0];
-      const validPassword = await bcrypt.compare(password, user.password);
-      if (!validPassword) {
-        return res.status(401).json({ message: 'Credenciales inválidas' });
-      }
-  
-      const token = jwt.sign(
-        { mail: user.mail, role: user.role, dni: user.dni },
-        JWT_SECRET,
-        { expiresIn: '1h' }
-      );
-  
-      res.json({
-        token,
-        user: {
-          dni: user.dni,
-          mail: user.mail,
-          name: user.name,
-          role: user.role 
-        }
-      });
-  
-    } catch (error) {
-      console.error('[Auth] Error:', error);
-      res.status(500).json({ message: 'Error en el servidor', error });
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
+
+    const token = jwt.sign(
+      { mail: user.mail, role: user.role, dni: user.dni },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        dni: user.dni,
+        mail: user.mail,
+        name: user.name,
+        role: user.role
+      }
+    });
+
+  } catch (error) {
+    console.error('[Auth] Error:', error);
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
 };
 
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
-    const { contact_email, password } = req.body;
+  const { contact_email, password } = req.body;
 
-    if (!contact_email || !password) {
-      return res.status(400).json({ message: 'Email y contraseña requeridos' });
+  if (!contact_email || !password) {
+    return res.status(400).json({ message: 'Email y contraseña requeridos' });
+  }
+
+  try {
+    const company = await prisma.organiser_company.findUnique({ where: { contact_email } });
+
+    if (!company) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    try {
-      const [rows]: any = await db.query(
-        'SELECT idOrganiser, company_name, cuil, contact_email, password, phone, address FROM organiser_company WHERE contact_email = ?',
-        [contact_email]
-      );
+    const validPassword = await bcrypt.compare(password, company.password);
 
-      if (!rows.length) {
-        return res.status(401).json({ message: 'Credenciales inválidas' });
-      }
-
-      const company = rows[0];
-      const validPassword = await bcrypt.compare(password, company.password);
-
-      if (!validPassword) {
-        return res.status(401).json({ message: 'Credenciales inválidas' });
-      }
-
-      // --- MODIFICACIÓN AQUÍ ---
-      // Se añade el idOrganiser al token para identificar a la empresa
-      const token = jwt.sign(
-        { 
-          idOrganiser: company.idOrganiser,
-          contact_email: company.contact_email, 
-          role: 'company',
-          type: 'company'
-        },
-        JWT_SECRET,
-        { expiresIn: '8h' }
-      );
-
-      res.json({
-        token,
-        company: {
-          idOrganiser: company.idOrganiser, 
-          company_name: company.company_name,
-          cuil: company.cuil,
-          contact_email: company.contact_email,
-          phone: company.phone,
-          address: company.address 
-        }
-      });
-    } catch (error) {
-      console.error('[Auth] Error en login de empresa:', error);
-      res.status(500).json({ message: 'Error en el servidor', error });
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Credenciales inválidas' });
     }
+
+    const token = jwt.sign(
+      {
+        idOrganiser: company.idOrganiser,
+        contact_email: company.contact_email,
+        role: 'company',
+        type: 'company'
+      },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    res.json({
+      token,
+      company: {
+        idOrganiser: company.idOrganiser,
+        company_name: company.company_name,
+        cuil: company.cuil,
+        contact_email: company.contact_email,
+        phone: company.phone,
+        address: company.address
+      }
+    });
+  } catch (error) {
+    console.error('[Auth] Error en login de empresa:', error);
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
 };

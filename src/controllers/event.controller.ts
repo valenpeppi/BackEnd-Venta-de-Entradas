@@ -1,16 +1,12 @@
 import { Response } from 'express';
-import { db } from '../db/mysql';
+import { prisma } from '../db/mysql';
 import fs from 'fs';
-import { AuthRequest } from '../middlewares/auth'; 
+import { AuthRequest } from '../middlewares/auth';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, description, date, idEventType } = req.body;
     const state = 'Pendiente';
-    console.log('Datos recibidos:', req.body);
-    console.log('Archivo recibido:', req.file); 
-
-    // Se obtiene el idOrganiser del usuario autenticado a través del token
     const idOrganiser = req.auth?.idOrganiser;
 
     if (!idOrganiser) {
@@ -33,14 +29,14 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const [org]: any = await db.query('SELECT idOrganiser FROM organiser_company WHERE idOrganiser = ?', [idOrganiser]);
-    if (!Array.isArray(org) || org.length === 0) {
+    const org = await prisma.organiser_company.findUnique({ where: { idOrganiser: idOrganiser } });
+    if (!org) {
       res.status(400).json({ message: 'El organizador no existe' });
       return;
     }
 
-    const [etype]: any = await db.query('SELECT idType FROM eventtype WHERE idType = ?', [idEventType]);
-    if (!Array.isArray(etype) || etype.length === 0) {
+    const etype = await prisma.eventtype.findUnique({ where: { idType: Number(idEventType) } });
+    if (!etype) {
       res.status(400).json({ message: 'El tipo de evento no existe' });
       return;
     }
@@ -56,13 +52,19 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-    const [result]: any = await db.query(
-      `INSERT INTO event (name, description, date, state, idEventType, idOrganiser, image)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [name, description, date, state, idEventType, idOrganiser, imagePath]
-    );
+    const event = await prisma.event.create({
+      data: {
+        name,
+        description,
+        date: new Date(date),
+        state,
+        idEventType: Number(idEventType),
+        idOrganiser: idOrganiser,
+        image: imagePath,
+      }
+    });
 
-    res.status(201).json({ message: 'Evento creado exitosamente', eventId: result.insertId });
+    res.status(201).json({ message: 'Evento creado exitosamente', eventId: event.idEvent });
   } catch (error: any) {
     console.error('Error al crear evento:', error);
     if (req.file?.path) {
@@ -74,23 +76,13 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const [rows]: any = await db.query(`
-      SELECT
-        e.idEvent,
-        e.name,
-        e.description,
-        e.date,
-        e.state,
-        e.image,
-        et.name AS eventType,
-        oc.company_name AS organiserName,
-        DATE_FORMAT(e.date, '%Y-%m-%d') AS dateOnly,
-        DATE_FORMAT(e.date, '%H:%i:%s') AS timeOnly
-      FROM event e
-      JOIN eventtype et ON e.idEventType = et.idType
-      JOIN organiser_company oc ON e.idOrganiser = oc.idOrganiser
-      ORDER BY e.date ASC
-    `);
+    const rows = await prisma.event.findMany({
+      include: {
+        eventtype: true,
+        organiser_company: true,
+      },
+      orderBy: { date: 'asc' }
+    });
     res.status(200).json(rows);
   } catch (error: any) {
     console.error('Error al obtener eventos:', error);
@@ -100,7 +92,7 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
 
 export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const [rows]: any = await db.query('SELECT idType, name FROM eventtype ORDER BY name ASC');
+    const rows = await prisma.eventtype.findMany({ orderBy: { name: 'asc' } });
     res.status(200).json(rows);
   } catch (error: any) {
     console.error('Error al obtener tipos de evento:', error);
