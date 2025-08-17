@@ -8,8 +8,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node", // Asegúrate de que esto esté
-    "baseUrl": "." // Y esto
+    "moduleResolution": "node", 
+    "baseUrl": "."
   },
   "include": [
     "**/*.ts"

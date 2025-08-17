@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,4 +8,158 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model Event {
+  idEvent         Int            @id @default(autoincrement()) @map("idEvent")
+  name            String         @db.VarChar(45)
+  description     String         @db.VarChar(60)
+  date            DateTime       @db.DateTime
+  state           String         @db.VarChar(45)
+  image           String?        @db.VarChar(255)
+  idEventType     Int            @map("idEventType")
+  idOrganiser     Int            @map("idOrganiser")
+  eventType       EventType      @relation(fields: [idEventType], references: [idType])
+  organiser       Organiser      @relation(fields: [idOrganiser], references: [idOrganiser])
+  eventSectors    EventSector[]
+
+  @@map("event")
+}
+
+model EventSector {
+  idEvent       Int          @map("idEvent")
+  idPlace       Int          @map("idPlace")
+  idSector      Int          @map("idSector")
+  event         Event        @relation(fields: [idEvent], references: [idEvent])
+  sector        Sector       @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  prices        Price[]
+  tickets       Ticket[]
+
+  @@id([idEvent, idPlace, idSector])
+  @@map("event_sector")
+}
+
+model EventType {
+  idType    Int     @id @default(autoincrement()) @map("idType")
+  name      String  @db.VarChar(45)
+  events    Event[]
+
+  @@map("eventtype")
+}
+
+model Organiser {
+  idOrganiser    Int      @id @default(autoincrement()) @map("idOrganiser")
+  companyName    String?  @map("company_name") @db.VarChar(100)
+  cuil           String?  @unique @map("cuil") @db.VarChar(20)
+  contactEmail   String?  @unique @map("contact_email") @db.VarChar(100) // <<-- Agrega esto
+  password       String   @db.VarChar(255)
+  phone          String?  @db.VarChar(20)
+  address        String?  @db.VarChar(100)
+  events         Event[]
+
+  @@map("organiser_company")
+}
+
+model Place {
+  idPlace     Int        @id @default(autoincrement()) @map("idPlace")
+  name        String     @db.VarChar(45)
+  totalCap    Int        @map("totalCap")
+  address     String     @db.VarChar(45)
+  sectors     Sector[]
+
+  @@map("places")
+}
+
+model Price {
+  idEvent       Int         @map("idEvent")
+  idPlace       Int         @map("idPlace")
+  idSector      Int         @map("idSector")
+  dateSince     DateTime    @map("dateSince") @db.DateTime
+  price         Float
+  eventSector   EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
+
+  @@id([idEvent, idPlace, idSector, dateSince])
+  @@map("prices")
+}
+
+model SaleItem {
+  idSale         Int        @map("idSale")
+  dateSaleItem   DateTime   @map("dateSaleItem") @db.DateTime
+  quantity       Int
+  sale           Sale       @relation(fields: [idSale], references: [idSale])
+  tickets        Ticket[]
+
+  @@id([idSale, dateSaleItem])
+  @@map("saleitem")
+}
+
+model Sale {
+  idSale     Int        @id @default(autoincrement()) @map("idSale")
+  date       DateTime   @db.DateTime
+  dniClient  Int        @map("dniClient")
+  client     User       @relation(fields: [dniClient], references: [dni])
+  saleItems  SaleItem[]
+
+  @@map("sales")
+}
+
+model Seat {
+  idSeat      Int        @map("idSeat")
+  idSector    Int        @map("idSector")
+  idPlace     Int        @map("idPlace")
+  state       String     @db.VarChar(45)
+  sector      Sector     @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets     Ticket[]
+
+  @@id([idSeat, idSector, idPlace])
+  @@index([idPlace, idSector, idSeat])
+  @@map("seats")
+}
+
+model Sector {
+  idSector    Int          @map("idSector")
+  idPlace     Int          @map("idPlace")
+  name        String       @db.VarChar(45)
+  capacity    Int
+  place       Place        @relation(fields: [idPlace], references: [idPlace])
+  eventSectors  EventSector[]
+  seats         Seat[]
+
+  @@id([idSector, idPlace])
+  @@map("sectors")
+}
+
+model Ticket {
+  idEvent        Int         @map("idEvent")
+  idPlace        Int         @map("idPlace")
+  idSector       Int         @map("idSector")
+  idTicket       Int         @map("idTicket")
+  state          String      @db.VarChar(45)
+  idSeat         Int         @map("idSeat")
+  dateSaleItem   DateTime?   @map("dateSaleItem") @db.DateTime
+  idSale         Int?        @map("idSale")
+  eventSector    EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
+  saleItem       SaleItem?   @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
+  seat           Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
+
+  @@id([idEvent, idPlace, idSector, idTicket])
+  @@map("ticket")
+}
+
+model User {
+  dni         Int       @id @map("dni")
+  name        String    @db.VarChar(25)
+  surname     String    @db.VarChar(25)
+  mail        String    @unique @db.VarChar(60)
+  birthDate   DateTime  @db.Date
+  password    String    @db.VarChar(255)
+  role        Role      @default(user)
+  sales       Sale[]
+
+  @@map("users")
+}
+
+enum Role {
+  user
+  admin
 }
