@@ -21,18 +21,17 @@ export const createUser = async (req: Request, res: Response): Promise<void> => 
   }
   
   try {
-    // Convierte la fecha a un formato válido para Prisma si es necesario
     const parsedBirthDate = new Date(birthDate);
 
     // Crea el usuario
     const newUser = await prisma.user.create({
       data: {
-        dni: parseInt(dni), // Asegura que el DNI sea un número
+        dni: parseInt(dni), 
         name,
         surname,
         mail,
         birthDate: parsedBirthDate,
-        password, // Asegúrate de hashear la contraseña en una aplicación real
+        password, 
       },
     });
 

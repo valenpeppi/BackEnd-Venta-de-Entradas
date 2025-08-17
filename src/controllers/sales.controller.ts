@@ -12,8 +12,7 @@ class SalesController {
     }
 
     try {
-      // Corregido: prisma.sales -> prisma.sale
-      const sale = await prisma.sale.create({
+        const sale = await prisma.sale.create({
         data: {
           date: new Date(date),
           dniClient: dniClient
@@ -35,7 +34,6 @@ class SalesController {
     const { dniClient } = req.params;
 
     try {
-      // Corregido: prisma.sales -> prisma.sale
       const sales = await prisma.sale.findMany({
         where: { dniClient: Number(dniClient) }
       });

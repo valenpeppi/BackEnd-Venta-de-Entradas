@@ -78,7 +78,7 @@ export const registerCompany = async (req: Request, res: Response) => {
       where: {
         OR: [
           { cuil: cuil },
-          { contactEmail: contactEmail } // Corregido: contact_email -> contactEmail
+          { contactEmail: contactEmail } 
         ]
       }
     });
@@ -87,17 +87,17 @@ export const registerCompany = async (req: Request, res: Response) => {
       if (existingCompany.cuil === cuil) {
         return res.status(409).json({ message: 'El CUIL ya está registrado para otra empresa.' });
       }
-      if (existingCompany.contactEmail === contactEmail) { // Corregido: contact_email -> contactEmail
+      if (existingCompany.contactEmail === contactEmail) {
         return res.status(409).json({ message: 'El Email de contacto ya está registrado para otra empresa.' });
       }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.organiser.create({ // Corregido: prisma.organiser_company -> prisma.organiser
+    await prisma.organiser.create({ 
       data: {
-        companyName, // Corregido: company_name -> companyName
+        companyName, 
         cuil,
-        contactEmail, // Corregido: contact_email -> contactEmail
+        contactEmail,
         password: hashedPassword,
         phone,
         address
@@ -156,9 +156,9 @@ export const login = async (req: Request, res: Response) => {
 
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
-  const { contactEmail, password } = req.body; // Corregido: contact_email -> contactEmail
+  const { contactEmail, password } = req.body; 
 
-  if (!contactEmail || !password) { // Corregido: contact_email -> contactEmail
+  if (!contactEmail || !password) {
     return res.status(400).json({ message: 'Email y contraseña requeridos' });
   }
 
@@ -177,7 +177,7 @@ export const loginCompany = async (req: Request, res: Response) => {
     const token = jwt.sign(
       {
         idOrganiser: company.idOrganiser,
-        contactEmail: company.contactEmail, // Corregido: contact_email -> contactEmail
+        contactEmail: company.contactEmail, 
         role: 'company',
         type: 'company'
       },
@@ -189,9 +189,9 @@ export const loginCompany = async (req: Request, res: Response) => {
       token,
       company: {
         idOrganiser: company.idOrganiser,
-        companyName: company.companyName, // Corregido: company_name -> companyName
+        companyName: company.companyName, 
         cuil: company.cuil,
-        contactEmail: company.contactEmail, // Corregido: contact_email -> contactEmail
+        contactEmail: company.contactEmail, 
         phone: company.phone,
         address: company.address
       }
