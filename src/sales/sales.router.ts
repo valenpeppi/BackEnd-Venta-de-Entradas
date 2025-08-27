@@ -1,6 +1,5 @@
 import { Router } from 'express';
-// Asegúrate de que sales.controller.ts exporta un objeto por defecto (SalesController)
-import SalesController from '../controllers/sales.controller';
+import SalesController from './sales.controller';
 
 const router: Router = Router();
 

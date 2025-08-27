@@ -9,12 +9,12 @@ dotenv.config();
 const app: Application = express();
 
 // Rutas
-import userRoutes from './src/routes/users.router';
-import eventRoutes from './src/routes/events.router';
-import salesRoutes from './src/routes/sales.router';
-import catalogRoutes from './src/routes/catalog.router';
-import seatsRoutes from './src/routes/seats.router';
-import authRoutes from './src/routes/auth.router';
+import userRoutes from './src/users/users.router';
+import eventRoutes from './src/event/events.router';
+import salesRoutes from './src/sales/sales.router';
+import catalogRoutes from './src/catalog/catalog.router';
+import seatsRoutes from './src/seats/seats.router';
+import authRoutes from './src/auth/auth.router';
 
 // Middleware
 app.use(cors({
