@@ -157,6 +157,7 @@ async function main() {
         description: 'Bad Bunny en Argentina!',
         date: new Date('2025-12-31T00:00:00Z'),
         state: 'Aceptado',
+        featured: true,
         idEventType: 1,
         idOrganiser: 1,
         image: null,

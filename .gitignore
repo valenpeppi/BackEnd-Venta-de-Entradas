@@ -3,13 +3,22 @@ node_modules/
 
 # Variables sensibles
 .env
+.env.local
 
 # Archivos de log o temporales
 *.log
 .DS_Store
 *.sqlite
+npm-debug.log*
+yarn-error.log*
+
+# Directorios de build
+/dist
+/build
 
 # Opcional para VSCode
 .vscode/
 
-/generated/prisma
+# Archivos generados por Prisma
+/prisma/dev.db
+/node_modules/.prisma/client

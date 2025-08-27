@@ -17,6 +17,7 @@ model Event {
   date            DateTime       @db.DateTime
   state           String         @db.VarChar(45)
   image           String?        @db.VarChar(255)
+  featured        Boolean        @default(false)
   idEventType     Int            @map("idEventType")
   idOrganiser     Int            @map("idOrganiser")
   eventType       EventType      @relation(fields: [idEventType], references: [idType])
@@ -51,7 +52,7 @@ model Organiser {
   idOrganiser    Int      @id @default(autoincrement()) @map("idOrganiser")
   companyName    String?  @map("company_name") @db.VarChar(100)
   cuil           String?  @unique @map("cuil") @db.VarChar(20)
-  contactEmail   String?  @unique @map("contact_email") @db.VarChar(100) // <<-- Agrega esto
+  contactEmail   String?  @unique @map("contact_email") @db.VarChar(100)
   password       String   @db.VarChar(255)
   phone          String?  @db.VarChar(20)
   address        String?  @db.VarChar(100)
