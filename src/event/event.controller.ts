@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import fs from 'fs';
-import { AuthRequest } from '../middlewares/auth';
+import { AuthRequest } from '../auth/auth.middleware';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {

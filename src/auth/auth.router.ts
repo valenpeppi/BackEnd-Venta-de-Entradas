@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, loginCompany, register, registerCompany } from '../controllers/auth.controller'; // Importa todas las funciones necesarias
+import { login, loginCompany, register, registerCompany } from './auth.controller'; 
 
 const router: Router = Router();
 

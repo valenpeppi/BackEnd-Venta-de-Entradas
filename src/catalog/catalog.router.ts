@@ -1,6 +1,5 @@
 import { Router } from 'express';
-// Importa las funciones del controlador
-import { getEventTypes, getPlaces, getSectorsByPlace } from '../controllers/catalog.controller';
+import { getEventTypes, getPlaces, getSectorsByPlace } from './catalog.controller';
 
 const router: Router = Router();
 

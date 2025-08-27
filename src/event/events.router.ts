@@ -2,8 +2,8 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { verifyToken, isCompany } from '../middlewares/auth';
-import { createEvent, getAllEvents, getAllEventTypes } from '../controllers/event.controller';
+import { verifyToken, isCompany } from '../auth/auth.middleware';
+import { createEvent, getAllEvents, getAllEventTypes } from './event.controller';
 
 const router = Router();
 
