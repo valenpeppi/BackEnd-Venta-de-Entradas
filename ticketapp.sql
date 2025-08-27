@@ -1,3 +1,7 @@
+-- Tener en cuenta que esta base de datos esta como Backup
+-- En el proyecto no se usa, sino que se accede por medio de Prisma ORM a la base de datos directamente.
+
+
 -- MySQL dump 10.13  Distrib 8.0.42, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: ticketapp
@@ -22,13 +26,12 @@ CREATE DATABASE IF NOT EXISTS ticketapp
 
 USE ticketapp;
 
-
 --
 -- Table structure for table `event`
 --
 
 DROP TABLE IF EXISTS `event`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET @saved_cs_client      = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `event` (
   `idEvent` int NOT NULL AUTO_INCREMENT,
@@ -36,9 +39,10 @@ CREATE TABLE `event` (
   `description` varchar(60) NOT NULL,
   `date` datetime NOT NULL,
   `state` varchar(45) NOT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `featured` tinyint(1) NOT NULL DEFAULT '0',
   `idEventType` int NOT NULL,
   `idOrganiser` int NOT NULL,
-  `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`idEvent`),
   UNIQUE KEY `idEvent_UNIQUE` (`idEvent`),
   KEY `dniOrganiser_idx` (`idOrganiser`),
@@ -54,9 +58,14 @@ CREATE TABLE `event` (
 
 LOCK TABLES `event` WRITE;
 /*!40000 ALTER TABLE `event` DISABLE KEYS */;
-INSERT INTO `event` VALUES (1,'Bad Bunny','Bad Bunny en Argentina!','2025-12-31 00:00:00','Aceptado',1,1,NULL),(2,'la vela puerca','la vela en Rosario!','2025-10-31 20:00:00','Aceptado',1,1,'/uploads/event-1755092653867-52272554.jpg');
+INSERT INTO `event` VALUES (1,'Bad Bunny','Bad Bunny en Argentina!','2025-12-31 00:00:00','Aceptado',NULL,1,1,1),(2,'la vela puerca','la vela en Rosario!','2025-10-31 20:00:00','Aceptado','/uploads/event-1755092653867-52272554.jpg',0,1,1);
 /*!40000 ALTER TABLE `event` ENABLE KEYS */;
 UNLOCK TABLES;
+--
+-- Dumping data for table `event`
+--
+
+
 
 --
 -- Table structure for table `event_sector`
