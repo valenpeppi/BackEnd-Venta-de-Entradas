@@ -91,7 +91,7 @@ CREATE TABLE `seats` (
     `idPlace` INTEGER NOT NULL,
     `state` VARCHAR(45) NOT NULL,
 
-    INDEX `seats_idPlace_idSector_idSeat_idx`(`idPlace`, `idSector`, `idSeat`),
+    UNIQUE INDEX `seats_idPlace_idSector_idSeat_key`(`idPlace`, `idSector`, `idSeat`),
     PRIMARY KEY (`idSeat`, `idSector`, `idPlace`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
