@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
-// Interfaz extendida mejorada
+
 export interface AuthRequest extends Request {
   auth?: {
     idOrganiser?: number;
