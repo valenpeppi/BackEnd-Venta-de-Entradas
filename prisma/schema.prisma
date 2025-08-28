@@ -113,8 +113,8 @@ model Seat {
   tickets     Ticket[]
 
   @@id([idSeat, idSector, idPlace])
-  @@index([idPlace, idSector, idSeat])
   @@map("seats")
+  @@unique([idPlace, idSector, idSeat])
 }
 
 model Sector {
