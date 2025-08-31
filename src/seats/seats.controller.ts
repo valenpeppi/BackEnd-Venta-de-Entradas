@@ -3,11 +3,10 @@ import { prisma } from '../db/mysql';
 
 class SeatsController {
   public async getAvailableSeats(req: Request, res: Response): Promise<void> {
-    const { eventId, placeId, sectorId } = req.query;
+    const { placeId, sectorId } = req.query;
 
     try {
-      const where: any = { is_available: true };
-      if (eventId) where.idEvent = Number(eventId);
+      const where: any = { state: 'disponible' };
       if (placeId) where.idPlace = Number(placeId);
       if (sectorId) where.idSector = Number(sectorId);
 

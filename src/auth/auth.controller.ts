@@ -156,14 +156,14 @@ export const login = async (req: Request, res: Response) => {
 
 // Login de empresa
 export const loginCompany = async (req: Request, res: Response) => {
-  const { contact_email, password } = req.body; 
+  const { contactEmail, password } = req.body; 
 
-  if (!contact_email || !password) {
+  if (!contactEmail || !password) {
     return res.status(400).json({ message: 'Email y contraseña requeridos' });
   }
 
   try {
-      const company = await prisma.organiser.findUnique({ where: { contactEmail: contact_email } });
+      const company = await prisma.organiser.findUnique({ where: { contactEmail: contactEmail } });
     if (!company) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
@@ -177,7 +177,7 @@ export const loginCompany = async (req: Request, res: Response) => {
     const token = jwt.sign(
       {
         idOrganiser: company.idOrganiser,
-        contact_email: company.contactEmail, 
+        contactEmail: company.contactEmail, 
         role: 'company',
         type: 'company'
       },
@@ -191,7 +191,7 @@ export const loginCompany = async (req: Request, res: Response) => {
         idOrganiser: company.idOrganiser,
         companyName: company.companyName, 
         cuil: company.cuil,
-        contact_email: company.contactEmail, 
+        contactEmail: company.contactEmail, 
         phone: company.phone,
         address: company.address
       }
