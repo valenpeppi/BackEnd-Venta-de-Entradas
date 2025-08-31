@@ -9,7 +9,7 @@ export interface AuthRequest extends Request {
     idOrganiser?: number;
     dni?: number;
     mail?: string;
-    contact_email?: string;
+    contactEmail?: string;
     role?: string;
     type?: 'user' | 'company';
   };
@@ -31,7 +31,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       idOrganiser?: number;
       dni?: number;
       mail?: string;
-      contact_email?: string;
+      contactEmail?: string;
       role?: string;
       type?: 'user' | 'company';
     };
