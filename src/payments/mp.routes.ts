@@ -32,7 +32,7 @@ router.post('/checkout', async (req, res) => {
   });
   // 2) Persistir tu orden "pending" con pref.id en tu DB
   // await prisma.order.create({ data: { preferenceId: pref.id, ... } });
-
+console.log("Preference ID:", pref.id);
   // 3) Devolvés el ID y/o init_point
   return res.json({ preferenceId: pref.id, initPoint: pref.init_point });
 });

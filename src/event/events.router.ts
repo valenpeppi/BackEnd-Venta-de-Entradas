@@ -3,7 +3,8 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { verifyToken, isCompany } from '../auth/auth.middleware';
-import { createEvent, getAllEvents, getAllEventTypes, getPendingEvents, approveEvent, rejectEvent } from './event.controller';
+import { createEvent, getAllEvents, getAllEventTypes, getPendingEvents,
+  approveEvent, rejectEvent, getFeaturedEvents } from './event.controller';
 
 const router = Router();
 
@@ -53,6 +54,6 @@ router.get('/pending', verifyToken, getPendingEvents);
 
 router.patch("/:id/approve", verifyToken,  approveEvent);
 router.patch("/:id/reject", verifyToken,  rejectEvent);
-
+router.get('/featured', getFeaturedEvents);
 
 export default router;

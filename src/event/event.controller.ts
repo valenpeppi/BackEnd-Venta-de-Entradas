@@ -12,6 +12,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     const { name, description, date, idEventType, idPlace } = req.body;
     const state = 'Pending';
     const idOrganiser = req.auth?.idOrganiser;
+    const featured = false
 
     if (!idOrganiser) {
       res.status(403).json({ message: 'No autorizado: el token no pertenece a un organizador válido.' });
@@ -77,6 +78,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
         idOrganiser,
         image: imagePath,
         idPlace: Number(idPlace),
+        featured: featured,
       }
     });
 
@@ -160,6 +162,23 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
       select: { idEvent: true, state: true, image: true, name: true},
     });
     res.status(200).json({ ok: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
+  try {
+    const events = await prisma.event.findMany({
+      // si no usás status, cambialo por { approved: false }
+      where: { featured: true },
+      select: {
+        idEvent: true, name: true, description: true, date: true,
+        image: true, idEventType: true, state: true, idOrganiser: true,
+      },
+    });
+    res.status(200).json({ ok: true, data: events });
   } catch (err) {
     next(err);
   }
