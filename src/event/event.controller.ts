@@ -2,6 +2,10 @@ import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import fs from 'fs';
 import { AuthRequest } from '../auth/auth.middleware';
+import { RequestHandler } from 'express';
+
+
+
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -35,19 +39,19 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       res.status(400).json({ message: 'Fecha inválida' });
       return;
     }
-    console.log('prueba 1');
+
     const org = await prisma.organiser.findUnique({ where: { idOrganiser } });
     if (!org) {
       res.status(400).json({ message: 'El organizador no existe' });
       return;
     }
-    console.log('prueba 2');
+    
     const etype = await prisma.eventType.findUnique({ where: { idType: Number(idEventType) } });
     if (!etype) {
       res.status(400).json({ message: 'El tipo de evento no existe' });
       return;
     }
-    console.log('prueba 3');
+
     let imagePath: string | null = null;
     if (req.file) {
       const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -58,7 +62,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       }
       imagePath = `/uploads/${req.file.filename}`;
     }
-    console.log('prueba 4');
+    
     const event = await prisma.event.create({
       data: {
         name,
@@ -106,4 +110,22 @@ export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promis
     console.error('Error al obtener tipos de evento:', error);
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
+};
+
+
+
+export const getPendingEvents: RequestHandler = async (_req, res, next) => {
+  try {
+    const events = await prisma.event.findMany({
+      // si no usás status, cambialo por { approved: false }
+      where: { state: 'PENDING' },
+      select: {
+        idEvent: true, name: true, description: true, date: true,
+        image: true, idEventType: true, state: true, idOrganiser: true,
+      },
+    });
+    res.status(200).json({ ok: true, data: events });
+  } catch (err) {
+    next(err);
+  }
 };

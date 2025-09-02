@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { verifyToken, isCompany } from '../auth/auth.middleware';
-import { createEvent, getAllEvents, getAllEventTypes } from './event.controller';
+import { createEvent, getAllEvents, getAllEventTypes, getPendingEvents } from './event.controller';
 
 const router = Router();
 
@@ -38,15 +38,17 @@ const upload = multer({
 // === Rutas Protegidas ===
 router.post(
   '/createEvent',
-  verifyToken,  // <-- Middleware de autenticación
-  isCompany,    // <-- Solo para empresas
+  verifyToken, 
+  isCompany,    
   upload.single('image'),
   createEvent
 );
 
-router.get('/', verifyToken, getAllEvents); // Requiere autenticación
+router.get('/', verifyToken, getAllEvents);
 
 // === Rutas Públicas ===
-router.get('/types', getAllEventTypes); // <-- Sin verifyToken, accesible públicamente
+router.get('/types', getAllEventTypes);
+
+router.get('/pending', verifyToken, getPendingEvents);
 
 export default router;
