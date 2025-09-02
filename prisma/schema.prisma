@@ -18,8 +18,14 @@ model Event {
   state           String         @db.VarChar(45)
   image           String?        @db.VarChar(255)
   featured        Boolean        @default(false)
+
   idEventType     Int            @map("idEventType")
   idOrganiser     Int            @map("idOrganiser")
+
+  // 🔗 NUEVO: FK a Place (CORRECTO: references [idPlace])
+  idPlace         Int
+  place           Place          @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
+
   eventType       EventType      @relation(fields: [idEventType], references: [idType])
   organiser       Organiser      @relation(fields: [idOrganiser], references: [idOrganiser])
   eventSectors    EventSector[]
@@ -66,6 +72,9 @@ model Place {
   name        String     @db.VarChar(45)
   totalCap    Int        @map("totalCap")
   address     String     @db.VarChar(45)
+
+  // 🔁 lado inverso de la relación con Event
+  events      Event[]
   sectors     Sector[]
 
   @@map("places")
