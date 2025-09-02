@@ -9,7 +9,7 @@ import { RequestHandler } from 'express';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, description, date, idEventType } = req.body;
+    const { name, description, date, idEventType, idPlace } = req.body;
     const state = 'Pending';
     const idOrganiser = req.auth?.idOrganiser;
 
@@ -18,7 +18,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    if (!name || !description || !date || !idEventType) {
+    if (!name || !description || !date || !idEventType || !idPlace) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
       return;
     }
@@ -51,7 +51,11 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       res.status(400).json({ message: 'El tipo de evento no existe' });
       return;
     }
-
+    const place = await prisma.place.findUnique({ where: { idPlace: Number(idPlace) } });
+    if (!place) {
+      res.status(400).json({ message: 'El lugar no existe' });
+      return;
+    }
     let imagePath: string | null = null;
     if (req.file) {
       const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
@@ -72,6 +76,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
         idEventType: Number(idEventType),
         idOrganiser,
         image: imagePath,
+        idPlace: Number(idPlace),
       }
     });
 
