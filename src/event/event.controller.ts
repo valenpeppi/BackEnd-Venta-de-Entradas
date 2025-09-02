@@ -10,7 +10,7 @@ import { RequestHandler } from 'express';
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, description, date, idEventType } = req.body;
-    const state = 'Pendiente';
+    const state = 'Pending';
     const idOrganiser = req.auth?.idOrganiser;
 
     if (!idOrganiser) {
@@ -118,13 +118,43 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
   try {
     const events = await prisma.event.findMany({
       // si no usás status, cambialo por { approved: false }
-      where: { state: 'PENDING' },
+      where: { state: 'Pending' },
       select: {
         idEvent: true, name: true, description: true, date: true,
         image: true, idEventType: true, state: true, idOrganiser: true,
       },
     });
     res.status(200).json({ ok: true, data: events });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+
+export const approveEvent: RequestHandler = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const updated = await prisma.event.update({
+      where: { idEvent: id },
+      data: { state: "Approved" }, 
+      select: { idEvent: true, state: true, image: true, name: true}, 
+    });
+    res.status(200).json({ ok: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const rejectEvent: RequestHandler = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const updated = await prisma.event.update({
+      where: { idEvent: id },
+      data: { state: "Rejected" }, 
+      select: { idEvent: true, state: true, image: true, name: true},
+    });
+    res.status(200).json({ ok: true, data: updated });
   } catch (err) {
     next(err);
   }

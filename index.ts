@@ -54,3 +54,11 @@ testDbConnection().then(() => {
   console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
   process.exit(1);
 });
+
+// SDK de Mercado Pago
+import { MercadoPagoConfig, Preference } from 'mercadopago';
+// Agregar credenciales
+const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN!,
+});
+
+export const preferences = new Preference(client);
