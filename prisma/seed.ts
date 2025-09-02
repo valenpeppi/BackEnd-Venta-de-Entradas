@@ -148,36 +148,7 @@ async function main() {
     console.log('Datos de sectors cargados.');
 
     // --- Eventos (`event`) ---
-    await prisma.event.upsert({
-      where: { idEvent: 1 },
-      update: {},
-      create: {
-        idEvent: 1,
-        name: 'Bad Bunny',
-        description: 'Bad Bunny en Argentina!',
-        date: new Date('2025-12-31T00:00:00Z'),
-        state: 'Aceptado',
-        featured: true,
-        idEventType: 1,
-        idOrganiser: 1,
-        image: null,
-      },
-    });
-    await prisma.event.upsert({
-      where: { idEvent: 2 },
-      update: {},
-      create: {
-        idEvent: 2,
-        name: 'la vela puerca',
-        description: 'la vela en Rosario!',
-        date: new Date('2025-10-31T20:00:00Z'),
-        state: 'Aceptado',
-        idEventType: 1,
-        idOrganiser: 1,
-        image: '/uploads/event-1755092653867-52272554.jpg',
-      },
-    });
-    console.log('Datos de event cargados.');
+
 
     // --- Usuarios (`users`) ---
     await prisma.user.upsert({

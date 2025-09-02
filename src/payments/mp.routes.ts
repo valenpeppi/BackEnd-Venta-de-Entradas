@@ -21,16 +21,15 @@ router.post('/checkout', async (req, res) => {
       payer: { email: buyerEmail },
       external_reference: `order_${eventId}_${Date.now()}`,
       back_urls: {
-        success: 'https://tuapp.com/pago/exito',
-        failure: 'https://tuapp.com/pago/error',
-        pending: 'https://tuapp.com/pago/pendiente',
+        success: 'https://tuapp.com/pago/success',
+        failure: 'https://tuapp.com/pago/failure',
+        pending: 'https://tuapp.com/pago/pending',
       },
       auto_return: 'approved',
       binary_mode: true, // solo APPROVED/REJECTED
       notification_url: 'https://tuapp.com/webhooks/mp?source_news=webhooks',
     }
   });
-
   // 2) Persistir tu orden "pending" con pref.id en tu DB
   // await prisma.order.create({ data: { preferenceId: pref.id, ... } });
 
@@ -38,21 +37,6 @@ router.post('/checkout', async (req, res) => {
   return res.json({ preferenceId: pref.id, initPoint: pref.init_point });
 });
 
-const preference = new Preference(client);
-
-preference.create({
-  body: {
-    items: [
-      {
-        title: 'Mi producto',
-        quantity: 1,
-        unit_price: 2000
-      }
-    ],
-  }
-})
-.then(console.log)
-.catch(console.log);
-
 export default router;
+
 

@@ -6,15 +6,21 @@ import { testDbConnection } from './src/db/mysql';
 import path from 'path';
 dotenv.config();
 
+
 const app: Application = express();
 
 // Rutas
+import placesRoutes from './src/places/places.router';
 import userRoutes from './src/users/users.router';
 import eventRoutes from './src/event/events.router';
 import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
 import seatsRoutes from './src/seats/seats.router';
 import authRoutes from './src/auth/auth.router';
+import paymentsRoutes from './src/payments/mp.routes';
+
+
+
 
 // Middleware
 app.use(cors({
@@ -37,6 +43,13 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/seats', seatsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/places', placesRoutes);
+app.use("/api/payments", paymentsRoutes);
+
+
+app.use(express.json({ type: "*/*" }));
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+
 
 // Manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
