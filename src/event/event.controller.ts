@@ -68,19 +68,19 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       imagePath = `/uploads/${req.file.filename}`;
     }
     
-    const event = await prisma.event.create({
-      data: {
-        name,
-        description,
-        date: parsedDate,
-        state,
-        idEventType: Number(idEventType),
-        idOrganiser,
-        image: imagePath,
-        idPlace: Number(idPlace),
-        featured: featured,
-      }
-    });
+      const event = await prisma.event.create({
+        data: {
+          name,
+          description,
+          date: parsedDate,
+          state,
+          idEventType: Number(idEventType),
+          idOrganiser,
+          image: imagePath,
+          idPlace: Number(idPlace), 
+          featured,
+        }
+      });
 
     res.status(201).json({ message: 'Evento creado exitosamente', event });
   } catch (error: any) {
@@ -144,7 +144,7 @@ export const approveEvent: RequestHandler = async (req, res, next) => {
     const id = Number(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
-      data: { state: "Approved" }, 
+      data: { state: "Approved", featured: true }, 
       select: { idEvent: true, state: true, image: true, name: true}, 
     });
     res.status(200).json({ ok: true, data: updated });
@@ -168,18 +168,45 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
 };
 
 
+
+
 export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
   try {
     const events = await prisma.event.findMany({
-      // si no usás status, cambialo por { approved: false }
       where: { featured: true },
-      select: {
-        idEvent: true, name: true, description: true, date: true,
-        image: true, idEventType: true, state: true, idOrganiser: true,
+      include: {
+        eventType: true,
+        place: true,
+        eventSectors: {
+          include: {
+            sector: {
+              include: {
+                seats: true, 
+              },
+            },
+            prices: true,
+          },
+        },
       },
     });
-    res.status(200).json({ ok: true, data: events });
+
+    const enriched = events.map(ev => {
+      let availableSeats = 0;
+
+      ev.eventSectors.forEach(es => {
+        es.sector.seats.forEach(seat => {
+          if (seat.state.toLowerCase() === 'libre') {
+            availableSeats++;
+          }
+        });
+      });
+
+      return { ...ev, availableSeats };
+    });
+
+    res.status(200).json({ ok: true, data: enriched });
   } catch (err) {
     next(err);
   }
 };
+
