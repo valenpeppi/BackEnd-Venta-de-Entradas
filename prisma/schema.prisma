@@ -72,7 +72,7 @@ model Place {
   totalCap    Int        @map("totalCap")
   address     String     @db.VarChar(45)
 
-  // 🔁 lado inverso de la relación con Event
+  
   events      Event[]
   sectors     Sector[]
 
