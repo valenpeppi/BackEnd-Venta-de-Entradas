@@ -201,88 +201,83 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
 };
 
 export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
-    try {
-      const events = await prisma.event.findMany({
-        where: { 
-          featured: true,
-          state: 'Approved' 
-        },
-        include: {
-          eventType: true,
-          place: true,
-          eventSectors: {
-            include: {
-              sector: true
-            }
-          },
-        },
+  try {
+    const events = await prisma.event.findMany({
+      where: { 
+        featured: true,
+        state: 'Approved' 
+      },
+      include: {
+        eventType: true,
+        place: true,
+        eventSectors: { include: { sector: true } },
+      },
+    });
+
+    const enriched = await Promise.all(events.map(async (ev) => {
+      const seatCounts = await prisma.seatEvent.groupBy({
+        by: ['state'],
+        where: { idEvent: ev.idEvent },
+        _count: { idSeat: true },
       });
-  
-      const enriched = await Promise.all(events.map(async (ev) => {
-        const seatCounts = await prisma.seatEvent.groupBy({
-          by: ['state'],
-          where: { idEvent: ev.idEvent },
-          _count: {
-            idSeat: true,
-          },
-        });
-  
-        const availableSeats = seatCounts.find((sc: { state: string; _count: { idSeat: number | null } }) => sc.state === 'available')?._count.idSeat || 0;
-        
-        let minPrice = 0;
-        if (ev.eventSectors.length > 0) {
-          const prices = ev.eventSectors.map(es => es.price.toNumber());
-          minPrice = Math.min(...prices);
-        }
-  
-        return { ...ev, availableSeats, minPrice };
-      }));
-  
-      res.status(200).json({ ok: true, data: enriched });
-    } catch (err) {
-      next(err);
-    }
-  };
+
+      const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
+      const totalSeats = seatCounts.reduce((acc, sc) => acc + (sc._count.idSeat || 0), 0);
+
+      let minPrice = 0;
+      if (ev.eventSectors.length > 0) {
+        const prices = ev.eventSectors.map(es => es.price.toNumber());
+        minPrice = Math.min(...prices);
+      }
+
+      const agotado = availableSeats <= 0 || availableSeats === 0 || totalSeats > 0 && availableSeats === 0;
+
+      return { ...ev, availableSeats, minPrice, agotado };
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
+  } catch (err) {
+    next(err);
+  }
+};
+
 
 export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
-    try {
-      const events = await prisma.event.findMany({
-        where: { state: 'Approved' },
-        include: {
-          eventType: true,
-          place: true,
-          eventSectors: {
-            include: {
-              sector: true
-            }
-          },
-        },
+  try {
+    const events = await prisma.event.findMany({
+      where: { state: 'Approved' },
+      include: {
+        eventType: true,
+        place: true,
+        eventSectors: { include: { sector: true } },
+      },
+    });
+
+    const enriched = await Promise.all(events.map(async (ev) => {
+      const seatCounts = await prisma.seatEvent.groupBy({
+        by: ['state'],
+        where: { idEvent: ev.idEvent },
+        _count: { idSeat: true },
       });
 
-      const enriched = await Promise.all(events.map(async (ev) => {
-        const seatCounts = await prisma.seatEvent.groupBy({
-          by: ['state'],
-          where: { idEvent: ev.idEvent },
-          _count: {
-            idSeat: true,
-          },
-        });
+      const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
+      const totalSeats = seatCounts.reduce((acc, sc) => acc + (sc._count.idSeat || 0), 0);
 
-        const availableSeats = seatCounts.find((sc: { state: string; _count: { idSeat: number | null } }) => sc.state === 'available')?._count.idSeat || 0;
-        
-        let minPrice = 0;
-        if (ev.eventSectors.length > 0) {
-            const prices = ev.eventSectors.map(es => es.price.toNumber());
-            minPrice = Math.min(...prices);
-        }
+      let minPrice = 0;
+      if (ev.eventSectors.length > 0) {
+        const prices = ev.eventSectors.map(es => es.price.toNumber());
+        minPrice = Math.min(...prices);
+      }
 
-        return { ...ev, availableSeats, minPrice };
-      }));
-  
-      res.status(200).json({ ok: true, data: enriched });
-    } catch (err) {
-      next(err);
-    }
+      const agotado = availableSeats <= 0 || (totalSeats > 0 && availableSeats === 0);
+
+      return { ...ev, availableSeats, minPrice, agotado };
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
@@ -333,6 +328,120 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
   };
 
 
-  
+  export const getEventSummary: RequestHandler = async (req, res) => {
+  try {
+    const idEvent = Number(req.params.id);
+    if (Number.isNaN(idEvent)) {
+      res.status(400).json({ message: 'Invalid id' });
+      return;
+    }
+
+    const event = await prisma.event.findUnique({
+      where: { idEvent },
+      include: { place: true, eventType: true },
+    });
+    if (!event) {
+      res.status(404).json({ message: 'Event not found' });
+      return;
+    }
+
+    const placeType = event.place.placeType;
+    const availableTotal = await prisma.seatEvent.count({
+      where: { idEvent, state: 'available' },
+    });
+    const totalSeats = await prisma.seatEvent.count({
+      where: { idEvent },
+    });
+
+    const agotado = totalSeats > 0 && availableTotal === 0;
+
+    const eventSectors = await prisma.eventSector.findMany({
+      where: { idEvent, idPlace: event.idPlace },
+      select: { price: true },
+    });
+
+    const prices = eventSectors.map(es => Number(es.price));
+
+    const payload: any = {
+      id: event.idEvent,
+      eventName: event.name,
+      imageUrl: event.image ?? '',
+      type: event.eventType.name,
+      date: event.date,
+      idPlace: event.idPlace,
+      placeType,
+      availableTickets: availableTotal,
+      agotado,
+    };
+
+    if (placeType === 'nonEnumerated') {
+      payload.price = prices[0] ?? 0;
+    } else {
+      payload.minPrice = prices.length ? Math.min(...prices) : 0;
+    }
+
+    res.json(payload);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+};
+export const getEventSectors: RequestHandler = async (req, res) => {
+  try {
+    const idEvent = Number(req.params.id);
+    if (Number.isNaN(idEvent)) {
+      res.status(400).json({ message: 'Invalid id' });
+      return;
+    }
+
+    const ev = await prisma.event.findUnique({
+      where: { idEvent },
+      include: { place: true },
+    });
+    if (!ev) {
+      res.status(404).json({ message: 'Event not found' });
+      return;
+    }
+
+    if (ev.place.placeType !== 'Hybrid') {
+      res.json([]); // nonEnumerated -> sin sectores
+      return;
+    }
+
+    const idPlace = ev.idPlace;
+    const sectorsWithPrice = await prisma.eventSector.findMany({
+      where: { idEvent, idPlace },
+      select: { idSector: true, price: true },
+    });
+
+    const sectorIds = sectorsWithPrice.map(s => s.idSector);
+    const sectorsMeta = await prisma.sector.findMany({
+      where: { idPlace, idSector: { in: sectorIds } },
+      select: { idSector: true, name: true },
+    });
+    const nameBySector = new Map(sectorsMeta.map(s => [s.idSector, s.name]));
+
+    const availableBySectorRaw = await prisma.seatEvent.groupBy({
+      by: ['idSector', 'idPlace'],
+      where: { idEvent, idPlace, state: 'available' },
+      _count: { _all: true },
+    });
+    const availableBySector = new Map(
+      availableBySectorRaw.map(r => [r.idSector, r._count._all])
+    );
+
+    const response = sectorsWithPrice.map(s => ({
+      idSector: s.idSector,
+      name: nameBySector.get(s.idSector) ?? `Sector ${s.idSector}`,
+      price: Number(s.price),
+      availableTickets: availableBySector.get(s.idSector) ?? 0,
+    }));
+
+    res.json(response); // <- sin return
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal error' });
+  }
+};
 
 
