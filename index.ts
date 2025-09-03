@@ -15,7 +15,7 @@ import userRoutes from './src/users/users.router';
 import eventRoutes from './src/event/events.router';
 import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
-import seatsRoutes from './src/seats/seats.router';
+
 import authRoutes from './src/auth/auth.router';
 import paymentsRoutes from './src/payments/mp.routes';
 
@@ -41,7 +41,6 @@ app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
-app.use('/api/seats', seatsRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use("/api/payments", paymentsRoutes);
