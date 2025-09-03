@@ -22,7 +22,6 @@ model Event {
   idEventType     Int            @map("idEventType")
   idOrganiser     Int            @map("idOrganiser")
 
-  // 🔗 NUEVO: FK a Place (CORRECTO: references [idPlace])
   idPlace         Int
   place           Place          @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
 
