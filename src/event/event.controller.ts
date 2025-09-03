@@ -210,3 +210,23 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
   }
 };
 
+export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) => {
+    const { idPlace } = req.params;
+    try {
+      const events = await prisma.event.findMany({
+        where: {
+          idPlace: Number(idPlace),
+          state: {
+            in: ['Approved', 'Pending'],
+          },
+        },
+        select: {
+          date: true,
+        },
+      });
+      const occupiedDates = events.map(event => event.date.toISOString().split('T')[0]);
+      res.status(200).json({ ok: true, data: occupiedDates });
+    } catch (err) {
+      next(err);
+    }
+  };
