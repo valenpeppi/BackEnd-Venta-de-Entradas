@@ -11,35 +11,35 @@ datasource db {
 }
 
 model Event {
-  idEvent         Int            @id @default(autoincrement()) @map("idEvent")
-  name            String         @db.VarChar(45)
-  description     String         @db.VarChar(60)
-  date            DateTime       @db.DateTime
-  state           String         @db.VarChar(45)
-  image           String?        @db.VarChar(255)
-  featured        Boolean        @default(false)
+  idEvent      Int          @id @default(autoincrement()) @map("idEvent")
+  name         String       @db.VarChar(45)
+  description  String       @db.VarChar(255)
+  date         DateTime     @db.DateTime
+  state        String       @db.VarChar(45)
+  image        String?      @db.VarChar(255)
+  featured     Boolean      @default(false)
 
-  idEventType     Int            @map("idEventType")
-  idOrganiser     Int            @map("idOrganiser")
+  idEventType  Int          @map("idEventType")
+  idOrganiser  Int          @map("idOrganiser")
+  idPlace      Int
 
-  idPlace         Int
-  place           Place          @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
+  place        Place        @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
+  eventType    EventType    @relation(fields: [idEventType], references: [idType])
+  organiser    Organiser    @relation(fields: [idOrganiser], references: [idOrganiser])
 
-  eventType       EventType      @relation(fields: [idEventType], references: [idType])
-  organiser       Organiser      @relation(fields: [idOrganiser], references: [idOrganiser])
-  eventSectors    EventSector[]
-
-  @@map("event")
+  eventSectors EventSector[]
+  seatEvents   SeatEvent[]
+  tickets      Ticket[]    
 }
 
 model EventSector {
-  idEvent       Int          @map("idEvent")
-  idPlace       Int          @map("idPlace")
-  idSector      Int          @map("idSector")
-  event         Event        @relation(fields: [idEvent], references: [idEvent])
-  sector        Sector       @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
-  prices        Price[]
-  tickets       Ticket[]
+  idEvent     Int      @map("idEvent")
+  idPlace     Int      @map("idPlace")
+  idSector    Int      @map("idSector")
+  price       Decimal  @db.Decimal(10,2)
+  event       Event    @relation(fields: [idEvent], references: [idEvent])
+  sector      Sector   @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets     Ticket[]
 
   @@id([idEvent, idPlace, idSector])
   @@map("event_sector")
@@ -71,25 +71,14 @@ model Place {
   name        String     @db.VarChar(45)
   totalCap    Int        @map("totalCap")
   address     String     @db.VarChar(45)
-
-  // 🔁 lado inverso de la relación con Event
+  placeType   String     @db.VarChar(45)
+  
   events      Event[]
   sectors     Sector[]
 
   @@map("places")
 }
 
-model Price {
-  idEvent       Int         @map("idEvent")
-  idPlace       Int         @map("idPlace")
-  idSector      Int         @map("idSector")
-  dateSince     DateTime    @map("dateSince") @db.DateTime
-  price         Float
-  eventSector   EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
-
-  @@id([idEvent, idPlace, idSector, dateSince])
-  @@map("prices")
-}
 
 model SaleItem {
   idSale         Int        @map("idSale")
@@ -112,23 +101,41 @@ model Sale {
   @@map("sales")
 }
 
+
 model Seat {
   idSeat      Int        @map("idSeat")
   idSector    Int        @map("idSector")
   idPlace     Int        @map("idPlace")
-  state       String     @db.VarChar(45)
+
   sector      Sector     @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
   tickets     Ticket[]
+  seatEvents  SeatEvent[]  
 
   @@id([idSeat, idSector, idPlace])
   @@map("seats")
   @@unique([idPlace, idSector, idSeat])
 }
 
+
+model SeatEvent {
+  idEvent  Int
+  idPlace  Int
+  idSector Int
+  idSeat   Int        @map("idSeat")
+  state    String     @db.VarChar(45) @default("available")
+
+  event Event @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
+  seat  Seat  @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
+
+  @@id([idEvent, idPlace, idSector, idSeat])
+  @@map("seat_event")
+}
+
 model Sector {
   idSector    Int          @map("idSector")
   idPlace     Int          @map("idPlace")
   name        String       @db.VarChar(45)
+  sectorType  String       @db.VarChar(45)
   capacity    Int
   place       Place        @relation(fields: [idPlace], references: [idPlace])
   eventSectors  EventSector[]
@@ -143,10 +150,12 @@ model Ticket {
   idPlace        Int         @map("idPlace")
   idSector       Int         @map("idSector")
   idTicket       Int         @map("idTicket")
-  state          String      @db.VarChar(45)
-  idSeat         Int         @map("idSeat")
+  state          String      @db.VarChar(45) @default("available")
+  idSeat         Int         @map("idSeat") 
   dateSaleItem   DateTime?   @map("dateSaleItem") @db.DateTime
-  idSale         Int?        @map("idSale")
+  idSale         Int?        @map("idSale") 
+
+  event          Event       @relation(fields: [idEvent], references: [idEvent])   // 👈 agregado
   eventSector    EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
   saleItem       SaleItem?   @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
   seat           Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
