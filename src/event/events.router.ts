@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { verifyToken, isCompany } from '../auth/auth.middleware';
 import { createEvent, getAllEvents, getAllEventTypes, getPendingEvents,
-  approveEvent, rejectEvent, getFeaturedEvents } from './event.controller';
+  approveEvent, rejectEvent, getFeaturedEvents, getAvailableDatesByPlace } from './event.controller';
 
 const router = Router();
 
@@ -55,5 +55,6 @@ router.get('/pending', verifyToken, getPendingEvents);
 router.patch("/:id/approve", verifyToken,  approveEvent);
 router.patch("/:id/reject", verifyToken,  rejectEvent);
 router.get('/featured', getFeaturedEvents);
+router.get('/available-dates/:idPlace', getAvailableDatesByPlace);
 
 export default router;

@@ -4,23 +4,26 @@ import fs from 'fs';
 import { AuthRequest } from '../auth/auth.middleware';
 import { RequestHandler } from 'express';
 
-
-
-
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { name, description, date, idEventType, idPlace } = req.body;
+    const { name, description, date, idEventType, idPlace, sectors } = req.body;
     const state = 'Pending';
     const idOrganiser = req.auth?.idOrganiser;
-    const featured = false
+    const featured = false;
 
     if (!idOrganiser) {
       res.status(403).json({ message: 'No autorizado: el token no pertenece a un organizador válido.' });
       return;
     }
 
-    if (!name || !description || !date || !idEventType || !idPlace) {
+    if (!name || !description || !date || !idEventType || !idPlace || !sectors) {
       res.status(400).json({ message: 'Faltan campos obligatorios' });
+      return;
+    }
+    
+    const parsedSectors = JSON.parse(sectors);
+    if (!Array.isArray(parsedSectors) || parsedSectors.length === 0) {
+      res.status(400).json({ message: 'Debe especificar precios para los sectores.' });
       return;
     }
 
@@ -29,12 +32,11 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    if (description.length > 60) {
-      res.status(400).json({ message: 'La descripción no puede exceder 60 caracteres' });
+    if (description.length > 255) {
+      res.status(400).json({ message: 'La descripción no puede exceder 255 caracteres' });
       return;
     }
 
-    // Validar fecha
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
       res.status(400).json({ message: 'Fecha inválida' });
@@ -67,8 +69,9 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       }
       imagePath = `/uploads/${req.file.filename}`;
     }
-    
-      const event = await prisma.event.create({
+
+    const result = await prisma.$transaction(async (tx) => {
+      const event = await tx.event.create({
         data: {
           name,
           description,
@@ -82,7 +85,20 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
         }
       });
 
-    res.status(201).json({ message: 'Evento creado exitosamente', event });
+      for (const sector of parsedSectors) {
+        await tx.eventSector.create({
+          data: {
+            idEvent: event.idEvent,
+            idPlace: Number(idPlace),
+            idSector: Number(sector.idSector),
+            price: parseFloat(sector.price)
+          }
+        });
+      }
+      return event;
+    });
+
+    res.status(201).json({ message: 'Evento creado exitosamente', event: result });
   } catch (error: any) {
     console.error('Error al crear evento:', error);
     if (req.file?.path) {
@@ -119,12 +135,9 @@ export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promis
   }
 };
 
-
-
 export const getPendingEvents: RequestHandler = async (_req, res, next) => {
   try {
     const events = await prisma.event.findMany({
-      // si no usás status, cambialo por { approved: false }
       where: { state: 'Pending' },
       select: {
         idEvent: true, name: true, description: true, date: true,
@@ -136,8 +149,6 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
     next(err);
   }
 };
-
-
 
 export const approveEvent: RequestHandler = async (req, res, next) => {
   try {
@@ -167,46 +178,65 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
   }
 };
 
-
-
-
 export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
-  try {
-    const events = await prisma.event.findMany({
-      where: { featured: true },
-      include: {
-        eventType: true,
-        place: true,
-        eventSectors: {
-          include: {
-            sector: {
-              include: {
-                seats: true, 
-              },
-            },
-            prices: true,
+    try {
+      const events = await prisma.event.findMany({
+        where: { featured: true },
+        include: {
+          eventType: true,
+          place: true,
+          eventSectors: {
+            include: {
+              sector: true
+            }
           },
         },
-      },
-    });
-
-    const enriched = events.map(ev => {
-      let availableSeats = 0;
-
-      ev.eventSectors.forEach(es => {
-        es.sector.seats.forEach(seat => {
-          if (seat.state.toLowerCase() === 'libre') {
-            availableSeats++;
-          }
-        });
       });
+  
+      const enriched = await Promise.all(events.map(async (ev) => {
+        const seatCounts = await prisma.seatEvent.groupBy({
+          by: ['state'],
+          where: { idEvent: ev.idEvent },
+          _count: {
+            idSeat: true,
+          },
+        });
+  
+        const availableSeats = seatCounts.find((sc: { state: string; _count: { idSeat: number | null } }) => sc.state === 'available')?._count.idSeat || 0;
+        
+        let minPrice = 0;
+        if (ev.eventSectors.length > 0) {
+          const prices = ev.eventSectors.map(es => es.price.toNumber());
+          minPrice = Math.min(...prices);
+        }
+  
+        return { ...ev, availableSeats, minPrice };
+      }));
+  
+      res.status(200).json({ ok: true, data: enriched });
+    } catch (err) {
+      next(err);
+    }
+  };
 
-      return { ...ev, availableSeats };
-    });
-
-    res.status(200).json({ ok: true, data: enriched });
-  } catch (err) {
-    next(err);
-  }
-};
+export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) => {
+    const { idPlace } = req.params;
+    try {
+      const events = await prisma.event.findMany({
+        where: {
+          idPlace: Number(idPlace),
+          state: {
+            in: ['Approved', 'Pending'],
+          },
+        },
+        select: {
+          date: true,
+        },
+      });
+      const occupiedDates = events.map(event => event.date.toISOString().split('T')[0]);
+      res.status(200).json({ ok: true, data: occupiedDates });
+    } catch (err) {
+      next(err);
+    }
+  };
 
