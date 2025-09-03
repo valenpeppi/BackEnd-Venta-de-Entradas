@@ -2,9 +2,19 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { verifyToken, isCompany } from '../auth/auth.middleware';
-import { createEvent, getAllEvents, getAllEventTypes, getPendingEvents,
-  approveEvent, rejectEvent, getFeaturedEvents, getAvailableDatesByPlace } from './event.controller';
+import { verifyToken, isCompany, isAdmin } from '../auth/auth.middleware';
+import { 
+  createEvent, 
+  getAllEventTypes, 
+  getPendingEvents,
+  getAdminAllEvents,
+  approveEvent, 
+  rejectEvent, 
+  getFeaturedEvents, 
+  getAvailableDatesByPlace, 
+  toggleFeatureStatus, 
+  getApprovedEvents 
+} from './event.controller';
 
 const router = Router();
 
@@ -36,7 +46,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB
 });
 
-// === Rutas Protegidas ===
+// === Rutas Protegidas para Empresas ===
 router.post(
   '/createEvent',
   verifyToken, 
@@ -45,16 +55,19 @@ router.post(
   createEvent
 );
 
-router.get('/', verifyToken, getAllEvents);
+// === Rutas de Admin ===
+router.get('/pending', verifyToken, isAdmin, getPendingEvents);
+router.get('/all', verifyToken, isAdmin, getAdminAllEvents);
+router.patch("/:id/approve", verifyToken, isAdmin, approveEvent);
+router.patch("/:id/reject", verifyToken, isAdmin, rejectEvent);
+router.patch('/:id/feature', verifyToken, isAdmin, toggleFeatureStatus);
+
 
 // === Rutas Públicas ===
 router.get('/types', getAllEventTypes);
-
-router.get('/pending', verifyToken, getPendingEvents);
-
-router.patch("/:id/approve", verifyToken,  approveEvent);
-router.patch("/:id/reject", verifyToken,  rejectEvent);
 router.get('/featured', getFeaturedEvents);
+router.get('/approved', getApprovedEvents);
 router.get('/available-dates/:idPlace', getAvailableDatesByPlace);
 
 export default router;
+

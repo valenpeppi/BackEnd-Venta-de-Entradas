@@ -142,7 +142,29 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
       select: {
         idEvent: true, name: true, description: true, date: true,
         image: true, idEventType: true, state: true, idOrganiser: true,
+        featured: true,
       },
+      orderBy: {
+        date: 'desc'
+      }
+    });
+    res.status(200).json({ ok: true, data: events });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
+  try {
+    const events = await prisma.event.findMany({
+      select: {
+        idEvent: true, name: true, description: true, date: true,
+        image: true, idEventType: true, state: true, idOrganiser: true,
+        featured: true,
+      },
+      orderBy: {
+        date: 'desc'
+      }
     });
     res.status(200).json({ ok: true, data: events });
   } catch (err) {
@@ -155,7 +177,7 @@ export const approveEvent: RequestHandler = async (req, res, next) => {
     const id = Number(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
-      data: { state: "Approved", featured: true }, 
+      data: { state: "Approved" }, 
       select: { idEvent: true, state: true, image: true, name: true}, 
     });
     res.status(200).json({ ok: true, data: updated });
@@ -181,7 +203,10 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
 export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
     try {
       const events = await prisma.event.findMany({
-        where: { featured: true },
+        where: { 
+          featured: true,
+          state: 'Approved' 
+        },
         include: {
           eventType: true,
           place: true,
@@ -219,6 +244,73 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
     }
   };
 
+export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
+    try {
+      const events = await prisma.event.findMany({
+        where: { state: 'Approved' },
+        include: {
+          eventType: true,
+          place: true,
+          eventSectors: {
+            include: {
+              sector: true
+            }
+          },
+        },
+      });
+
+      const enriched = await Promise.all(events.map(async (ev) => {
+        const seatCounts = await prisma.seatEvent.groupBy({
+          by: ['state'],
+          where: { idEvent: ev.idEvent },
+          _count: {
+            idSeat: true,
+          },
+        });
+
+        const availableSeats = seatCounts.find((sc: { state: string; _count: { idSeat: number | null } }) => sc.state === 'available')?._count.idSeat || 0;
+        
+        let minPrice = 0;
+        if (ev.eventSectors.length > 0) {
+            const prices = ev.eventSectors.map(es => es.price.toNumber());
+            minPrice = Math.min(...prices);
+        }
+
+        return { ...ev, availableSeats, minPrice };
+      }));
+  
+      res.status(200).json({ ok: true, data: enriched });
+    } catch (err) {
+      next(err);
+    }
+};
+
+export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    
+    const currentEvent = await prisma.event.findUnique({
+      where: { idEvent: id },
+      select: { featured: true }
+    });
+
+    if (!currentEvent) {
+      return res.status(404).json({ message: 'Evento no encontrado' });
+    }
+
+    const updatedEvent = await prisma.event.update({
+      where: { idEvent: id },
+      data: { featured: !currentEvent.featured },
+      select: { idEvent: true, featured: true }, 
+    });
+
+    res.status(200).json({ ok: true, data: updatedEvent });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
 export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) => {
     const { idPlace } = req.params;
     try {
@@ -239,4 +331,8 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
       next(err);
     }
   };
+
+
+  
+
 
