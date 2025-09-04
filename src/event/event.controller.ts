@@ -221,13 +221,14 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
     const events = await prisma.event.findMany({
       where: { 
         featured: true,
-        state: 'Approved' 
+        state: 'Approved'
       },
       include: {
         eventType: true,
         place: true,
         eventSectors: { include: { sector: true } },
       },
+      orderBy: { date: 'asc' },
     });
 
     const enriched = await Promise.all(events.map(async (ev) => {
@@ -238,20 +239,25 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
       });
 
       const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
-      const totalSeats = seatCounts.reduce((acc, sc) => acc + (sc._count.idSeat || 0), 0);
 
       let minPrice = 0;
       if (ev.eventSectors.length > 0) {
-        const prices = ev.eventSectors.map(es => es.price.toNumber());
-        minPrice = Math.min(...prices);
+        const prices = ev.eventSectors.map(es => Number(es.price));
+        minPrice = prices.length ? Math.min(...prices) : 0;
       }
 
-      const agotado = availableSeats <= 0 || availableSeats === 0 || totalSeats > 0 && availableSeats === 0;
-
-      return { ...ev, availableSeats, minPrice, agotado };
+      return {
+        ...ev,
+        availableSeats,
+        minPrice,
+        agotado: availableSeats === 0,
+      };
     }));
 
-    res.status(200).json({ ok: true, data: enriched });
+    // 🔒 No devolver agotados
+    const onlyWithStock = enriched.filter(ev => ev.availableSeats > 0);
+
+    res.status(200).json({ ok: true, data: onlyWithStock });
   } catch (err) {
     next(err);
   }
@@ -267,6 +273,7 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
         place: true,
         eventSectors: { include: { sector: true } },
       },
+      orderBy: { date: 'asc' },
     });
 
     const enriched = await Promise.all(events.map(async (ev) => {
@@ -277,20 +284,25 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
       });
 
       const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
-      const totalSeats = seatCounts.reduce((acc, sc) => acc + (sc._count.idSeat || 0), 0);
 
       let minPrice = 0;
       if (ev.eventSectors.length > 0) {
-        const prices = ev.eventSectors.map(es => es.price.toNumber());
-        minPrice = Math.min(...prices);
+        const prices = ev.eventSectors.map(es => Number(es.price));
+        minPrice = prices.length ? Math.min(...prices) : 0;
       }
 
-      const agotado = availableSeats <= 0 || (totalSeats > 0 && availableSeats === 0);
-
-      return { ...ev, availableSeats, minPrice, agotado };
+      return {
+        ...ev,
+        availableSeats,
+        minPrice,
+        agotado: availableSeats === 0,
+      };
     }));
 
-    res.status(200).json({ ok: true, data: enriched });
+    // 🔒 No devolver agotados
+    const onlyWithStock = enriched.filter(ev => ev.availableSeats > 0);
+
+    res.status(200).json({ ok: true, data: onlyWithStock });
   } catch (err) {
     next(err);
   }

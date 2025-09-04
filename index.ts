@@ -5,6 +5,8 @@ import dotenv from 'dotenv';
 import { testDbConnection } from './src/db/mysql';
 import path from 'path';
 dotenv.config();
+// SDK de Mercado Pago
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 
 
 const app: Application = express();
@@ -18,6 +20,7 @@ import catalogRoutes from './src/catalog/catalog.router';
 
 import authRoutes from './src/auth/auth.router';
 import paymentsRoutes from './src/payments/mp.routes';
+import { title } from 'process';
 
 
 
@@ -67,7 +70,34 @@ testDbConnection().then(() => {
   process.exit(1);
 });
 
-// SDK de Mercado Pago
-import { MercadoPagoConfig, Preference } from 'mercadopago';
 // Agrega credenciales
 const client = new MercadoPagoConfig({ accessToken: 'APP_USR-3312580635175308-090415-dd54815b21ddfbfbc3d626eac20feb91-2662356501' });
+
+app.post("/create_preference", async (req: Request, res: Response) => {
+  try {
+  const body = { 
+      items: [
+        {
+          id: req.body.id,
+          title: req.body.title,
+          unit_price: Number(req.body.unit_price),
+          quantity: Number(req.body.quantity)
+       },
+      ],
+  back_urls: {
+    success: 'http://localhost:5173/success',
+    failure: 'http://localhost:5173/failure',
+    pending: 'http://localhost:5173/pending',
+    },
+    auto_return: 'approved',
+  };
+
+  const preference = new Preference(client);
+  const result = await preference.create({ body });
+  res.json({ 
+    id: result.id
+  });
+  } catch (error) {
+    console.log(error);
+  }
+});
