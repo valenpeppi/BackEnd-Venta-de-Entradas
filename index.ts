@@ -69,8 +69,5 @@ testDbConnection().then(() => {
 
 // SDK de Mercado Pago
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-// Agregar credenciales
-const client = new MercadoPagoConfig({ accessToken: process.env.MP_ACCESS_TOKEN!,
-});
-
-export const preferences = new Preference(client);
+// Agrega credenciales
+const client = new MercadoPagoConfig({ accessToken: 'APP_USR-3312580635175308-090415-dd54815b21ddfbfbc3d626eac20feb91-2662356501' });

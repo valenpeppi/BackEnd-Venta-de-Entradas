@@ -3,6 +3,7 @@ import { prisma } from '../db/mysql';
 import fs from 'fs';
 import { AuthRequest } from '../auth/auth.middleware';
 import { RequestHandler } from 'express';
+import { createSeatEventGridForEvent } from '../seats/seats.controller'
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -98,7 +99,22 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return event;
     });
 
-    res.status(201).json({ message: 'Evento creado exitosamente', event: result });
+    await createSeatEventGridForEvent(result.idEvent, Number(idPlace));
+
+    const availableSeats = await prisma.seatEvent.count({
+      where: { idEvent: result.idEvent, state: 'available' },
+    });
+
+    if (availableSeats <= 0) {
+      res.status(500).json({ message: 'No se pudieron generar asientos para el evento.' });
+      return;
+    }
+
+    res.status(201).json({
+      message: 'Evento creado exitosamente',
+      event: result,
+      availableSeats,
+    });
   } catch (error: any) {
     console.error('Error al crear evento:', error);
     if (req.file?.path) {
