@@ -17,6 +17,7 @@ import {
   getEventSectors,
   getEventSummary
   
+  
 } from './event.controller';
 
 const router = Router();
