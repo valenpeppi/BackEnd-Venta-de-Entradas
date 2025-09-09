@@ -429,47 +429,57 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       return;
     }
 
-    if (ev.place.placeType !== 'Hybrid') {
-      res.json([]); // nonEnumerated -> sin sectores
+    if (ev.place.placeType.toLowerCase() !== 'hybrid') {
+      res.json([]); 
       return;
     }
 
+
     const idPlace = ev.idPlace;
+
     const sectorsWithPrice = await prisma.eventSector.findMany({
       where: { idEvent, idPlace },
       select: { idSector: true, price: true },
     });
 
     const sectorIds = sectorsWithPrice.map(s => s.idSector);
+
     const sectorsMeta = await prisma.sector.findMany({
       where: { idPlace, idSector: { in: sectorIds } },
       select: { idSector: true, name: true },
     });
     const nameBySector = new Map(sectorsMeta.map(s => [s.idSector, s.name]));
 
-    const availableBySectorRaw = await prisma.seatEvent.groupBy({
-      by: ['idSector', 'idPlace'],
-      where: { idEvent, idPlace, state: 'available' },
-      _count: { _all: true },
+    // 🔑 Traer todas las butacas con estado
+    const seatEvents = await prisma.seatEvent.findMany({
+      where: { idEvent, idPlace, idSector: { in: sectorIds } },
+      select: { idSeat: true, idSector: true, state: true },
+      orderBy: { idSeat: 'asc' },
     });
-    const availableBySector = new Map(
-      availableBySectorRaw.map(r => [r.idSector, r._count._all])
-    );
+
+    const seatsBySector = new Map<number, { idSeat: number; state: string }[]>();
+    for (const se of seatEvents) {
+      if (!seatsBySector.has(se.idSector)) {
+        seatsBySector.set(se.idSector, []);
+      }
+      seatsBySector.get(se.idSector)!.push(se);
+    }
 
     const response = sectorsWithPrice.map(s => ({
       idEvent,
       idSector: s.idSector,
       name: nameBySector.get(s.idSector) ?? `Sector ${s.idSector}`,
       price: Number(s.price),
-      availableTickets: availableBySector.get(s.idSector) ?? 0,
+      seats: seatsBySector.get(s.idSector) ?? [],
+      availableTickets: (seatsBySector.get(s.idSector) ?? []).filter(se => se.state === 'available').length,
     }));
 
-
-    res.json(response); 
+    res.json(response);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal error' });
   }
 };
+
 
 
