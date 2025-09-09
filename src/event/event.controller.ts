@@ -364,8 +364,13 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
 
     const event = await prisma.event.findUnique({
       where: { idEvent },
-      include: { place: true, eventType: true },
+      include: {
+        place: true,
+        eventType: true,
+        eventSectors: true
+      }
     });
+
     if (!event) {
       res.status(404).json({ message: 'Event not found' });
       return;
@@ -396,6 +401,7 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
       date: event.date,
       idPlace: event.idPlace,
       placeType,
+      placeName: event.place.name, 
       availableTickets: availableTotal,
       agotado,
     };
