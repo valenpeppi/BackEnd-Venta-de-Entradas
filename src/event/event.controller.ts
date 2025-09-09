@@ -254,10 +254,8 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
       };
     }));
 
-    // 🔒 No devolver agotados
-    const onlyWithStock = enriched.filter(ev => ev.availableSeats > 0);
+    res.status(200).json({ ok: true, data: enriched });
 
-    res.status(200).json({ ok: true, data: onlyWithStock });
   } catch (err) {
     next(err);
   }
@@ -465,7 +463,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       availableTickets: availableBySector.get(s.idSector) ?? 0,
     }));
 
-    res.json(response); // <- sin return
+    res.json(response); 
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal error' });
