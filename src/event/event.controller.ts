@@ -457,11 +457,13 @@ export const getEventSectors: RequestHandler = async (req, res) => {
     );
 
     const response = sectorsWithPrice.map(s => ({
+      idEvent,
       idSector: s.idSector,
       name: nameBySector.get(s.idSector) ?? `Sector ${s.idSector}`,
       price: Number(s.price),
       availableTickets: availableBySector.get(s.idSector) ?? 0,
     }));
+
 
     res.json(response); 
   } catch (err) {
