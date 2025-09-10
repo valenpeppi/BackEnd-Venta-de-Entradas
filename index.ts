@@ -22,7 +22,9 @@ import authRoutes from './src/auth/auth.router';
 import paymentsRoutes from './src/payments/mp.routes';
 import { title } from 'process';
 
+import { fileURLToPath } from 'url';
 
+app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
 // Middleware
 app.use(cors({
@@ -35,8 +37,6 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Servir /uploads como estático
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Montar las rutas
 app.use('/api/users', userRoutes);

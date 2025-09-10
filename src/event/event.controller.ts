@@ -13,51 +13,51 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     const featured = false;
 
     if (!idOrganiser) {
-      res.status(403).json({ message: 'No autorizado: el token no pertenece a un organizador válido.' });
+      res.status(403).json({ ok: false, message: 'No autorizado: el token no pertenece a un organizador válido.' });
       return;
     }
 
     if (!name || !description || !date || !idEventType || !idPlace || !sectors) {
-      res.status(400).json({ message: 'Faltan campos obligatorios' });
+      res.status(400).json({ ok: false, message: 'Faltan campos obligatorios' });
       return;
     }
     
     const parsedSectors = JSON.parse(sectors);
     if (!Array.isArray(parsedSectors) || parsedSectors.length === 0) {
-      res.status(400).json({ message: 'Debe especificar precios para los sectores.' });
+      res.status(400).json({ ok: false, message: 'Debe especificar precios para los sectores.' });
       return;
     }
 
     if (name.length > 45) {
-      res.status(400).json({ message: 'El nombre no puede exceder 45 caracteres' });
+      res.status(400).json({ ok: false, message: 'El nombre no puede exceder 45 caracteres' });
       return;
     }
 
     if (description.length > 255) {
-      res.status(400).json({ message: 'La descripción no puede exceder 255 caracteres' });
+      res.status(400).json({ ok: false, message: 'La descripción no puede exceder 255 caracteres' });
       return;
     }
 
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
-      res.status(400).json({ message: 'Fecha inválida' });
+      res.status(400).json({ ok: false, message: 'Fecha inválida' });
       return;
     }
 
     const org = await prisma.organiser.findUnique({ where: { idOrganiser } });
     if (!org) {
-      res.status(400).json({ message: 'El organizador no existe' });
+      res.status(400).json({ ok: false, message: 'El organizador no existe' });
       return;
     }
     
     const etype = await prisma.eventType.findUnique({ where: { idType: Number(idEventType) } });
     if (!etype) {
-      res.status(400).json({ message: 'El tipo de evento no existe' });
+      res.status(400).json({ ok: false, message: 'El tipo de evento no existe' });
       return;
     }
     const place = await prisma.place.findUnique({ where: { idPlace: Number(idPlace) } });
     if (!place) {
-      res.status(400).json({ message: 'El lugar no existe' });
+      res.status(400).json({ ok: false, message: 'El lugar no existe' });
       return;
     }
     let imagePath: string | null = null;
@@ -65,7 +65,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
       if (!valid.includes(req.file.mimetype)) {
         fs.unlinkSync(req.file.path);
-        res.status(400).json({ message: 'Solo imágenes válidas' });
+        res.status(400).json({ ok: false, message: 'Solo imágenes válidas' });
         return;
       }
       imagePath = `/uploads/${req.file.filename}`;
@@ -106,13 +106,19 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     });
 
     if (availableSeats <= 0) {
-      res.status(500).json({ message: 'No se pudieron generar asientos para el evento.' });
+      res.status(500).json({ ok: false, message: 'No se pudieron generar asientos para el evento.' });
       return;
     }
 
     res.status(201).json({
+      ok: true,
       message: 'Evento creado exitosamente',
-      event: result,
+      data: {
+        ...result,
+        imageUrl: result.image
+          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${result.image}`
+          : "/ticket.png"
+      },
       availableSeats,
     });
   } catch (error: any) {
@@ -120,35 +126,42 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     if (req.file?.path) {
       try { fs.unlinkSync(req.file.path); } catch {}
     }
-    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
+    res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
   }
 };
 
-
 export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const rows = await prisma.event.findMany({
-      include: {
-        eventType: true, 
-        organiser: true, 
-      },
-      orderBy: { date: 'asc' }
-    });
-    res.status(200).json(rows);
-  } catch (error: any) {
-    console.error('Error al obtener eventos:', error);
-    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
-  }
+  try {
+    const rows = await prisma.event.findMany({
+      include: {
+        eventType: true,
+        organiser: true,
+      },
+      orderBy: { date: 'asc' }
+    });
+
+    const enriched = rows.map(ev => ({
+      ...ev,
+      imageUrl: ev.image
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        : "/ticket.png"
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
+  } catch (error: any) {
+    console.error('Error al obtener eventos:', error);
+    res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
+  }
 };
 
 export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const rows = await prisma.eventType.findMany({ orderBy: { name: 'asc' } });
-    res.status(200).json(rows);
-  } catch (error: any) {
-    console.error('Error al obtener tipos de evento:', error);
-    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
-  }
+  try {
+    const rows = await prisma.eventType.findMany({ orderBy: { name: 'asc' } });
+    res.status(200).json({ ok: true, data: rows });
+  } catch (error: any) {
+    console.error('Error al obtener tipos de evento:', error);
+    res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
+  }
 };
 
 export const getPendingEvents: RequestHandler = async (_req, res, next) => {
@@ -164,7 +177,15 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
         date: 'desc'
       }
     });
-    res.status(200).json({ ok: true, data: events });
+
+    const enriched = events.map(ev => ({
+      ...ev,
+      imageUrl: ev.image
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        : "/ticket.png"
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
   } catch (err) {
     next(err);
   }
@@ -182,7 +203,15 @@ export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
         date: 'desc'
       }
     });
-    res.status(200).json({ ok: true, data: events });
+
+    const enriched = events.map(ev => ({
+      ...ev,
+      imageUrl: ev.image
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        : "/ticket.png"
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
   } catch (err) {
     next(err);
   }
@@ -193,10 +222,19 @@ export const approveEvent: RequestHandler = async (req, res, next) => {
     const id = Number(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
-      data: { state: "Approved" }, 
-      select: { idEvent: true, state: true, image: true, name: true}, 
+      data: { state: "Approved" },
+      select: { idEvent: true, state: true, image: true, name: true },
     });
-    res.status(200).json({ ok: true, data: updated });
+
+    res.status(200).json({
+      ok: true,
+      data: {
+        ...updated,
+        imageUrl: updated.image
+          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${updated.image}`
+          : "/ticket.png"
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -207,10 +245,19 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
     const id = Number(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
-      data: { state: "Rejected" }, 
-      select: { idEvent: true, state: true, image: true, name: true},
+      data: { state: "Rejected" },
+      select: { idEvent: true, state: true, image: true, name: true },
     });
-    res.status(200).json({ ok: true, data: updated });
+
+    res.status(200).json({
+      ok: true,
+      data: {
+        ...updated,
+        imageUrl: updated.image
+          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${updated.image}`
+          : "/ticket.png"
+      }
+    });
   } catch (err) {
     next(err);
   }
@@ -248,8 +295,12 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
 
       return {
         ...ev,
+        placeName: ev.place.name,
         availableSeats,
         minPrice,
+        imageUrl: ev.image 
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}` 
+        : "/ticket.png",
         agotado: availableSeats === 0,
       };
     }));
@@ -260,7 +311,6 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
     next(err);
   }
 };
-
 
 export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
   try {
@@ -291,7 +341,11 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
 
       return {
         ...ev,
+        placeName: ev.place.name,
         availableSeats,
+        imageUrl: ev.image 
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}` 
+        : "/ticket.png",
         minPrice,
         agotado: availableSeats === 0,
       };
@@ -316,7 +370,7 @@ export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
     });
 
     if (!currentEvent) {
-      return res.status(404).json({ message: 'Evento no encontrado' });
+      return res.status(404).json({ ok: false, message: 'Evento no encontrado' });
     }
 
     const updatedEvent = await prisma.event.update({
@@ -331,34 +385,32 @@ export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
   }
 };
 
-
 export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) => {
-    const { idPlace } = req.params;
-    try {
-      const events = await prisma.event.findMany({
-        where: {
-          idPlace: Number(idPlace),
-          state: {
-            in: ['Approved', 'Pending'],
-          },
+  const { idPlace } = req.params;
+  try {
+    const events = await prisma.event.findMany({
+      where: {
+        idPlace: Number(idPlace),
+        state: {
+          in: ['Approved', 'Pending'],
         },
-        select: {
-          date: true,
-        },
-      });
-      const occupiedDates = events.map(event => event.date.toISOString().split('T')[0]);
-      res.status(200).json({ ok: true, data: occupiedDates });
-    } catch (err) {
-      next(err);
-    }
-  };
+      },
+      select: {
+        date: true,
+      },
+    });
+    const occupiedDates = events.map(event => event.date.toISOString().split('T')[0]);
+    res.status(200).json({ ok: true, data: occupiedDates });
+  } catch (err) {
+    next(err);
+  }
+};
 
-
-  export const getEventSummary: RequestHandler = async (req, res) => {
+export const getEventSummary: RequestHandler = async (req, res) => {
   try {
     const idEvent = Number(req.params.id);
     if (Number.isNaN(idEvent)) {
-      res.status(400).json({ message: 'Invalid id' });
+      res.status(400).json({ ok: false, message: 'Invalid id' });
       return;
     }
 
@@ -372,7 +424,7 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
     });
 
     if (!event) {
-      res.status(404).json({ message: 'Event not found' });
+      res.status(404).json({ ok: false, message: 'Event not found' });
       return;
     }
 
@@ -396,33 +448,36 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
     const payload: any = {
       id: event.idEvent,
       eventName: event.name,
-      imageUrl: event.image ?? '',
+      imageUrl: event.image
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${event.image}`
+        : "/ticket.png",
       type: event.eventType.name,
       date: event.date,
       idPlace: event.idPlace,
       placeType,
-      placeName: event.place.name, 
+      placeName: event.place.name,
       availableTickets: availableTotal,
       agotado,
     };
 
-    if (placeType === 'nonEnumerated') {
+    if (placeType.toLowerCase() === 'nonenumerated') {
       payload.price = prices[0] ?? 0;
     } else {
       payload.minPrice = prices.length ? Math.min(...prices) : 0;
     }
 
-    res.json(payload);
+    res.status(200).json({ ok: true, data: payload });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Internal error' });
+    res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
+
 export const getEventSectors: RequestHandler = async (req, res) => {
   try {
     const idEvent = Number(req.params.id);
     if (Number.isNaN(idEvent)) {
-      res.status(400).json({ message: 'Invalid id' });
+      res.status(400).json({ ok: false, message: 'Invalid id' });
       return;
     }
 
@@ -431,15 +486,14 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       include: { place: true },
     });
     if (!ev) {
-      res.status(404).json({ message: 'Event not found' });
+      res.status(404).json({ ok: false, message: 'Event not found' });
       return;
     }
 
     if (ev.place.placeType.toLowerCase() !== 'hybrid') {
-      res.json([]); 
+      res.status(200).json({ ok: true, data: [] });
       return;
     }
-
 
     const idPlace = ev.idPlace;
 
@@ -456,7 +510,6 @@ export const getEventSectors: RequestHandler = async (req, res) => {
     });
     const nameBySector = new Map(sectorsMeta.map(s => [s.idSector, s.name]));
 
-    // 🔑 Traer todas las butacas con estado
     const seatEvents = await prisma.seatEvent.findMany({
       where: { idEvent, idPlace, idSector: { in: sectorIds } },
       select: { idSeat: true, idSector: true, state: true },
@@ -480,12 +533,9 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       availableTickets: (seatsBySector.get(s.idSector) ?? []).filter(se => se.state === 'available').length,
     }));
 
-    res.json(response);
+    res.status(200).json({ ok: true, data: response });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Internal error' });
+    res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
-
-
-
