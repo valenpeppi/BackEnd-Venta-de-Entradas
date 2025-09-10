@@ -255,15 +255,15 @@ async function main() {
     update: {},
     create: {
       idEvent: 1,
-      name: 'Concierto Sinfónico',
-      description: 'Una noche de música clásica.',
+      name: 'Nicky Nicole',
+      description: 'Nicky Nicole se presenta en rosario para una noche espectacular.',
       date: in10d,
       state: 'Approved',
-      image: null,
+      image: '/uploads/event-1757442435231-517072449.jpeg',
       featured: true,
       idEventType: 1, 
       idOrganiser: 1,
-      idPlace: 1,
+      idPlace: 2,
     },
   });
 
@@ -272,13 +272,13 @@ async function main() {
     update: {},
     create: {
       idEvent: 2,
-      name: 'Stand Up Night',
-      description: 'Humor para todos.',
+      name: 'Bad Bunny',
+      description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones.',
       date: in20d,
       state: 'Approved',
-      image: null,
-      featured: false,
-      idEventType: 2, 
+      image: '/uploads/event-1755092653867-52272554.jpg',
+      featured: true,
+      idEventType: 1, 
       idOrganiser: 2,
       idPlace: 2,
     },
@@ -297,7 +297,7 @@ async function main() {
         idEvent: ev1.idEvent,
         idPlace: 1,
         idSector: s.idSector,
-        price: new Prisma.Decimal(s.name === 'Platea' ? '15000.00' : '12000.00'),
+        price: new Prisma.Decimal(s.name === 'Platea' ? '65000.00' : '80000.00'),
       },
     });
   }
@@ -314,7 +314,7 @@ async function main() {
         idPlace: 2,
         idSector: s.idSector,
         price: new Prisma.Decimal(
-          s.name.includes('Tribuna') ? '9000.00' : '11000.00'
+          s.name.includes('Tribuna') ? '90000.00' : '130000.00'
         ),
       },
     });
