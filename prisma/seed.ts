@@ -286,11 +286,11 @@ async function main() {
 
   console.log('Eventos cargados.');
 
-  const place1Sectors = await prisma.sector.findMany({ where: { idPlace: 1 } });
+  const place1Sectors = await prisma.sector.findMany({ where: { idPlace: 2 } });
   for (const s of place1Sectors) {
     await prisma.eventSector.upsert({
       where: {
-        idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 1, idSector: s.idSector },
+        idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 2, idSector: s.idSector },
       },
       update: {},
       create: {
