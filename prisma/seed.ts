@@ -322,7 +322,7 @@ async function main() {
 
   console.log('EventSectors con price cargados.');
 
-  await createSeatEventGridForEvent(ev1.idEvent, 1);
+  await createSeatEventGridForEvent(ev1.idEvent, 2);
   await createSeatEventGridForEvent(ev2.idEvent, 2);
   console.log('SeatEvent cargado en estado "available".');
 
