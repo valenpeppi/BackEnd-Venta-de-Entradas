@@ -295,9 +295,9 @@ async function main() {
       update: {},
       create: {
         idEvent: ev1.idEvent,
-        idPlace: 1,
+        idPlace: 2,
         idSector: s.idSector,
-        price: new Prisma.Decimal(s.name === 'Platea' ? '65000.00' : '80000.00'),
+        price: new Prisma.Decimal( s.name.includes('Tribuna') ? '65000.00' : '80000.00'),
       },
     });
   }
