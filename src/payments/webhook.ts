@@ -14,8 +14,6 @@ router.post('/webhooks/mp', async (req, res) => {
       });
       const payment = res.data;
 
-      // >>> actualizar tu orden en la DB según status
-      // if (payment.status === 'approved') { marcar pagado, asignar entradas, enviar mail }
     }
   } catch (e) {
     console.error('Webhook MP error', e);
