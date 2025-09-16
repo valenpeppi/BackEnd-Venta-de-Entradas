@@ -62,6 +62,12 @@ app.post("/api/payments/create_preference", async (req: Request, res: Response) 
   try {
     const preference = new Preference(client);
 
+    const payerData = req.body.payer || {
+      email: 'test_user@testuser.com',
+      name: 'Test',
+      surname: 'User'
+    };
+
     const result = await preference.create({
       body: { 
         items: req.body.items.map((item: any) => ({
@@ -69,14 +75,19 @@ app.post("/api/payments/create_preference", async (req: Request, res: Response) 
           title: item.title,
           unit_price: Number(item.unit_price),
           quantity: Number(item.quantity),
-          
         })),
+        payer: {
+          email: payerData.email,
+          name: payerData.name,
+          surname: payerData.surname
+        },
         back_urls: {
           success: 'http://localhost:5173/success',
           failure: 'http://localhost:5173/failure',
           pending: 'http://localhost:5173/pending',
-        },
-        
+        }
+        // Remover auto_return temporalmente para testing
+        // auto_return: 'approved'
       }
     });
 
@@ -92,7 +103,7 @@ app.post("/api/payments/create_preference", async (req: Request, res: Response) 
 
 testDbConnection().then(() => {
   app.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT}`);
+    console.log(`Servidor escuchando en http://localhost:${PORT} 🚀`);
   });
 }).catch((error) => {
   console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
