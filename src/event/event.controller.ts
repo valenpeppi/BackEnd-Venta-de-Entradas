@@ -351,7 +351,6 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
       };
     }));
 
-    // 🔒 No devolver agotados
     const onlyWithStock = enriched.filter(ev => ev.availableSeats > 0);
 
     res.status(200).json({ ok: true, data: onlyWithStock });
@@ -490,7 +489,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       return;
     }
 
-    if (ev.place.placeType.toLowerCase() !== 'hybrid') {
+    if (ev.place.placeType.toLowerCase() === 'nonenumerated') {
       res.status(200).json({ ok: true, data: [] });
       return;
     }
@@ -506,9 +505,9 @@ export const getEventSectors: RequestHandler = async (req, res) => {
 
     const sectorsMeta = await prisma.sector.findMany({
       where: { idPlace, idSector: { in: sectorIds } },
-      select: { idSector: true, name: true },
+      select: { idSector: true, name: true, sectorType: true },
     });
-    const nameBySector = new Map(sectorsMeta.map(s => [s.idSector, s.name]));
+    const sectorMetadataMap = new Map(sectorsMeta.map(s => [s.idSector, { name: s.name, type: s.sectorType }]));
 
     const seatEvents = await prisma.seatEvent.findMany({
       where: { idEvent, idPlace, idSector: { in: sectorIds } },
@@ -524,14 +523,17 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       seatsBySector.get(se.idSector)!.push(se);
     }
 
-    const response = sectorsWithPrice.map(s => ({
-      idEvent,
-      idSector: s.idSector,
-      name: nameBySector.get(s.idSector) ?? `Sector ${s.idSector}`,
-      price: Number(s.price),
-      seats: seatsBySector.get(s.idSector) ?? [],
-      availableTickets: (seatsBySector.get(s.idSector) ?? []).filter(se => se.state === 'available').length,
-    }));
+    const response = sectorsWithPrice.map(s => {
+      const metadata = sectorMetadataMap.get(s.idSector);
+      return {
+        idEvent,
+        idSector: s.idSector,
+        name: metadata?.name ?? `Sector ${s.idSector}`,
+        price: Number(s.price),
+        enumerated: metadata?.type.toLowerCase() === 'enumerated',
+        availableTickets: (seatsBySector.get(s.idSector) ?? []).filter(se => se.state === 'available').length,
+      };
+    });
 
     res.status(200).json({ ok: true, data: response });
   } catch (err) {
@@ -539,3 +541,90 @@ export const getEventSectors: RequestHandler = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
+
+
+export const getSeatsForEventSector: RequestHandler = async (req, res) => {
+  try {
+    const idEvent = Number(req.params.id);
+    const idSector = Number(req.params.idSector);
+
+    if (Number.isNaN(idEvent) || Number.isNaN(idSector)) {
+      res.status(400).json({ ok: false, message: 'ID de evento o sector inválido' });
+      return;
+    }
+
+    const seats = await prisma.seatEvent.findMany({
+      where: {
+        idEvent: idEvent,
+        idSector: idSector,
+      },
+      select: {
+        idSeat: true,
+        state: true,
+      },
+      orderBy: {
+        idSeat: 'asc',
+      },
+    });
+
+    const responseData = seats.map(seat => ({
+      id: seat.idSeat,
+      state: seat.state,
+      label: seat.idSeat.toString(),
+    }));
+
+    res.status(200).json({ ok: true, data: responseData });
+  } catch (err) {
+    console.error('Error al obtener asientos para el sector:', err);
+    res.status(500).json({ ok: false, message: 'Error interno del servidor' });
+  }
+};
+
+export const searchEvents: RequestHandler = async (req, res, next) => {
+  try {
+    const rawQuery = req.query.query as string;
+    if (!rawQuery || rawQuery.trim().length < 3) {
+      return res.status(400).json({ ok: false, message: "Consulta demasiado corta" });
+    }
+
+    const query = rawQuery.trim().toLowerCase();
+
+    const events = await prisma.event.findMany({
+      where: {
+        state: "Approved",
+        OR: [
+          {
+            name: {
+              contains: query,
+            },
+          },
+          {
+            eventType: {
+              name: {
+                contains: query,
+              },
+            },
+          },
+        ],
+      },
+      include: {
+        eventType: true,
+        place: true,
+        eventSectors: true,
+      },
+      orderBy: { date: 'asc' }
+    });
+
+    const enriched = events.map(ev => ({
+      ...ev,
+      imageUrl: ev.image
+        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        : "/ticket.png"
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
+  } catch (err) {
+    next(err);
+  }
+};
+

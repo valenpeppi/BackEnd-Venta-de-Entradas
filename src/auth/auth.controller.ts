@@ -26,37 +26,49 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
 
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
-  const { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
+  let { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
 
-  const isCaptchaValid = await verifyRecaptcha(captchaToken);
-  if (!isCaptchaValid) {
-    return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
-  }
+  // Verificar CAPTCHA
+  const isCaptchaValid = await verifyRecaptcha(captchaToken);
+  if (!isCaptchaValid) {
+    return res.status(400).json({ message: 'Verificación de CAPTCHA fallida.' });
+  }
 
-  if (!dni || !mail || !password || !name || !birthDate) {
-    return res.status(400).json({ message: 'Todos los campos son requeridos' });
-  }
+  // Validar campos requeridos
+  if (!dni || !mail || !password || !name || !birthDate) {
+    return res.status(400).json({ message: 'Todos los campos son requeridos.' });
+  }
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await prisma.user.create({
-      data: {
-        dni,
-        name,
-        surname,
-        mail,
-        password: hashedPassword,
-        birthDate: new Date(birthDate)
-      }
-    });
-    res.status(201).json({ message: 'Usuario registrado' });
-  } catch (error: any) {
-    console.error('[Auth] Error en registro:', error);
-    if (error.code === 'P2002') {
-      return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
-    }
-    res.status(500).json({ message: 'Error en el servidor', error });
-  }
+  // Convertir dni a número
+  dni = parseInt(dni, 10);
+  if (isNaN(dni)) {
+    return res.status(400).json({ message: 'DNI inválido. Debe ser un número.' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await prisma.user.create({
+      data: {
+        dni,
+        name,
+        surname: surname || '', // Si viene vacío, guardar como string vacío
+        mail,
+        password: hashedPassword,
+        birthDate: new Date(birthDate)
+      }
+    });
+
+    res.status(201).json({ message: 'Usuario registrado correctamente.' });
+  } catch (error: any) {
+    console.error('[Auth] Error en registro:', error);
+
+    if (error.code === 'P2002') {
+      return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
+    }
+
+    res.status(500).json({ message: 'Error en el servidor', error });
+  }
 };
 
 // Registro de empresa
