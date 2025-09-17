@@ -15,10 +15,11 @@ import {
   toggleFeatureStatus, 
   getApprovedEvents,
   getEventSectors,
-  getEventSummary
-  
-  
+  getEventSummary,
+  getSeatsForEventSector,
+  searchEvents
 } from './event.controller';
+
 
 const router = Router();
 
@@ -72,10 +73,10 @@ router.get('/types', getAllEventTypes);
 router.get('/featured', getFeaturedEvents);
 router.get('/approved', getApprovedEvents);
 router.get('/available-dates/:idPlace', getAvailableDatesByPlace);
-router.get('/events/:id', getEventSummary);      // resumen del evento (incluye placeType y precio/minPrice)
-router.get('/events/:id/sectors', getEventSectors); // sectores (solo Hybrid)
-
-
+router.get('/search', searchEvents);
+router.get('/events/:id', getEventSummary);
+router.get('/events/:id/sectors', getEventSectors);
+router.get('/events/:id/sectors/:idSector/seats', getSeatsForEventSector); 
 
 
 export default router;
