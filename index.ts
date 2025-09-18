@@ -15,12 +15,10 @@ const app: Application = express();
 // Rutas
 import placesRoutes from './src/places/places.router';
 import userRoutes from './src/users/users.router';
-import eventRoutes from './src/event/events.router';
+import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
-// ⚡ si querés, borrá este import y dejá solo el endpoint abajo
-// import paymentsRoutes from './src/payments/mp.routes';
 
 // Archivos estáticos
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
