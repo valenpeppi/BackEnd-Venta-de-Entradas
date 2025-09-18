@@ -583,27 +583,44 @@ export const getSeatsForEventSector: RequestHandler = async (req, res) => {
 export const searchEvents: RequestHandler = async (req, res, next) => {
   try {
     const rawQuery = req.query.query as string;
-    if (!rawQuery || rawQuery.trim().length < 3) {
-      return res.status(400).json({ ok: false, message: "Consulta demasiado corta" });
+    if (!rawQuery || rawQuery.trim().length < 1) {
+      return res.status(400).json({ ok: false, message: 'Consulta demasiado corta' });
     }
 
     const query = rawQuery.trim().toLowerCase();
 
     const events = await prisma.event.findMany({
       where: {
-        state: "Approved",
         OR: [
+          // Coincidencia exacta de categoría (case-insensitive)
           {
-            name: {
-              contains: query,
+            state: 'Approved',
+            eventType: {
+              name: {
+                equals: query,
+              } as any,
             },
           },
           {
+            state: 'Featured',
             eventType: {
               name: {
-                contains: query,
-              },
+                equals: query,
+              } as any,
             },
+          },
+          // Nombre del evento que comience con la query
+          {
+            state: 'Approved',
+            name: {
+              startsWith: query,
+            } as any,
+          },
+          {
+            state: 'Featured',
+            name: {
+              startsWith: query,
+            } as any,
           },
         ],
       },
@@ -612,19 +629,49 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
         place: true,
         eventSectors: true,
       },
-      orderBy: { date: 'asc' }
+      orderBy: {
+        date: 'asc',
+      },
     });
 
-    const enriched = events.map(ev => ({
-      ...ev,
-      imageUrl: ev.image
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
-        : "/ticket.png"
-    }));
+    const enrichedEvents = await Promise.all(
+      events.map(async (event) => {
+        const seatCounts = await prisma.seatEvent.groupBy({
+          by: ['state'],
+          where: { idEvent: event.idEvent },
+          _count: { idSeat: true },
+        });
 
-    res.status(200).json({ ok: true, data: enriched });
+        const availableSeats =
+          seatCounts.find((s) => s.state === 'available')?._count.idSeat || 0;
+
+        const sectorPrices = event.eventSectors.map((s) =>
+          parseFloat(s.price.toString())
+        );
+        const minPrice = sectorPrices.length > 0 ? Math.min(...sectorPrices) : 0;
+
+        return {
+          id: event.idEvent,
+          name: event.name,
+          description: event.description,
+          date: event.date,
+          location: event.place?.name ?? 'Lugar no especificado',
+          imageUrl: event.image
+            ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${event.image}`
+            : '/ticket.png',
+          price: minPrice,
+          type: event.eventType?.name ?? 'General',
+          availableSeats,
+          agotado: availableSeats === 0,
+          featured: event.featured,
+        };
+      })
+    );
+
+    return res.status(200).json({ ok: true, data: enrichedEvents });
   } catch (err) {
-    next(err);
+    console.error('Error al buscar eventos:', err);
+    return res.status(500).json({ ok: false, message: 'Error interno del servidor' });
   }
 };
 
