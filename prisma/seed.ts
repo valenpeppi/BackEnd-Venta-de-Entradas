@@ -421,6 +421,46 @@ async function main() {
 
   console.log('SeatEvents cargados.');
 
+  await prisma.user.upsert({
+    where: { dni: 45500050 },
+    update: {},
+    create: {
+      dni: 45500050,
+      name: 'peppi',
+      surname: '',
+      mail: 'peppi@gmail.com',
+      birthDate: new Date('2005-04-14'),
+      password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG',
+      role: 'admin',
+    },
+  });
+  await prisma.user.upsert({
+    where: { dni: 46187000 },
+    update: {},
+    create: {
+      dni: 46187000,
+      name: 'gian',
+      surname: '',
+      mail: 'gian@hotmail.com',
+      birthDate: new Date('2005-01-02'),
+      password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a',
+      role: 'user',
+    },
+  });
+  await prisma.user.upsert({
+    where: { dni: 46497046 },
+    update: {},
+    create: {
+      dni: 46497046,
+      name: 'Valen',
+      surname: '',
+      mail: 'maiusbrolla@gmail.com',
+      birthDate: new Date('2005-03-31'),
+      password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO',
+      role: 'user',
+    },
+  });
+  console.log('Datos de users cargados.');
   console.log('Seeding completado.');
 }
 
