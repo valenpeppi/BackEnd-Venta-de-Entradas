@@ -177,7 +177,7 @@ async function main() {
     create: {
       idPlace: 5,
       name: 'El Circulo',
-      totalCap: 60,
+      totalCap: 60, // 40 + 20
       address: 'Laprida 1223',
       placeType: 'enumerated',
     },
@@ -284,7 +284,6 @@ async function main() {
       capacity: 40,
     },
   });
-  // NUEVO: Tribuna Superior en El Circulo
   await prisma.sector.upsert({
     where: { idSector_idPlace: { idSector: 2, idPlace: 5 } },
     update: {},
@@ -306,8 +305,48 @@ async function main() {
   }
   console.log('Seats generados por sector según capacity.');
 
+  const now = new Date();
+  const in10d = new Date(now.getTime() + 10 * 24 * 3600 * 1000);
+  const in20d = new Date(now.getTime() + 20 * 24 * 3600 * 1000);
+
+  // --- Evento Nicky Nicole ---
+  const ev1 = await prisma.event.upsert({
+    where: { idEvent: 1 },
+    update: {},
+    create: {
+      idEvent: 1,
+      name: 'Nicky Nicole',
+      description: 'Nicky Nicole se presenta en rosario para una noche espectacular.',
+      date: in10d,
+      state: 'Approved',
+      image: '/uploads/event-1757442435231-517072449.jpeg',
+      featured: true,
+      idEventType: 1,
+      idOrganiser: 1,
+      idPlace: 2,
+    },
+  });
+
+  // --- Evento Bad Bunny ---
+  const ev2 = await prisma.event.upsert({
+    where: { idEvent: 2 },
+    update: {},
+    create: {
+      idEvent: 2,
+      name: 'Bad Bunny',
+      description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones.',
+      date: in20d,
+      state: 'Approved',
+      image: '/uploads/event-1755092653867-52272554.jpg',
+      featured: true,
+      idEventType: 1,
+      idOrganiser: 2,
+      idPlace: 2,
+    },
+  });
+
   // --- Evento Bizarrap ---
-  await prisma.event.upsert({
+  const ev3 = await prisma.event.upsert({
     where: { idEvent: 3 },
     update: {},
     create: {
@@ -324,29 +363,63 @@ async function main() {
     },
   });
 
+  // --- Precios ---
+  const place2Sectors = await prisma.sector.findMany({ where: { idPlace: 2 } });
+  for (const s of place2Sectors) {
+    await prisma.eventSector.upsert({
+      where: {
+        idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 2, idSector: s.idSector },
+      },
+      update: {},
+      create: {
+        idEvent: ev1.idEvent,
+        idPlace: 2,
+        idSector: s.idSector,
+        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '65000.00' : '80000.00'),
+      },
+    });
+    await prisma.eventSector.upsert({
+      where: {
+        idEvent_idPlace_idSector: { idEvent: ev2.idEvent, idPlace: 2, idSector: s.idSector },
+      },
+      update: {},
+      create: {
+        idEvent: ev2.idEvent,
+        idPlace: 2,
+        idSector: s.idSector,
+        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '90000.00' : '130000.00'),
+      },
+    });
+  }
+
   await prisma.eventSector.upsert({
-    where: { idEvent_idPlace_idSector: { idEvent: 3, idPlace: 3, idSector: 1 } },
+    where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 1 } },
     update: { price: new Prisma.Decimal('450000.00') },
     create: {
-      idEvent: 3,
+      idEvent: ev3.idEvent,
       idPlace: 3,
       idSector: 1,
       price: new Prisma.Decimal('450000.00'),
     },
   });
   await prisma.eventSector.upsert({
-    where: { idEvent_idPlace_idSector: { idEvent: 3, idPlace: 3, idSector: 2 } },
+    where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 2 } },
     update: { price: new Prisma.Decimal('300000.00') },
     create: {
-      idEvent: 3,
+      idEvent: ev3.idEvent,
       idPlace: 3,
       idSector: 2,
       price: new Prisma.Decimal('300000.00'),
     },
   });
 
+  console.log('EventSectors cargados.');
 
-  await createSeatEventGridForEvent(3, 3);
+  await createSeatEventGridForEvent(ev1.idEvent, 2);
+  await createSeatEventGridForEvent(ev2.idEvent, 2);
+  await createSeatEventGridForEvent(ev3.idEvent, 3);
+
+  console.log('SeatEvents cargados.');
 
   console.log('Seeding completado.');
 }
