@@ -88,19 +88,6 @@ async function main() {
 
   // --- Organizadores (`organiser_company`) ---
   await prisma.organiser.upsert({
-    where: { idOrganiser: 1 },
-    update: {},
-    create: {
-      idOrganiser: 1,
-      companyName: 'Eventos SRL',
-      cuil: '30-12345678-9',
-      contactEmail: 'contacto@eventos.com',
-      password: 'password_hash_ejemplo',
-      phone: '3411234567',
-      address: 'Av. San Martín 123',
-    },
-  });
-  await prisma.organiser.upsert({
     where: { idOrganiser: 2 },
     update: {},
     create: {
