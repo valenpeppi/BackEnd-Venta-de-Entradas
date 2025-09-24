@@ -19,6 +19,7 @@ import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
+import stripeRoutes from './src/payments/stripe.routes';
 
 // Archivos estáticos
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
@@ -39,6 +40,7 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/catalog', catalogRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
+app.use('/api/stripe', stripeRoutes);
 // app.use("/api/payments", paymentsRoutes); // -> usar si tenés archivo separado
 
 // Manejo de errores
