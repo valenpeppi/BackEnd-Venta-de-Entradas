@@ -41,7 +41,6 @@ app.use('/api/catalog', catalogRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/stripe', stripeRoutes);
-// app.use("/api/payments", paymentsRoutes); // -> usar si tenés archivo separado
 
 // Manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -51,25 +50,19 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 const PORT: number = Number(process.env.PORT) || 3000;
 
-// =============================
-// MERCADO PAGO CONFIG & RUTA
-// =============================
-const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MP_ACCESS_TOKEN || '' 
-});
 
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN || ''
+});
 app.post("/api/payments/create_preference", async (req: Request, res: Response) => {
   try {
-    const preference = new Preference(client);
+    console.log("📩 Body recibido:", req.body);
 
-    const payerData = req.body.payer || {
-      email: 'test_user@testuser.com',
-      name: 'Test',
-      surname: 'User'
-    };
+    const preference = new Preference(client);
+    const payerData = req.body.payer || { email: "test@test.com", name: "Test", surname: "User" };
 
     const result = await preference.create({
-      body: { 
+      body: {
         items: req.body.items.map((item: any) => ({
           id: item.id?.toString(),
           title: item.title,
@@ -79,27 +72,24 @@ app.post("/api/payments/create_preference", async (req: Request, res: Response) 
         payer: {
           email: payerData.email,
           name: payerData.name,
-          surname: payerData.surname
+          surname: payerData.surname,
         },
         back_urls: {
-          success: 'http://localhost:5173/success',
-          failure: 'http://localhost:5173/failure',
-          pending: 'http://localhost:5173/pending',
-        }
-        // Remover auto_return temporalmente para testing
-        // auto_return: 'approved'
-      }
+          success: `${process.env.FRONTEND_URL}/pay/success`,
+          failure: `${process.env.FRONTEND_URL}/pay/failure`,
+          pending: `${process.env.FRONTEND_URL}/pay/failure`,
+        },
+      },
     });
 
     console.log("✅ Preferencia creada:", result.id);
     res.json({ id: result.id });
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error creando preferencia:", error);
-    res.status(500).json({ error: "Error creando preferencia" });
+    res.status(500).json({ error: error.message || "Error creando preferencia" });
   }
 });
 
-// =============================
 
 testDbConnection().then(() => {
   app.listen(PORT, () => {
