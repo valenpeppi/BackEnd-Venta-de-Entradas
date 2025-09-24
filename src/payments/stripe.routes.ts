@@ -4,9 +4,7 @@ import Stripe from 'stripe';
 const router = express.Router();
 
 // Inicializamos Stripe con la secret key del .env
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-06-20',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 // Endpoint para crear sesión de checkout
 router.post('/checkout', async (req, res) => {
