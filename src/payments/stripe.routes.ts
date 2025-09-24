@@ -30,8 +30,8 @@ router.post('/checkout', async (req, res) => {
       })),
       mode: 'payment',
       customer_email: customerEmail,
-      success_url: `${process.env.FRONTEND_URL}/pago/exito`,
-      cancel_url: `${process.env.FRONTEND_URL}/pago/error`,
+      success_url: `${process.env.FRONTEND_URL}/pay/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/pay/failure`,
     });
 
     return res.json({ url: session.url });
