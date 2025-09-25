@@ -95,8 +95,9 @@ model SaleItem {
   dateSaleItem  DateTime  @map("dateSaleItem") @db.DateTime
   quantity      Int
 
-  sale          Sale      @relation(fields: [idSale], references: [idSale])
+  sale          Sale       @relation(fields: [idSale], references: [idSale])
   tickets       Ticket[]
+  seatEvents    SeatEvent[] @relation("SeatEventToSaleItem")
 
   @@id([idSale, dateSaleItem])
   @@index([idSale])
@@ -142,7 +143,7 @@ model SeatEvent {
 
   event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
   seat           Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
-  saleItem       SaleItem? @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
+  saleItem       SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
 
   @@id([idEvent, idPlace, idSector, idSeat])
   @@index([idSeat, idSector, idPlace])
