@@ -446,6 +446,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
 
     const payload: any = {
       id: event.idEvent,
+      description: event.description,
       eventName: event.name,
       imageUrl: event.image
         ? `${process.env.BACKEND_URL || "http://localhost:3000"}${event.image}`
