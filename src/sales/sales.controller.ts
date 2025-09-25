@@ -11,6 +11,7 @@ class SalesController {
     }
 
     try {
+      // Crear la venta principal
       const sale = await prisma.sale.create({
         data: {
           date: new Date(),
@@ -18,22 +19,30 @@ class SalesController {
         },
       });
 
-      for (const ticket of tickets) {
-        const { eventId, idPlace, idSector, ids } = ticket;
+      // Para cada grupo de tickets (mismo evento + sector)
+      for (const ticketGroup of tickets) {
+        const { ids, idEvent, idPlace, idSector } = ticketGroup;
 
-        const availableSeats = await prisma.seatEvent.findMany({
+        if (!Array.isArray(ids) || ids.length === 0) {
+          continue;
+        }
+
+        // Verificar disponibilidad
+        const available = await prisma.ticket.findMany({
           where: {
-            idEvent: eventId,
+            idTicket: { in: ids },
+            idEvent,
             idPlace,
             idSector,
-            idSeat: { in: ids },
-            state: 'reserved',
+            state: 'reserved', // o 'available', según el flujo
           },
         });
 
-        if (availableSeats.length !== ids.length) {
-          throw new Error('Algunos asientos ya fueron vendidos');
+        if (available.length !== ids.length) {
+          throw new Error('Algunos tickets no están disponibles para la venta');
         }
+
+        // Crear un SaleItem para este grupo
         await prisma.saleItem.create({
           data: {
             idSale: sale.idSale,
@@ -41,38 +50,24 @@ class SalesController {
             quantity: ids.length,
           },
         });
-        for (const idSeat of ids) {
-          await prisma.seatEvent.update({
-            where: {
-              idEvent_idPlace_idSector_idSeat: {
-                idEvent: eventId,
-                idPlace,
-                idSector,
-                idSeat,
-              },
-            },
-            data: {
-              state: 'sold',
-            },
-          });
-        }
+
+        // Actualizar los tickets como vendidos
         await prisma.ticket.updateMany({
           where: {
-            idEvent: eventId,
+            idTicket: { in: ids },
+            idEvent,
             idPlace,
             idSector,
-            idSeat: { in: ids },
           },
           data: {
+            state: 'sold',
             idSale: sale.idSale,
             dateSaleItem: new Date(),
-            state: 'sold',
           },
         });
       }
 
       res.status(201).json({ message: 'Venta confirmada', idSale: sale.idSale });
-
     } catch (error: any) {
       console.error('Error al confirmar venta:', error);
       res.status(500).json({ error: 'Error al registrar venta', details: error.message });
