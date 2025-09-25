@@ -131,19 +131,25 @@ model Seat {
 }
 
 model SeatEvent {
-  idEvent  Int
-  idPlace  Int
-  idSector Int
-  idSeat   Int     @map("idSeat")
-  state    String  @db.VarChar(45) @default("available")
+  idEvent        Int
+  idPlace        Int
+  idSector       Int
+  idSeat         Int     @map("idSeat")
+  state          String  @db.VarChar(45) @default("available")
 
-  event Event @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
-  seat  Seat  @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
+  idSale         Int?
+  dateSaleItem   DateTime?
+
+  event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
+  seat           Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
+  saleItem       SaleItem? @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
 
   @@id([idEvent, idPlace, idSector, idSeat])
   @@index([idSeat, idSector, idPlace])
+  @@index([idSale, dateSaleItem])
   @@map("seat_event")
 }
+
 
 model Sector {
   idSector   Int     @map("idSector")

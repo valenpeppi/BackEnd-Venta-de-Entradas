@@ -20,6 +20,7 @@ import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
 import stripeRoutes from './src/payments/stripe.routes';
+import salesRouter from './src/sales/sales.router';
 
 // Archivos estáticos
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
@@ -41,6 +42,8 @@ app.use('/api/catalog', catalogRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/sales', salesRouter);
+
 
 // Manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
