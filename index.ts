@@ -20,6 +20,7 @@ import salesRoutes from './src/sales/sales.router';
 import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
 import stripeRoutes from './src/payments/stripe.routes';
+import stripeWebhookHandler from './src/payments/stripe.webhook';
 import salesRouter from './src/sales/sales.router';
 
 // Archivos estáticos
@@ -31,6 +32,10 @@ app.use(cors({
   credentials: true
 }));
 app.use(morgan('dev'));
+
+// Webhook de Stripe debe usar el cuerpo en bruto para validar la firma
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
