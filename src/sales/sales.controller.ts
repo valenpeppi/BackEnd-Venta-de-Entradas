@@ -5,13 +5,14 @@ class SalesController {
   public async confirmSale(req: Request, res: Response): Promise<void> {
     const { dniClient, tickets } = req.body;
 
-    if (!dniClient || !Array.isArray(tickets) || tickets.length === 0) {
+    if (dniClient === null || dniClient === undefined || !Array.isArray(tickets) || tickets.length === 0) {
       res.status(400).json({ error: 'Faltan datos requeridos (dniClient, tickets[])' });
       return;
     }
 
     try {
       // Crear la venta principal
+      console.log("🧾 Creando venta con dniClient:", dniClient);
       const sale = await prisma.sale.create({
         data: {
           date: new Date(),
