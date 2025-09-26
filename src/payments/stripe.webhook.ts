@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import { stripe } from './stripe.client';
+import { prisma } from '../db/mysql';
 import SalesController from '../sales/sales.controller';
 
 const router = express.Router();
@@ -18,26 +19,80 @@ router.post(
         process.env.STRIPE_WEBHOOK_SECRET!
       );
     } catch (err: any) {
-      console.error('Webhook signature verification failed.', err.message);
+      console.error('❌ Webhook signature verification failed:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
+    console.log(`➡️ Stripe event recibido: ${event.type}`);
+
+    // ✅ Pago completado
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
 
       try {
-        const dniClient = session.metadata?.dniClient;
+        const dniClient = session.metadata?.dniClient
+      ? Number(session.metadata.dniClient)
+      : null;
         const ticketGroups = JSON.parse(session.metadata?.ticketGroups || '[]');
 
-        // Reusar confirmSale del controller
+        console.log("✅ Confirmando venta para:", {
+          dniClient,
+          ticketGroups
+        });
+
+        // Reusar la lógica de confirmSale
         await SalesController.confirmSale(
           { body: { dniClient, tickets: ticketGroups } } as any,
-          res
+          {
+            status: (code: number) => ({
+              json: (data: any) =>
+                console.log("➡️ confirmSale response:", code, data),
+            }),
+          } as any
         );
-
-        console.log(`✅ Venta confirmada automáticamente por webhook (dni: ${dniClient})`);
       } catch (error) {
-        console.error('Error confirmando venta desde webhook:', error);
+        console.error('❌ Error confirmando venta desde webhook:', error);
+      }
+    }
+
+    // ❌ Pago fallido o expirado → liberar tickets
+    if (
+      event.type === 'checkout.session.expired' ||
+      event.type === 'checkout.session.async_payment_failed'
+    ) {
+      const session = event.data.object as any;
+
+      try {
+        const ticketGroups = JSON.parse(session.metadata?.ticketGroups || '[]');
+
+        console.log("♻️ Liberando tickets reservados:", ticketGroups);
+
+        for (const g of ticketGroups) {
+          const idEvent = Number(g.idEvent);
+          const idPlace = Number(g.idPlace);
+          const idSector = Number(g.idSector);
+          const ids = Array.isArray(g.ids)
+            ? g.ids.map((id: any) => Number(id))
+            : [];
+
+          if (!idEvent || !idPlace || !idSector || ids.length === 0) continue;
+
+          await prisma.ticket.updateMany({
+            where: {
+              idTicket: { in: ids },
+              idEvent,
+              idPlace,
+              idSector,
+              state: 'reserved',
+            },
+            data: {
+              state: 'available',
+              reservedAt: null,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('❌ Error liberando tickets en fallo Stripe:', error);
       }
     }
 
