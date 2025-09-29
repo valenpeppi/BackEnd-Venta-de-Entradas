@@ -676,3 +676,49 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getTicketMap: RequestHandler = async (req, res) => {
+  try {
+    const idEvent = Number(req.params.id);
+    if (Number.isNaN(idEvent)) {
+      res.status(400).json({ ok: false, message: 'Invalid event id' });
+      return;
+    }
+
+    // Obtener el evento para saber el idPlace
+    const event = await prisma.event.findUnique({
+      where: { idEvent },
+      select: { idPlace: true }
+    });
+
+    if (!event) {
+      res.status(404).json({ ok: false, message: 'Event not found' });
+      return;
+    }
+
+    // Obtener los seatEvents disponibles para este evento
+    const seatEvents = await prisma.seatEvent.findMany({
+      where: { 
+        idEvent,
+        idPlace: event.idPlace,
+        state: 'available'
+      },
+      select: {
+        idSeat: true,
+        idPlace: true,
+        idSector: true,
+      },
+    });
+
+    const ticketMap: Record<string, number> = {};
+    seatEvents.forEach(seatEvent => {
+      const key = `${seatEvent.idPlace}-${seatEvent.idSector}-${seatEvent.idSeat}`;
+      ticketMap[key] = seatEvent.idSeat; // Usar idSeat como ticketId temporal
+    });
+
+    res.status(200).json({ ok: true, data: ticketMap });
+  } catch (err) {
+    console.error('Error al obtener mapa de tickets:', err);
+    res.status(500).json({ ok: false, message: 'Error interno del servidor' });
+  }
+};
+

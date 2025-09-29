@@ -11,12 +11,17 @@ router.post(
   async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'];
 
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error('❌ STRIPE_WEBHOOK_SECRET no está configurado');
+      return res.status(500).send('Webhook secret not configured');
+    }
+
     let event;
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
         sig as string,
-        process.env.STRIPE_WEBHOOK_SECRET!
+        process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err: any) {
       console.error('❌ Webhook signature verification failed:', err.message);
@@ -77,9 +82,9 @@ router.post(
 
           if (!idEvent || !idPlace || !idSector || ids.length === 0) continue;
 
-          await prisma.ticket.updateMany({
+          await prisma.seatEvent.updateMany({
             where: {
-              idTicket: { in: ids },
+              idSeat: { in: ids },
               idEvent,
               idPlace,
               idSector,
@@ -87,7 +92,6 @@ router.post(
             },
             data: {
               state: 'available',
-              reservedAt: null,
             },
           });
         }
