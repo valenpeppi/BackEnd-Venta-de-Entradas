@@ -11,6 +11,16 @@ class SalesController {
     }
 
     try {
+      // Verificar que el usuario existe
+      const user = await prisma.user.findUnique({
+        where: { dni: dniClient }
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'Usuario no encontrado' });
+        return;
+      }
+
       // Crear la venta principal
       console.log("🧾 Creando venta con dniClient:", dniClient);
       const sale = await prisma.sale.create({
@@ -28,23 +38,8 @@ class SalesController {
           continue;
         }
 
-        // Verificar disponibilidad
-        const available = await prisma.ticket.findMany({
-          where: {
-            idTicket: { in: ids },
-            idEvent,
-            idPlace,
-            idSector,
-            state: 'reserved', // o 'available', según el flujo
-          },
-        });
-
-        if (available.length !== ids.length) {
-          throw new Error('Algunos tickets no están disponibles para la venta');
-        }
-
         // Crear un SaleItem para este grupo
-        await prisma.saleItem.create({
+        const saleItem = await prisma.saleItem.create({
           data: {
             idSale: sale.idSale,
             dateSaleItem: new Date(),
@@ -52,20 +47,71 @@ class SalesController {
           },
         });
 
-        // Actualizar los tickets como vendidos
-        await prisma.ticket.updateMany({
-          where: {
-            idTicket: { in: ids },
-            idEvent,
-            idPlace,
-            idSector,
-          },
-          data: {
-            state: 'sold',
-            idSale: sale.idSale,
-            dateSaleItem: new Date(),
-          },
-        });
+        // Si es sector 0 (entrada general), no hay asientos específicos
+        if (idSector === 0) {
+          console.log(`🎫 Creando tickets de entrada general para evento ${idEvent}`);
+          // Para entrada general, crear tickets sin asientos específicos
+          for (let i = 0; i < ids.length; i++) {
+            await prisma.ticket.create({
+              data: {
+                idEvent,
+                idPlace,
+                idSector: 0,
+                idTicket: i + 1, // ID secuencial
+                state: 'sold',
+                idSeat: 0, // Sin asiento específico
+                idSale: sale.idSale,
+                dateSaleItem: new Date(),
+              },
+            });
+          }
+        } else {
+          // Para sectores enumerados, verificar y actualizar asientos específicos
+          const available = await prisma.seatEvent.findMany({
+            where: {
+              idSeat: { in: ids },
+              idEvent,
+              idPlace,
+              idSector,
+              state: 'reserved', // o 'available', según el flujo
+            },
+          });
+
+          if (available.length !== ids.length) {
+            throw new Error('Algunos asientos no están disponibles para la venta');
+          }
+
+          // Actualizar los seatEvents como vendidos
+          await prisma.seatEvent.updateMany({
+            where: {
+              idSeat: { in: ids },
+              idEvent,
+              idPlace,
+              idSector,
+            },
+            data: {
+              state: 'sold',
+              idSale: sale.idSale,
+              dateSaleItem: new Date(),
+            },
+          });
+
+          // Crear los tickets correspondientes
+          for (const seatId of ids) {
+            await prisma.ticket.create({
+              data: {
+                idEvent,
+                idPlace,
+                idSector,
+                idTicket: seatId, // Usar el seatId como ticketId
+                state: 'sold',
+                idSeat: seatId,
+                idSale: sale.idSale,
+                dateSaleItem: new Date(),
+              },
+            });
+          }
+        }
       }
 
       res.status(201).json({ message: 'Venta confirmada', idSale: sale.idSale });

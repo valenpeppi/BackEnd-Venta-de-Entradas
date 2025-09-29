@@ -48,268 +48,146 @@ async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
   }
 }
 
+async function generateTicketsForEvent(idEvent: number, idPlace: number) {
+  const seatEvents = await prisma.seatEvent.findMany({
+    where: { idEvent, idPlace },
+  });
+
+  for (const se of seatEvents) {
+    const existing = await prisma.ticket.findFirst({
+      where: {
+        idEvent: se.idEvent,
+        idPlace: se.idPlace,
+        idSector: se.idSector,
+        idSeat: se.idSeat,
+      },
+    });
+
+    if (existing) continue;
+
+    const ticketCount = await prisma.ticket.count({
+      where: {
+        idEvent: se.idEvent,
+        idPlace: se.idPlace,
+        idSector: se.idSector,
+      },
+    });
+
+    await prisma.ticket.create({
+      data: {
+        idEvent: se.idEvent,
+        idPlace: se.idPlace,
+        idSector: se.idSector,
+        idTicket: ticketCount + 1,
+        idSeat: se.idSeat,
+        state: 'available',
+      },
+    });
+  }
+
+  console.log(`Tickets generados para evento ${idEvent}`);
+}
+
 async function main() {
   console.log('Iniciando el proceso de seeding...');
 
-  // --- Tipos de Evento ---
-  await prisma.eventType.upsert({
-    where: { idType: 1 },
-    update: {},
-    create: { idType: 1, name: 'Concierto' },
+  // Event Types
+  await prisma.eventType.createMany({
+    skipDuplicates: true,
+    data: [
+      { idType: 1, name: 'Concierto' },
+      { idType: 2, name: 'Stand Up' },
+      { idType: 3, name: 'Jornada de Lectura' },
+      { idType: 4, name: 'Fiesta' },
+      { idType: 5, name: 'Evento Deportivo' },
+      { idType: 6, name: 'Arte' },
+    ],
   });
-  await prisma.eventType.upsert({
-    where: { idType: 2 },
-    update: {},
-    create: { idType: 2, name: 'Stand Up' },
-  });
-  await prisma.eventType.upsert({
-    where: { idType: 3 },
-    update: {},
-    create: { idType: 3, name: 'Jornada de Lectura' },
-  });
-  await prisma.eventType.upsert({
-    where: { idType: 4 },
-    update: {},
-    create: { idType: 4, name: 'Fiesta' },
-  });
-  await prisma.eventType.upsert({
-    where: { idType: 5 },
-    update: {},
-    create: { idType: 5, name: 'Evento Deportivo' },
-  });
-  await prisma.eventType.upsert({
-    where: { idType: 6 },
-    update: {},
-    create: { idType: 6, name: 'Arte' },
-  });
-  console.log('Datos de eventtype cargados.');
+  console.log('Tipos de evento cargados');
 
-  // --- Organizadores ---
-  await prisma.organiser.upsert({
-    where: { idOrganiser: 1 },
-    update: {},
-    create: {
-      idOrganiser: 1,
-      companyName: 'Agus SRL',
-      cuil: '3090090999',
-      contactEmail: 'agus@gmail.com',
-      password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
-      phone: '5493212567375',
-      address: 'Viamonte 2847',
-    },
+  // Organizadores
+  await prisma.organiser.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        idOrganiser: 1,
+        companyName: 'Agus SRL',
+        cuil: '3090090999',
+        contactEmail: 'agus@gmail.com',
+        password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
+        phone: '5493212567375',
+        address: 'Viamonte 2847',
+      },
+      {
+        idOrganiser: 2,
+        companyName: 'peppi SRL',
+        cuil: '2046497046',
+        contactEmail: 'sbrolla@gmail.com',
+        password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
+        phone: '03465654471',
+        address: 'GODINO 887',
+      },
+      {
+        idOrganiser: 3,
+        companyName: 'gian SRL',
+        cuil: '20-46187000-1',
+        contactEmail: 'gian@hotmail.com',
+        password: '$2b$10$nGs0vxZ66jyQE4bMELcTBOKorrT62lQfuZsbPTRT7aC8fQZhOkNFm',
+        phone: '3465656777',
+        address: 'zeballos 14453',
+      },
+    ],
   });
-  await prisma.organiser.upsert({
-    where: { idOrganiser: 2 },
-    update: {},
-    create: {
-      idOrganiser: 2,
-      companyName: 'peppi SRL',
-      cuil: '2046497046',
-      contactEmail: 'sbrolla@gmail.com',
-      password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
-      phone: '03465654471',
-      address: 'GODINO 887',
-    },
-  });
-  await prisma.organiser.upsert({
-    where: { idOrganiser: 3 },
-    update: {},
-    create: {
-      idOrganiser: 3,
-      companyName: 'gian SRL',
-      cuil: '20-46187000-1',
-      contactEmail: 'gian@hotmail.com',
-      password: '$2b$10$nGs0vxZ66jyQE4bMELcTBOKorrT62lQfuZsbPTRT7aC8fQZhOkNFm',
-      phone: '3465656777',
-      address: 'zeballos 14453',
-    },
-  });
-  console.log('Datos de organiser_company cargados.');
+  console.log('Organizadores cargados');
 
-  // --- Places ---
-  await prisma.place.upsert({
-    where: { idPlace: 1 },
-    update: {},
-    create: {
-      idPlace: 1,
-      name: 'Anfiteatro',
-      totalCap: 40,
-      address: 'Av. Belgrano 100 bis',
-      placeType: 'nonEnumerated',
-    },
+  // Lugares
+  await prisma.place.createMany({
+    skipDuplicates: true,
+    data: [
+      { idPlace: 1, name: 'Anfiteatro', totalCap: 40, address: 'Av. Belgrano 100 bis', placeType: 'nonEnumerated' },
+      { idPlace: 2, name: 'Estadio Gigante de Arroyito', totalCap: 260, address: 'Av. Génova 640', placeType: 'hybrid' },
+      { idPlace: 3, name: 'Bioceres Arena', totalCap: 50, address: 'Cafferata 729', placeType: 'hybrid' },
+      { idPlace: 4, name: 'El Ateneo', totalCap: 25, address: 'Cordoba 1473', placeType: 'nonEnumerated' },
+      { idPlace: 5, name: 'El Circulo', totalCap: 60, address: 'Laprida 1223', placeType: 'enumerated' },
+    ],
   });
-  await prisma.place.upsert({
-    where: { idPlace: 2 },
-    update: {},
-    create: {
-      idPlace: 2,
-      name: 'Estadio Gigante de Arroyito',
-      totalCap: 260,
-      address: 'Av. Génova 640',
-      placeType: 'hybrid',
-    },
-  });
-  await prisma.place.upsert({
-    where: { idPlace: 3 },
-    update: {},
-    create: {
-      idPlace: 3,
-      name: 'Bioceres Arena',
-      totalCap: 50,
-      address: 'Cafferata 729',
-      placeType: 'hybrid',
-    },
-  });
-  await prisma.place.upsert({
-    where: { idPlace: 4 },
-    update: {},
-    create: {
-      idPlace: 4,
-      name: 'El Ateneo',
-      totalCap: 25,
-      address: 'Cordoba 1473',
-      placeType: 'nonEnumerated',
-    },
-  });
-  await prisma.place.upsert({
-    where: { idPlace: 5 },
-    update: {},
-    create: {
-      idPlace: 5,
-      name: 'El Circulo',
-      totalCap: 60, // 40 + 20
-      address: 'Laprida 1223',
-      placeType: 'enumerated',
-    },
-  });
-  console.log('Datos de places cargados.');
+  console.log('Lugares cargados');
 
-  // --- Sectores ---
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 1, idPlace: 1 } },
-    update: {},
-    create: {
-      idSector: 1,
-      idPlace: 1,
-      name: 'Platea Inferior',
-      sectorType: 'nonEnumerated',
-      capacity: 40,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 1, idPlace: 2 } },
-    update: {},
-    create: {
-      idSector: 1,
-      idPlace: 2,
-      name: 'Campo',
-      sectorType: 'nonEnumerated',
-      capacity: 80,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 2, idPlace: 2 } },
-    update: {},
-    create: {
-      idSector: 2,
-      idPlace: 2,
-      name: 'Tribuna Norte',
-      sectorType: 'enumerated',
-      capacity: 60,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 3, idPlace: 2 } },
-    update: {},
-    create: {
-      idSector: 3,
-      idPlace: 2,
-      name: 'Tribuna Sur',
-      sectorType: 'enumerated',
-      capacity: 60,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 4, idPlace: 2 } },
-    update: {},
-    create: {
-      idSector: 4,
-      idPlace: 2,
-      name: 'Popular',
-      sectorType: 'nonEnumerated',
-      capacity: 60,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 1, idPlace: 3 } },
-    update: {},
-    create: {
-      idSector: 1,
-      idPlace: 3,
-      name: 'VIP',
-      sectorType: 'enumerated',
-      capacity: 20,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 2, idPlace: 3 } },
-    update: {},
-    create: {
-      idSector: 2,
-      idPlace: 3,
-      name: 'General',
-      sectorType: 'nonEnumerated',
-      capacity: 30,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 1, idPlace: 4 } },
-    update: {},
-    create: {
-      idSector: 1,
-      idPlace: 4,
-      name: 'Sala Principal',
-      sectorType: 'nonEnumerated',
-      capacity: 25,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 1, idPlace: 5 } },
-    update: {},
-    create: {
-      idSector: 1,
-      idPlace: 5,
-      name: 'Sala Principal',
-      sectorType: 'enumerated',
-      capacity: 40,
-    },
-  });
-  await prisma.sector.upsert({
-    where: { idSector_idPlace: { idSector: 2, idPlace: 5 } },
-    update: {},
-    create: {
-      idSector: 2,
-      idPlace: 5,
-      name: 'Tribuna Superior',
-      sectorType: 'enumerated',
-      capacity: 20,
-    },
-  });
+  // Sectores
+  const sectores: { idSector: number; idPlace: number; name: string; sectorType: string; capacity: number }[] = [
+    { idSector: 1, idPlace: 1, name: 'Platea Inferior', sectorType: 'nonEnumerated', capacity: 40 },
+    { idSector: 1, idPlace: 2, name: 'Campo', sectorType: 'nonEnumerated', capacity: 80 },
+    { idSector: 2, idPlace: 2, name: 'Tribuna Norte', sectorType: 'enumerated', capacity: 60 },
+    { idSector: 3, idPlace: 2, name: 'Tribuna Sur', sectorType: 'enumerated', capacity: 60 },
+    { idSector: 4, idPlace: 2, name: 'Popular', sectorType: 'nonEnumerated', capacity: 60 },
+    { idSector: 1, idPlace: 3, name: 'VIP', sectorType: 'enumerated', capacity: 20 },
+    { idSector: 2, idPlace: 3, name: 'General', sectorType: 'nonEnumerated', capacity: 30 },
+    { idSector: 1, idPlace: 4, name: 'Sala Principal', sectorType: 'nonEnumerated', capacity: 25 },
+    { idSector: 1, idPlace: 5, name: 'Sala Principal', sectorType: 'enumerated', capacity: 40 },
+    { idSector: 2, idPlace: 5, name: 'Tribuna Superior', sectorType: 'enumerated', capacity: 20 },
+  ];
 
-  console.log('Datos de sectors cargados.');
+  for (const s of sectores) {
+    await prisma.sector.upsert({
+      where: { idSector_idPlace: { idSector: s.idSector, idPlace: s.idPlace } },
+      update: {},
+      create: s,
+    });
+  }
+  console.log('Sectores cargados');
 
-  // Generar seats
+  // Seats
   const allSectors = await prisma.sector.findMany();
   for (const s of allSectors) {
     await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);
   }
-  console.log('Seats generados por sector según capacity.');
+  console.log('Asientos cargados');
 
+  // Eventos
   const now = new Date();
   const in10d = new Date(now.getTime() + 10 * 24 * 3600 * 1000);
   const in20d = new Date(now.getTime() + 20 * 24 * 3600 * 1000);
 
-  // --- Evento Nicky Nicole ---
   const ev1 = await prisma.event.upsert({
     where: { idEvent: 1 },
     update: {},
@@ -327,7 +205,6 @@ async function main() {
     },
   });
 
-  // --- Evento Bad Bunny ---
   const ev2 = await prisma.event.upsert({
     where: { idEvent: 2 },
     update: {},
@@ -345,7 +222,6 @@ async function main() {
     },
   });
 
-  // --- Evento Bizarrap ---
   const ev3 = await prisma.event.upsert({
     where: { idEvent: 3 },
     update: {},
@@ -363,13 +239,11 @@ async function main() {
     },
   });
 
-  // --- Precios ---
+  // Precios por sector
   const place2Sectors = await prisma.sector.findMany({ where: { idPlace: 2 } });
   for (const s of place2Sectors) {
     await prisma.eventSector.upsert({
-      where: {
-        idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 2, idSector: s.idSector },
-      },
+      where: { idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 2, idSector: s.idSector } },
       update: {},
       create: {
         idEvent: ev1.idEvent,
@@ -379,9 +253,7 @@ async function main() {
       },
     });
     await prisma.eventSector.upsert({
-      where: {
-        idEvent_idPlace_idSector: { idEvent: ev2.idEvent, idPlace: 2, idSector: s.idSector },
-      },
+      where: { idEvent_idPlace_idSector: { idEvent: ev2.idEvent, idPlace: 2, idSector: s.idSector } },
       update: {},
       create: {
         idEvent: ev2.idEvent,
@@ -394,7 +266,7 @@ async function main() {
 
   await prisma.eventSector.upsert({
     where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 1 } },
-    update: { price: new Prisma.Decimal('450000.00') },
+    update: {},
     create: {
       idEvent: ev3.idEvent,
       idPlace: 3,
@@ -402,9 +274,10 @@ async function main() {
       price: new Prisma.Decimal('450000.00'),
     },
   });
+
   await prisma.eventSector.upsert({
     where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 2 } },
-    update: { price: new Prisma.Decimal('300000.00') },
+    update: {},
     create: {
       idEvent: ev3.idEvent,
       idPlace: 3,
@@ -413,55 +286,55 @@ async function main() {
     },
   });
 
-  console.log('EventSectors cargados.');
+  console.log('EventSectors cargados');
 
   await createSeatEventGridForEvent(ev1.idEvent, 2);
+  await generateTicketsForEvent(ev1.idEvent, 2);
+
   await createSeatEventGridForEvent(ev2.idEvent, 2);
+  await generateTicketsForEvent(ev2.idEvent, 2);
+
   await createSeatEventGridForEvent(ev3.idEvent, 3);
+  await generateTicketsForEvent(ev3.idEvent, 3);
 
-  console.log('SeatEvents cargados.');
+  console.log('SeatEvents y Tickets generados');
 
-  await prisma.user.upsert({
-    where: { dni: 45500050 },
-    update: {},
-    create: {
-      dni: 45500050,
-      name: 'peppi',
-      surname: '',
-      mail: 'peppi@gmail.com',
-      birthDate: new Date('2005-04-14'),
-      password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG',
-      role: 'admin',
-    },
+  // ⚙️ Usuarios
+  await prisma.user.createMany({
+    skipDuplicates: true,
+    data: [
+      {
+        dni: 45500050,
+        name: 'peppi',
+        surname: '',
+        mail: 'peppi@gmail.com',
+        birthDate: new Date('2005-04-14'),
+        password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG',
+        role: 'admin',
+      },
+      {
+        dni: 46187000,
+        name: 'gian',
+        surname: '',
+        mail: 'gian@hotmail.com',
+        birthDate: new Date('2005-01-02'),
+        password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a',
+        role: 'user',
+      },
+      {
+        dni: 46497046,
+        name: 'Valen',
+        surname: '',
+        mail: 'maiusbrolla@gmail.com',
+        birthDate: new Date('2005-03-31'),
+        password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO',
+        role: 'user',
+      },
+    ],
   });
-  await prisma.user.upsert({
-    where: { dni: 46187000 },
-    update: {},
-    create: {
-      dni: 46187000,
-      name: 'gian',
-      surname: '',
-      mail: 'gian@hotmail.com',
-      birthDate: new Date('2005-01-02'),
-      password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a',
-      role: 'user',
-    },
-  });
-  await prisma.user.upsert({
-    where: { dni: 46497046 },
-    update: {},
-    create: {
-      dni: 46497046,
-      name: 'Valen',
-      surname: '',
-      mail: 'maiusbrolla@gmail.com',
-      birthDate: new Date('2005-03-31'),
-      password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO',
-      role: 'user',
-    },
-  });
-  console.log('Datos de users cargados.');
-  console.log('Seeding completado.');
+
+  console.log('Usuarios cargados');
+  console.log('Seed finalizado con éxito.');
 }
 
 main()

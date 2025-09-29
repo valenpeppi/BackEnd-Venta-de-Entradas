@@ -17,7 +17,8 @@ import {
   getEventSectors,
   getEventSummary,
   getSeatsForEventSector,
-  searchEvents
+  searchEvents,
+  getTicketMap
 } from './events.controller';
 
 
@@ -76,7 +77,8 @@ router.get('/available-dates/:idPlace', getAvailableDatesByPlace);
 router.get('/search', searchEvents);
 router.get('/events/:id', getEventSummary);
 router.get('/events/:id/sectors', getEventSectors);
-router.get('/events/:id/sectors/:idSector/seats', getSeatsForEventSector); 
+router.get('/events/:id/sectors/:idSector/seats', getSeatsForEventSector);
+router.get('/events/:id/tickets/map', getTicketMap); 
 
 
 export default router;
