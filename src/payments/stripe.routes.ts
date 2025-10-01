@@ -42,10 +42,9 @@ router.post('/checkout', async (req, res) => {
         continue;
       }
 
-      // Si es sector 0 (entrada general), no verificar asientos específicos
+      // Si es sector 0 (entrada general)
       if (idSector === 0) {
         console.log(`🎫 Procesando entrada general para evento ${idEvent}`);
-        // Para entrada general, solo verificamos que el evento tenga capacidad disponible
         const event = await prisma.event.findUnique({
           where: { idEvent },
           include: { place: true }
@@ -56,13 +55,8 @@ router.post('/checkout', async (req, res) => {
           return res.status(404).json({ error: 'Evento no encontrado' });
         }
 
-        // Verificar capacidad total disponible
         const totalAvailable = await prisma.seatEvent.count({
-          where: {
-            idEvent,
-            idPlace,
-            state: 'available',
-          },
+          where: { idEvent, idPlace, state: 'available' },
         });
 
         if (totalAvailable < ids.length) {
@@ -73,13 +67,24 @@ router.post('/checkout', async (req, res) => {
         }
 
         console.log(`✅ Entrada general verificada para evento ${idEvent}`);
-        continue; // No necesitamos reservar asientos específicos para entrada general
+        continue;
       }
 
-      // Para sectores enumerados, verificar asientos específicos
+      // 👉 Mapear índices recibidos del front a idSeat reales en DB
+      const seats = await prisma.seatEvent.findMany({
+        where: { idEvent, idPlace, idSector },
+        orderBy: { idSeat: 'asc' }, // mantenemos orden consistente
+      });
+
+    const mappedIds = ids
+      .map((seatIndex: number) => seats.find((_, idx) => idx === seatIndex)?.idSeat)
+      .filter((idSeat: number | undefined): idSeat is number => typeof idSeat === 'number');
+
+      console.log(`🗺️ Mapeo indices → idSeat reales:`, { ids, mappedIds });
+
       const availableSeats = await prisma.seatEvent.count({
         where: {
-          idSeat: { in: ids },
+          idSeat: { in: mappedIds },
           idEvent,
           idPlace,
           idSector,
@@ -87,9 +92,9 @@ router.post('/checkout', async (req, res) => {
         },
       });
 
-      console.log(`📊 Asientos disponibles: ${availableSeats} de ${ids.length} solicitados`);
+      console.log(`📊 Asientos disponibles: ${availableSeats} de ${mappedIds.length} solicitados`);
 
-      if (availableSeats !== ids.length) {
+      if (availableSeats !== mappedIds.length) {
         console.error(`❌ Asientos no disponibles para evento ${idEvent}, sector ${idSector}`);
         return res.status(400).json({ 
           error: `Algunos asientos no están disponibles para el evento ${idEvent}, sector ${idSector}` 
@@ -99,27 +104,19 @@ router.post('/checkout', async (req, res) => {
       console.log(`🔒 Reservando asientos para evento ${idEvent}, sector ${idSector}`);
       await prisma.seatEvent.updateMany({
         where: {
-          idSeat: { in: ids },
+          idSeat: { in: mappedIds },
           idEvent,
           idPlace,
           idSector,
-          state: 'available', // solo los libres
+          state: 'available',
         },
-        data: {
-          state: 'reserved',
-        },
+        data: { state: 'reserved' },
       });
       console.log(`✅ Asientos reservados exitosamente`);
     }
 
-    // ✅ Crear sesión de Stripe con metadata
+    // ✅ Crear sesión de Stripe
     console.log('💳 Creando sesión de Stripe...');
-    console.log('📋 Items para Stripe:', items);
-    console.log('🌐 URLs:', {
-      success: `${process.env.FRONTEND_URL}/pay/success`,
-      cancel: `${process.env.FRONTEND_URL}/pay/failure`
-    });
-    
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: items.map((item: any) => ({
@@ -143,6 +140,7 @@ router.post('/checkout', async (req, res) => {
     console.log('✅ Sesión de Stripe creada:', session.id);
     console.log('🔗 URL de checkout:', session.url);
     res.json({ url: session.url });
+
   } catch (error: any) {
     console.error('Error creando sesión de Stripe:', error);
     res.status(500).json({ error: error.message });
