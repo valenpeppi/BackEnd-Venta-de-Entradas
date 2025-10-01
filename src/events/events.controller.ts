@@ -593,7 +593,6 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
     const events = await prisma.event.findMany({
       where: {
         OR: [
-          // Coincidencia exacta de categoría (case-insensitive)
           {
             state: 'Approved',
             eventType: {
@@ -610,7 +609,6 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
               } as any,
             },
           },
-          // Nombre del evento que comience con la query
           {
             state: 'Approved',
             name: {
