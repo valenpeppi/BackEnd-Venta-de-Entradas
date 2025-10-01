@@ -1,9 +1,9 @@
-import { getSeatsForSector } from "./seats.controller";
+import { getReservedSeatsForSector } from "./seats.controller";
 import { Router } from 'express';
 
 const router: Router = Router();
 
 
-router.get("/:idEvent/:idPlace/:idSector", getSeatsForSector);
+router.get("/reserved/:idEvent/:idPlace/:idSector", getReservedSeatsForSector);
 
 export default router;

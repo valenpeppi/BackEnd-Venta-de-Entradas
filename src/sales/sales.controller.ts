@@ -42,7 +42,9 @@ class SalesController {
           continue;
         }
         
-        const saleItemDate = new Date(); // Usar la misma fecha para el item y los tickets
+        // CORRECCIÓN: Truncar milisegundos para compatibilidad con DATETIME de MySQL
+        const saleItemDate = new Date();
+        saleItemDate.setMilliseconds(0);
 
         // Crear un SaleItem para este grupo
         const saleItem = await prisma.saleItem.create({
@@ -58,12 +60,13 @@ class SalesController {
         if (idSector === 0) {
           console.log(`🎫 Creando tickets de entrada general para evento ${idEvent}`);
           for (let i = 0; i < ids.length; i++) {
+            const ticketId = await prisma.ticket.count({ where: { idEvent, idPlace, idSector }}) + i + 1;
             await prisma.ticket.create({
               data: {
                 idEvent,
                 idPlace,
                 idSector: 0,
-                idTicket: ids[i], // Usar los IDs temporales del carrito
+                idTicket: ticketId,
                 state: 'sold',
                 idSeat: 0, // Sin asiento específico
                 idSale: sale.idSale,
@@ -79,16 +82,23 @@ class SalesController {
               idEvent,
               idPlace,
               idSector,
-              state: 'reserved',
+              state: 'reserved', // Deberían estar reservados por el checkout
             },
           });
-          console.log(`📊 Asientos encontrados: ${available.length} de ${ids.length}`);
+          console.log(`📊 Asientos reservados encontrados: ${available.length} de ${ids.length}`);
 
           if (available.length !== ids.length) {
-            throw new Error('Algunos asientos no están disponibles para la venta');
+             const trulyAvailable = await prisma.seatEvent.count({
+                where: { idSeat: { in: ids }, idEvent, idPlace, idSector, state: 'available' }
+             });
+             if (trulyAvailable !== ids.length) {
+                throw new Error('Algunos asientos ya no están disponibles para la venta');
+             }
           }
 
-          // Actualizar los seatEvents como vendidos
+          // **LA CORRECCIÓN ESTÁ AQUÍ**
+          // Actualizar los seatEvents como vendidos, pero sin linkear a la venta.
+          // El link a la venta se hace en la tabla Ticket.
           await prisma.seatEvent.updateMany({
             where: {
               idSeat: { in: ids },
@@ -98,19 +108,22 @@ class SalesController {
             },
             data: {
               state: 'sold',
-              idSale: sale.idSale,
-              dateSaleItem: saleItemDate,
+              // Se eliminan idSale y dateSaleItem de aquí para evitar el error de FK
             },
           });
 
           // Crear los tickets correspondientes
           for (const seatId of ids) {
+            // Se genera un id de ticket incremental para ese sector/evento
+            const ticketCountInSector = await prisma.ticket.count({ where: { idEvent, idPlace, idSector }});
+            const newTicketId = ticketCountInSector + 1;
+
             await prisma.ticket.create({
               data: {
                 idEvent,
                 idPlace,
                 idSector,
-                idTicket: seatId,
+                idTicket: newTicketId, // Usamos el nuevo ID incremental
                 state: 'sold',
                 idSeat: seatId,
                 idSale: sale.idSale,
