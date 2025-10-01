@@ -38,31 +38,28 @@ export async function createSeatEventGridForEvent(idEvent: number, idPlace: numb
   }
 }
 
-export const getReservedSeatsForSector = async (req: Request, res: Response) => {
+export const getSeatsForSector = async (req: Request<SeatParams>, res: Response) => {
   try {
-    const { idEvent, idPlace, idSector } = req.params;
+    const { idEvent, idSector } = req.params;
 
     const seats = await prisma.seatEvent.findMany({
       where: {
         idEvent: Number(idEvent),
-        idPlace: Number(idPlace),
         idSector: Number(idSector),
-        state: "reserved",
       },
-      include: {
-        seat: true, // para traer label/número
-      },
-      orderBy: { idSeat: 'asc' }
+      include: { seat: true },
+      orderBy: { idSeat: "asc" },
     });
 
     res.json({
-      data: seats.map(s => ({
+      data: seats.map((s) => ({
         id: s.idSeat,
-        state: s.state
-      }))
+        label: (s.seat as any)?.label || `Asiento ${s.idSeat}`,
+        state: s.state as "available" | "reserved" | "sold" | "selected",
+      })),
     });
   } catch (error) {
-    console.error('Error al obtener asientos', error);
-    res.status(500).json({ message: 'Error al obtener asientos' });
+    console.error("❌ Error al obtener asientos", error);
+    res.status(500).json({ message: "Error al obtener asientos" });
   }
 };

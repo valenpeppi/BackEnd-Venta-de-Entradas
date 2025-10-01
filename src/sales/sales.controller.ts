@@ -42,7 +42,6 @@ class SalesController {
           continue;
         }
         
-        // CORRECCIÓN: Truncar milisegundos para compatibilidad con DATETIME de MySQL
         const saleItemDate = new Date();
         saleItemDate.setMilliseconds(0);
 
@@ -68,7 +67,7 @@ class SalesController {
                 idSector: 0,
                 idTicket: ticketId,
                 state: 'sold',
-                idSeat: 0, // Sin asiento específico
+                idSeat: 0, 
                 idSale: sale.idSale,
                 dateSaleItem: saleItemDate,
               },
@@ -82,7 +81,7 @@ class SalesController {
               idEvent,
               idPlace,
               idSector,
-              state: 'reserved', // Deberían estar reservados por el checkout
+              state: 'reserved', 
             },
           });
           console.log(`📊 Asientos reservados encontrados: ${available.length} de ${ids.length}`);
@@ -96,9 +95,6 @@ class SalesController {
              }
           }
 
-          // **LA CORRECCIÓN ESTÁ AQUÍ**
-          // Actualizar los seatEvents como vendidos, pero sin linkear a la venta.
-          // El link a la venta se hace en la tabla Ticket.
           await prisma.seatEvent.updateMany({
             where: {
               idSeat: { in: ids },
@@ -108,7 +104,6 @@ class SalesController {
             },
             data: {
               state: 'sold',
-              // Se eliminan idSale y dateSaleItem de aquí para evitar el error de FK
             },
           });
 
@@ -123,7 +118,7 @@ class SalesController {
                 idEvent,
                 idPlace,
                 idSector,
-                idTicket: newTicketId, // Usamos el nuevo ID incremental
+                idTicket: newTicketId, 
                 state: 'sold',
                 idSeat: seatId,
                 idSale: sale.idSale,
@@ -141,7 +136,6 @@ class SalesController {
     }
   }
 
-  // FUNCIÓN CORREGIDA
   public async getUserTickets(req: AuthRequest, res: Response): Promise<void> {
     const dniClient = req.auth?.dni;
 
@@ -182,7 +176,7 @@ class SalesController {
         },
         orderBy: {
           event: {
-            date: 'desc',
+            date: 'asc',
           },
         },
       });

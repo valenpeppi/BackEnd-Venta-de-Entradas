@@ -85,7 +85,7 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    // Corregido: prisma.organiser_company -> prisma.organiser
+    
     const existingCompany = await prisma.organiser.findFirst({
       where: {
         OR: [
