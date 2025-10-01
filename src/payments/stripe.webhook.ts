@@ -30,22 +30,19 @@ router.post(
 
     console.log(`➡️ Stripe event recibido: ${event.type}`);
 
-    // ✅ Pago completado
+    // ✅ Pago completado → confirmamos venta
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
 
       try {
         const dniClient = session.metadata?.dniClient
-      ? Number(session.metadata.dniClient)
-      : null;
+          ? Number(session.metadata.dniClient)
+          : null;
         const ticketGroups = JSON.parse(session.metadata?.ticketGroups || '[]');
 
-        console.log("✅ Confirmando venta para:", {
-          dniClient,
-          ticketGroups
-        });
+        console.log("✅ Confirmando venta para:", { dniClient, ticketGroups });
 
-        // Reusar la lógica de confirmSale
+        // Reusar SalesController.confirmSale
         await SalesController.confirmSale(
           { body: { dniClient, tickets: ticketGroups } } as any,
           {
@@ -60,7 +57,7 @@ router.post(
       }
     }
 
-    // ❌ Pago fallido o expirado → liberar tickets
+    // ❌ Pago fallido o expirado → liberar tickets reservados
     if (
       event.type === 'checkout.session.expired' ||
       event.type === 'checkout.session.async_payment_failed'
@@ -92,6 +89,8 @@ router.post(
             },
             data: {
               state: 'available',
+              idSale: null,
+              dateSaleItem: null,
             },
           });
         }
