@@ -70,17 +70,9 @@ router.post('/checkout', async (req, res) => {
         continue;
       }
 
-      // 👉 Mapear índices recibidos del front a idSeat reales en DB
-      const seats = await prisma.seatEvent.findMany({
-        where: { idEvent, idPlace, idSector },
-        orderBy: { idSeat: 'asc' }, // mantenemos orden consistente
-      });
-
-    const mappedIds = ids
-      .map((seatIndex: number) => seats.find((_, idx) => idx === seatIndex)?.idSeat)
-      .filter((idSeat: number | undefined): idSeat is number => typeof idSeat === 'number');
-
-      console.log(`🗺️ Mapeo indices → idSeat reales:`, { ids, mappedIds });
+      // Corrección: Usar 'ids' directamente ya que contienen los idSeat correctos.
+      const mappedIds = ids;
+      console.log(`🗺️ IDs de asientos a procesar:`, { mappedIds });
 
       const availableSeats = await prisma.seatEvent.count({
         where: {

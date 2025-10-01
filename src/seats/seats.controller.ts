@@ -38,7 +38,7 @@ export async function createSeatEventGridForEvent(idEvent: number, idPlace: numb
   }
 }
 
-export const getSeatsForSector = async (req: Request, res: Response) => {
+export const getReservedSeatsForSector = async (req: Request, res: Response) => {
   try {
     const { idEvent, idPlace, idSector } = req.params;
 
@@ -47,6 +47,7 @@ export const getSeatsForSector = async (req: Request, res: Response) => {
         idEvent: Number(idEvent),
         idPlace: Number(idPlace),
         idSector: Number(idSector),
+        state: "reserved",
       },
       include: {
         seat: true, // para traer label/número
