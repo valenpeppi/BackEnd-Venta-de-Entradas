@@ -1,61 +1,146 @@
 import express from 'express';
-import { preferences } from './mp';
+import { stripe } from './stripe.client';
 import { prisma } from '../db/mysql';
 
 const router = express.Router();
 
+// Crear sesión de checkout de Stripe
 router.post('/checkout', async (req, res) => {
   try {
-    const { eventId, ticketIds, buyerEmail, title, unitPrice } = req.body as {
-      eventId: number;
-      ticketIds: number[];
-      buyerEmail?: string;
-      title?: string;
-      unitPrice?: number;
-    };
+    console.log('🔍 Stripe checkout iniciado');
+    console.log('📦 Body recibido:', JSON.stringify(req.body, null, 2));
+    
+    const { items, dniClient, ticketGroups, customerEmail } = req.body;
 
-    if (!eventId || !ticketIds || ticketIds.length === 0) {
-      return res.status(400).json({ error: 'Faltan tickets o evento' });
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      console.error('❌ No se enviaron ítems válidos');
+      return res.status(400).json({ error: 'No se enviaron ítems válidos' });
     }
 
-    // Reservar tickets en estado "pending"
-    await prisma.ticket.updateMany({
-      where: { idTicket: { in: ticketIds }, state: "available" },
-      data: { state: "pending" }
-    });
+    if (!ticketGroups || !Array.isArray(ticketGroups) || ticketGroups.length === 0) {
+      console.error('❌ No se enviaron ticketGroups válidos');
+      return res.status(400).json({ error: 'No se enviaron ticketGroups válidos' });
+    }
 
-    const externalRef = `order_${eventId}_${Date.now()}`;
+    if (!dniClient || !customerEmail) {
+      console.error('❌ Faltan datos del cliente:', { dniClient, customerEmail });
+      return res.status(400).json({ error: 'Faltan datos del cliente (dniClient, customerEmail)' });
+    }
 
-    const pref = await preferences.create({
-      body: {
-        items: [
-          {
-            id: String(eventId),
-            title: title ?? `Evento ${eventId}`,
-            quantity: ticketIds.length,
-            unit_price: Number(unitPrice ?? 2000),
-            currency_id: 'ARS',
-          },
-        ],
-        payer: buyerEmail ? { email: buyerEmail } : undefined,
-        external_reference: externalRef,
-        back_urls: {
-          success: `${process.env.FRONTEND_URL}/pay/success`,
-          failure: `${process.env.FRONTEND_URL}/pay/failure`,
-          pending: `${process.env.FRONTEND_URL}/pay/failure`,
+    console.log('🎫 Procesando ticketGroups:', ticketGroups);
+    
+    for (const g of ticketGroups) {
+      const idEvent = Number(g.idEvent);
+      const idPlace = Number(g.idPlace);
+      const idSector = Number(g.idSector);
+      const ids = Array.isArray(g.ids) ? g.ids.map((id: any) => Number(id)) : [];
+
+      console.log(`🔍 Procesando grupo:`, { idEvent, idPlace, idSector, ids });
+
+      if (!idEvent || !idPlace || ids.length === 0) {
+        console.warn("⚠️ ticketGroup inválido, se saltea:", g);
+        continue;
+      }
+
+      // Si es sector 0 (entrada general)
+      if (idSector === 0) {
+        console.log(`🎫 Procesando entrada general para evento ${idEvent}`);
+        const event = await prisma.event.findUnique({
+          where: { idEvent },
+          include: { place: true }
+        });
+
+        if (!event) {
+          console.error(`❌ Evento ${idEvent} no encontrado`);
+          return res.status(404).json({ error: 'Evento no encontrado' });
+        }
+
+        const totalAvailable = await prisma.seatEvent.count({
+          where: { idEvent, idPlace, state: 'available' },
+        });
+
+        if (totalAvailable < ids.length) {
+          console.error(`❌ No hay suficientes entradas disponibles para evento ${idEvent}`);
+          return res.status(400).json({ 
+            error: `No hay suficientes entradas disponibles para el evento ${idEvent}` 
+          });
+        }
+
+        console.log(`✅ Entrada general verificada para evento ${idEvent}`);
+        continue;
+      }
+
+      // 👉 Mapear índices recibidos del front a idSeat reales en DB
+      const seats = await prisma.seatEvent.findMany({
+        where: { idEvent, idPlace, idSector },
+        orderBy: { idSeat: 'asc' }, // así el índice coincide con la posición
+      });
+
+      const mappedIds = ids.map(i => seats[i]?.idSeat).filter(Boolean);
+      console.log(`🗺️ Mapeo indices → idSeat reales:`, { ids, mappedIds });
+
+      const availableSeats = await prisma.seatEvent.count({
+        where: {
+          idSeat: { in: mappedIds },
+          idEvent,
+          idPlace,
+          idSector,
+          state: 'available',
         },
-        auto_return: 'approved',
-        notification_url: `${process.env.BACKEND_URL}/api/webhooks/mp`,
+      });
+
+      console.log(`📊 Asientos disponibles: ${availableSeats} de ${mappedIds.length} solicitados`);
+
+      if (availableSeats !== mappedIds.length) {
+        console.error(`❌ Asientos no disponibles para evento ${idEvent}, sector ${idSector}`);
+        return res.status(400).json({ 
+          error: `Algunos asientos no están disponibles para el evento ${idEvent}, sector ${idSector}` 
+        });
+      }
+
+      console.log(`🔒 Reservando asientos para evento ${idEvent}, sector ${idSector}`);
+      await prisma.seatEvent.updateMany({
+        where: {
+          idSeat: { in: mappedIds },
+          idEvent,
+          idPlace,
+          idSector,
+          state: 'available',
+        },
+        data: { state: 'reserved' },
+      });
+      console.log(`✅ Asientos reservados exitosamente`);
+    }
+
+    // ✅ Crear sesión de Stripe
+    console.log('💳 Creando sesión de Stripe...');
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: 'ars',
+          product_data: { name: item.name },
+          unit_amount: item.amount,
+        },
+        quantity: item.quantity,
+      })),
+      mode: 'payment',
+      customer_email: customerEmail,
+      success_url: `${process.env.FRONTEND_URL}/pay/success`,
+      cancel_url: `${process.env.FRONTEND_URL}/pay/failure`,
+      metadata: {
+        dniClient: String(dniClient),
+        ticketGroups: JSON.stringify(ticketGroups),
       },
     });
 
-    return res.json({
-      preferenceId: pref.id,
-      externalRef,
-    });
-  } catch (e: any) {
-    console.error('Error /checkout:', e);
-    res.status(500).json({ error: e.message || 'Error creando preferencia' });
+    console.log('✅ Sesión de Stripe creada:', session.id);
+    console.log('🔗 URL de checkout:', session.url);
+    res.json({ url: session.url });
+
+  } catch (error: any) {
+    console.error('Error creando sesión de Stripe:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
