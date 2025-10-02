@@ -183,6 +183,8 @@ model Ticket {
   eventSector  EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
   saleItem     SaleItem?   @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
   seat         Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
+  
+  @@unique([idEvent, idPlace, idSector, idSeat], name: "ticket_by_seat")
 
   @@id([idEvent, idPlace, idSector, idTicket])
   @@index([idSale, dateSaleItem])

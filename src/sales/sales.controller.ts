@@ -106,26 +106,26 @@ class SalesController {
               state: 'sold',
             },
           });
-
-          // Crear los tickets correspondientes
+          // Actualizar los tickets ya existentes para cada asiento
           for (const seatId of ids) {
-            // Se genera un id de ticket incremental para ese sector/evento
-            const ticketCountInSector = await prisma.ticket.count({ where: { idEvent, idPlace, idSector }});
-            const newTicketId = ticketCountInSector + 1;
-
-            await prisma.ticket.create({
+            await prisma.ticket.update({
+              where: {
+                ticket_by_seat: {
+                  idEvent,
+                  idPlace,
+                  idSector,
+                  idSeat: seatId,
+                },
+              },
               data: {
-                idEvent,
-                idPlace,
-                idSector,
-                idTicket: newTicketId, 
                 state: 'sold',
-                idSeat: seatId,
                 idSale: sale.idSale,
                 dateSaleItem: saleItemDate,
               },
             });
           }
+
+
         }
       }
       console.log("✅ Venta confirmada exitosamente:", sale);
