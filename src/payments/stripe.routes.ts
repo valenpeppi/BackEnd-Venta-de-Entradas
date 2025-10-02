@@ -104,10 +104,10 @@ router.post('/checkout', async (req, res) => {
         },
         data: { state: 'reserved' },
       });
-      console.log(`✅ Asientos reservados exitosamente`);
+      console.log(`Asientos reservados exitosamente`);
     }
 
-    // ✅ Crear sesión de Stripe
+    // Crear sesión de Stripe
     console.log('💳 Creando sesión de Stripe...');
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -121,7 +121,7 @@ router.post('/checkout', async (req, res) => {
       })),
       mode: 'payment',
       customer_email: customerEmail,
-      success_url: `${process.env.FRONTEND_URL}/pay/success`,
+      success_url: `${process.env.FRONTEND_URL}/pay/processing`,
       cancel_url: `${process.env.FRONTEND_URL}/pay/failure`,
       metadata: {
         dniClient: String(dniClient),
