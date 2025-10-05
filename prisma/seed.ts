@@ -24,7 +24,8 @@ async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
     include: { seats: true },
   });
 
-  for (const sec of sectors) {
+  // Solo iterar y crear si el sector es de tipo enumerado
+  for (const sec of sectors.filter(s => s.sectorType === 'enumerated')) {
     for (const st of sec.seats) {
       await prisma.seatEvent.upsert({
         where: {
@@ -53,6 +54,7 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
     where: { idEvent, idPlace },
   });
 
+  // Generar tickets solo para sectores enumerados que tienen seatEvents
   for (const se of seatEvents) {
     const existing = await prisma.ticket.findFirst({
       where: {
@@ -84,8 +86,10 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
       },
     });
   }
-
-  console.log(`Tickets generados para evento ${idEvent}`);
+  
+  // Para los sectores no enumerados, no se generan tickets individuales.
+  // La lógica de venta para estos se manejaría de forma distinta (por capacidad).
+  console.log(`Tickets (si aplica) generados para evento ${idEvent}`);
 }
 
 async function main() {
@@ -101,8 +105,7 @@ async function main() {
       { idType: 4, name: 'Fiesta' },
       { idType: 5, name: 'Evento Deportivo' },
       { idType: 6, name: 'Arte' },
-      { idType: 7, name: 'Conferencia' },
-        ],
+    ],
   });
   console.log('Tipos de evento cargados');
 
@@ -180,164 +183,181 @@ async function main() {
   // Seats
   const allSectors = await prisma.sector.findMany();
   for (const s of allSectors) {
-    await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);
+    // Solo crear asientos para sectores enumerados
+    if (s.sectorType === 'enumerated') {
+      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);
+    }
   }
   console.log('Asientos cargados');
 
   // Eventos
   const now = new Date();
-
   const in10d = new Date(now.getTime() + 90 * 24 * 3600 * 1000);
-  in10d.setHours(22, 0, 0, 0); 
-
+  in10d.setHours(22, 0, 0, 0);
   const in20d = new Date(now.getTime() + 79 * 24 * 3600 * 1000);
-  in20d.setHours(20, 30, 0, 0); 
-
+  in20d.setHours(20, 30, 0, 0);
   const in30d = new Date(now.getTime() + 68 * 24 * 3600 * 1000);
-  in30d.setHours(23, 45, 0, 0); 
-
+  in30d.setHours(23, 45, 0, 0);
 
   const ev1 = await prisma.event.upsert({
-    where: { idEvent: 1 },
-    update: {},
-    create: {
-      idEvent: 1,
-      name: 'Nicky Nicole',
-      description: 'Nicky Nicole se presenta en Rosario para una noche espectacular.',
-      date: in10d,
-      state: 'Approved',
-      image: '/uploads/event-1757442435231-517072449.jpeg',
-      featured: true,
-      idEventType: 1,
-      idOrganiser: 1,
-      idPlace: 2,
+    where: { idEvent: 1 }, update: {}, create: {
+      idEvent: 1, name: 'Nicky Nicole', description: 'Nicky Nicole se presenta en Rosario para una noche espectacular.',
+      date: in10d, state: 'Approved', image: '/uploads/event-1757442435231-517072449.jpeg',
+      featured: true, idEventType: 1, idOrganiser: 1, idPlace: 2,
     },
   });
 
   const ev2 = await prisma.event.upsert({
-    where: { idEvent: 2 },
-    update: {},
-    create: {
-      idEvent: 2,
-      name: 'Bad Bunny',
-      description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones.',
-      date: in20d,
-      state: 'Approved',
-      image: '/uploads/event-1755092653867-52272554.jpg',
-      featured: true,
-      idEventType: 1,
-      idOrganiser: 2,
-      idPlace: 2,
+    where: { idEvent: 2 }, update: {}, create: {
+      idEvent: 2, name: 'Bad Bunny', description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones.',
+      date: in20d, state: 'Approved', image: '/uploads/event-1755092653867-52272554.jpg',
+      featured: true, idEventType: 1, idOrganiser: 2, idPlace: 2,
     },
   });
 
   const ev3 = await prisma.event.upsert({
-    where: { idEvent: 3 },
-    update: {},
-    create: {
-      idEvent: 3,
-      name: 'Bizarrap',
-      description: '¡Bizarrap llega al Bioceres para reventar la ciudad de Rosario en este show exclusivo!',
-      date: in30d,
-      state: 'Approved',
-      image: '/uploads/event-1758722694684-973176483.webp',
-      featured: true,
-      idEventType: 1,
-      idOrganiser: 1,
-      idPlace: 3,
+    where: { idEvent: 3 }, update: {}, create: {
+      idEvent: 3, name: 'Bizarrap', description: '¡Bizarrap llega al Bioceres para reventar la ciudad de Rosario en este show exclusivo!',
+      date: in30d, state: 'Approved', image: '/uploads/event-1758722694684-973176483.webp',
+      featured: true, idEventType: 1, idOrganiser: 1, idPlace: 3,
     },
   });
+  
+  // Se agregan los nuevos eventos
+  const ev4 = await prisma.event.upsert({
+    where: { idEvent: 4 }, update: {}, create: {
+      idEvent: 4, name: 'Lucho Mallera Rosario', description: 'Preparate para una noche espectacular llena de risas!',
+      date: new Date('2026-12-13 00:00:00'), state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
+      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 5
+    }
+  });
 
-  // Precios por sector
-  const place2Sectors = await prisma.sector.findMany({ where: { idPlace: 2 } });
-  for (const s of place2Sectors) {
+  const ev5 = await prisma.event.upsert({
+    where: { idEvent: 5 }, update: {}, create: {
+      idEvent: 5, name: 'Vuelve Yayo a Rosario!', description: 'Vuelve el mejor humorista de la historia de Argentina, preparate para reirte con humor de todo tipo!',
+      date: new Date('2026-11-20 23:00:00'), state: 'Approved', image: '/uploads/event-1759701392664-86226707.jpg',
+      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
+    }
+  });
+
+  const ev6 = await prisma.event.upsert({
+    where: { idEvent: 6 }, update: {}, create: {
+      idEvent: 6, name: 'Viernes en la Jungla', description: 'Preparate la * que te re pario\r\nPorque Los viernes de la jungla son a todo *!',
+      date: new Date('2026-01-20 03:00:00'), state: 'Approved', image: '/uploads/event-1759701574472-372104597.jpg',
+      featured: false, idEventType: 4, idOrganiser: 3, idPlace: 2
+    }
+  });
+
+  const ev7 = await prisma.event.upsert({
+    where: { idEvent: 7 }, update: {}, create: {
+      idEvent: 7, name: 'La Besh', description: 'Somos un movimiento que conecta a miles de personas a través de la música, la alegría y la inclusión. Hitazo tras hitazo. Revive cada fiesta.',
+      date: new Date('2026-01-15 18:00:00'), state: 'Approved', image: '/uploads/event-1759701709738-724959945.jpg',
+      featured: false, idEventType: 4, idOrganiser: 3, idPlace: 2
+    }
+  });
+
+  const ev8 = await prisma.event.upsert({
+    where: { idEvent: 8 }, update: {}, create: {
+      idEvent: 8, name: 'Festival de Danzas Clasicas', description: 'Un encuentro de las compañías de ballet más prestigiosas del mundo, conocido por su excelencia técnica y espectáculos innovadores.',
+      date: new Date('2025-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
+      featured: false, idEventType: 3, idOrganiser: 3, idPlace: 3
+    }
+  });
+
+  const ev9 = await prisma.event.upsert({
+    where: { idEvent: 9 }, update: {}, create: {
+      idEvent: 9, name: '9 de Juilio contra Belgrano', description: 'El mejor clasico de la liga se juega, compra tus entradas con 1 año de anticipacion!!',
+      date: new Date('2026-07-19 19:00:00'), state: 'Approved', image: '/uploads/event-1759702021862-561109661.jpg',
+      featured: false, idEventType: 5, idOrganiser: 3, idPlace: 2
+    }
+  });
+
+  const ev10 = await prisma.event.upsert({
+    where: { idEvent: 10 }, update: {}, create: {
+      idEvent: 10, name: 'Conferencia para Debatir sobre Martin Fierro', description: 'Evento literario que celebra la publicación de la obra de José Hernández mediante la recitación de sus versos en voz alta por parte de el público.',
+      date: new Date('2025-12-12 20:00:00'), state: 'Approved', image: '/uploads/event-1759702164244-273917676.jpg',
+      featured: false, idEventType: 7, idOrganiser: 3, idPlace: 4
+    }
+  });
+
+  const ev11 = await prisma.event.upsert({
+    where: { idEvent: 11 }, update: {}, create: {
+      idEvent: 11, name: 'Demostracion de Arte de La Siberia', description: 'Hacemos una gran demostracion de arte de nuestros alumnos para despedir el año.',
+      date: new Date('2025-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
+      featured: false, idEventType: 6, idOrganiser: 3, idPlace: 5
+    }
+  });
+  console.log('Todos los eventos han sido cargados.');
+
+  // Precios por sector para todos los eventos
+  const eventSectorsData = [
+    { idEvent: ev1.idEvent, idPlace: 2, idSector: 1, price: '80000.00' },
+    { idEvent: ev1.idEvent, idPlace: 2, idSector: 2, price: '65000.00' },
+    { idEvent: ev1.idEvent, idPlace: 2, idSector: 3, price: '65000.00' },
+    { idEvent: ev1.idEvent, idPlace: 2, idSector: 4, price: '80000.00' },
+    { idEvent: ev2.idEvent, idPlace: 2, idSector: 1, price: '80000.00' },
+    { idEvent: ev2.idEvent, idPlace: 2, idSector: 2, price: '60000.00' },
+    { idEvent: ev2.idEvent, idPlace: 2, idSector: 3, price: '60000.00' },
+    { idEvent: ev2.idEvent, idPlace: 2, idSector: 4, price: '80000.00' },
+    { idEvent: ev3.idEvent, idPlace: 3, idSector: 1, price: '100000.00' },
+    { idEvent: ev3.idEvent, idPlace: 3, idSector: 2, price: '150000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 1, price: '25000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 2, price: '30000.00' },
+    { idEvent: ev5.idEvent, idPlace: 4, idSector: 1, price: '50000.00' },
+    { idEvent: ev6.idEvent, idPlace: 2, idSector: 1, price: '20000.00' },
+    { idEvent: ev6.idEvent, idPlace: 2, idSector: 2, price: '25000.00' },
+    { idEvent: ev6.idEvent, idPlace: 2, idSector: 3, price: '25000.00' },
+    { idEvent: ev6.idEvent, idPlace: 2, idSector: 4, price: '30000.00' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 1, price: '60000.00' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 2, price: '70000.00' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 3, price: '70000.00' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 4, price: '64999.99' },
+    { idEvent: ev8.idEvent, idPlace: 3, idSector: 1, price: '40000.00' },
+    { idEvent: ev8.idEvent, idPlace: 3, idSector: 2, price: '40000.00' },
+    { idEvent: ev9.idEvent, idPlace: 2, idSector: 1, price: '7000.00' },
+    { idEvent: ev9.idEvent, idPlace: 2, idSector: 2, price: '10000.00' },
+    { idEvent: ev9.idEvent, idPlace: 2, idSector: 3, price: '10000.00' },
+    { idEvent: ev9.idEvent, idPlace: 2, idSector: 4, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 4, idSector: 1, price: '5000.00' },
+    { idEvent: ev11.idEvent, idPlace: 5, idSector: 1, price: '10000.00' },
+    { idEvent: ev11.idEvent, idPlace: 5, idSector: 2, price: '10000.00' },
+  ];
+
+  for (const data of eventSectorsData) {
     await prisma.eventSector.upsert({
-      where: { idEvent_idPlace_idSector: { idEvent: ev1.idEvent, idPlace: 2, idSector: s.idSector } },
-      update: {},
-      create: {
-        idEvent: ev1.idEvent,
-        idPlace: 2,
-        idSector: s.idSector,
-        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '65000.00' : '80000.00'),
-      },
-    });
-    await prisma.eventSector.upsert({
-      where: { idEvent_idPlace_idSector: { idEvent: ev2.idEvent, idPlace: 2, idSector: s.idSector } },
-      update: {},
-      create: {
-        idEvent: ev2.idEvent,
-        idPlace: 2,
-        idSector: s.idSector,
-        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '60000.00' : '80000.00'),
-      },
+      where: { idEvent_idPlace_idSector: { idEvent: data.idEvent, idPlace: data.idPlace, idSector: data.idSector } },
+      update: { price: new Prisma.Decimal(data.price) },
+      create: { ...data, price: new Prisma.Decimal(data.price) },
     });
   }
-
-  await prisma.eventSector.upsert({
-    where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 1 } },
-    update: {},
-    create: {
-      idEvent: ev3.idEvent,
-      idPlace: 3,
-      idSector: 1,
-      price: new Prisma.Decimal('100000.00'),
-    },
-  });
-
-  await prisma.eventSector.upsert({
-    where: { idEvent_idPlace_idSector: { idEvent: ev3.idEvent, idPlace: 3, idSector: 2 } },
-    update: {},
-    create: {
-      idEvent: ev3.idEvent,
-      idPlace: 3,
-      idSector: 2,
-      price: new Prisma.Decimal('150000.00'),
-    },
-  });
-
   console.log('EventSectors cargados');
 
-  await createSeatEventGridForEvent(ev1.idEvent, 2);
-  await generateTicketsForEvent(ev1.idEvent, 2);
-
-  await createSeatEventGridForEvent(ev2.idEvent, 2);
-  await generateTicketsForEvent(ev2.idEvent, 2);
-
-  await createSeatEventGridForEvent(ev3.idEvent, 3);
-  await generateTicketsForEvent(ev3.idEvent, 3);
-
-  console.log('SeatEvents y Tickets generados');
+  // Generación de Grilla y Tickets para todos los eventos de forma automática
+  const allEvents = await prisma.event.findMany();
+  for (const event of allEvents) {
+    await createSeatEventGridForEvent(event.idEvent, event.idPlace);
+    await generateTicketsForEvent(event.idEvent, event.idPlace);
+  }
+  console.log('SeatEvents y Tickets generados para todos los eventos');
 
   // Usuarios
   await prisma.user.createMany({
     skipDuplicates: true,
     data: [
       {
-        dni: 45500050,
-        name: 'peppi',
-        surname: '',
-        mail: 'peppi@gmail.com',
+        dni: 45500050, name: 'peppi', surname: '', mail: 'peppi@gmail.com',
         birthDate: new Date('2005-04-14'),
-        password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG',
-        role: 'admin',
+        password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG', role: 'admin',
       },
       {
-        dni: 46187000,
-        name: 'gian',
-        surname: '',
-        mail: 'gian@hotmail.com',
+        dni: 46187000, name: 'gian', surname: '', mail: 'gian@hotmail.com',
         birthDate: new Date('2005-01-02'),
-        password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a',
-        role: 'user',
+        password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a', role: 'user',
       },
       {
-        dni: 46497046,
-        name: 'Valen',
-        surname: '',
-        mail: 'maiusbrolla@gmail.com',
+        dni: 46497046, name: 'Valen', surname: '', mail: 'maiusbrolla@gmail.com',
         birthDate: new Date('2005-03-31'),
-        password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO',
-        role: 'user',
+        password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user',
       },
     ],
   });
