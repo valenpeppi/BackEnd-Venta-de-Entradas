@@ -226,7 +226,7 @@ async function main() {
   // Se agregan los nuevos eventos
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
-      idEvent: 4, name: 'Lucho Mallera Rosario', description: 'Preparate para una noche espectacular llena de risas!',
+      idEvent: 4, name: 'Lucho Mellera', description: 'Preparate para una noche espectacular llena de risas!',
       date: new Date('2026-12-13 00:00:00'), state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
       featured: false, idEventType: 2, idOrganiser: 3, idPlace: 5
     }
@@ -250,7 +250,7 @@ async function main() {
 
   const ev7 = await prisma.event.upsert({
     where: { idEvent: 7 }, update: {}, create: {
-      idEvent: 7, name: 'La Besh', description: 'Somos un movimiento que conecta a miles de personas a través de la música, la alegría y la inclusión. Hitazo tras hitazo. Revive cada fiesta.',
+      idEvent: 7, name: 'La Bresh', description: 'Somos un movimiento que conecta a miles de personas a través de la música, la alegría y la inclusión. Hitazo tras hitazo. Revive cada fiesta.',
       date: new Date('2026-01-15 18:00:00'), state: 'Approved', image: '/uploads/event-1759701709738-724959945.jpg',
       featured: false, idEventType: 4, idOrganiser: 3, idPlace: 2
     }
@@ -258,7 +258,7 @@ async function main() {
 
   const ev8 = await prisma.event.upsert({
     where: { idEvent: 8 }, update: {}, create: {
-      idEvent: 8, name: 'Festival de Danzas Clasicas', description: 'Un encuentro de las compañías de ballet más prestigiosas del mundo, conocido por su excelencia técnica y espectáculos innovadores.',
+      idEvent: 8, name: 'Festival de Danzas Clásicas', description: 'Un encuentro de las compañías de ballet más prestigiosas del mundo, conocido por su excelencia técnica y espectáculos innovadores.',
       date: new Date('2025-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
       featured: false, idEventType: 3, idOrganiser: 3, idPlace: 3
     }
@@ -266,7 +266,7 @@ async function main() {
 
   const ev9 = await prisma.event.upsert({
     where: { idEvent: 9 }, update: {}, create: {
-      idEvent: 9, name: '9 de Juilio contra Belgrano', description: 'El mejor clasico de la liga se juega, compra tus entradas con 1 año de anticipacion!!',
+      idEvent: 9, name: 'La previa de 9 de Julio contra Belgrano', description: 'El mejor clasico de la liga se juega, compra tus entradas con 1 año de anticipacion!!',
       date: new Date('2026-07-19 19:00:00'), state: 'Approved', image: '/uploads/event-1759702021862-561109661.jpg',
       featured: false, idEventType: 5, idOrganiser: 3, idPlace: 2
     }
@@ -274,15 +274,7 @@ async function main() {
 
   const ev10 = await prisma.event.upsert({
     where: { idEvent: 10 }, update: {}, create: {
-      idEvent: 10, name: 'Conferencia para Debatir sobre Martin Fierro', description: 'Evento literario que celebra la publicación de la obra de José Hernández mediante la recitación de sus versos en voz alta por parte de el público.',
-      date: new Date('2025-12-12 20:00:00'), state: 'Approved', image: '/uploads/event-1759702164244-273917676.jpg',
-      featured: false, idEventType: 7, idOrganiser: 3, idPlace: 4
-    }
-  });
-
-  const ev11 = await prisma.event.upsert({
-    where: { idEvent: 11 }, update: {}, create: {
-      idEvent: 11, name: 'Demostracion de Arte de La Siberia', description: 'Hacemos una gran demostracion de arte de nuestros alumnos para despedir el año.',
+      idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año.',
       date: new Date('2025-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
       featured: false, idEventType: 6, idOrganiser: 3, idPlace: 5
     }
@@ -318,9 +310,8 @@ async function main() {
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 2, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 3, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 4, price: '10000.00' },
-    { idEvent: ev10.idEvent, idPlace: 4, idSector: 1, price: '5000.00' },
-    { idEvent: ev11.idEvent, idPlace: 5, idSector: 1, price: '10000.00' },
-    { idEvent: ev11.idEvent, idPlace: 5, idSector: 2, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 1, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 2, price: '10000.00' },
   ];
 
   for (const data of eventSectorsData) {
