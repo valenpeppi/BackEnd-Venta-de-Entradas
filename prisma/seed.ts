@@ -188,9 +188,15 @@ async function main() {
 
   // Eventos
   const now = new Date();
+
   const in10d = new Date(now.getTime() + 90 * 24 * 3600 * 1000);
+  in10d.setHours(22, 0, 0, 0); 
+
   const in20d = new Date(now.getTime() + 79 * 24 * 3600 * 1000);
+  in20d.setHours(20, 30, 0, 0); 
+
   const in30d = new Date(now.getTime() + 68 * 24 * 3600 * 1000);
+  in30d.setHours(23, 45, 0, 0); 
 
 
   const ev1 = await prisma.event.upsert({
