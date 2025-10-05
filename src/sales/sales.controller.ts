@@ -192,6 +192,7 @@ class SalesController {
         seatNumber: ticket.idSeat,
         imageUrl: ticket.event.image ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}` : '/ticket.png',
         idTicket: ticket.idTicket,
+        idSale: ticket.idSale, 
       }));
 
       res.status(200).json({ data: formattedTickets });
