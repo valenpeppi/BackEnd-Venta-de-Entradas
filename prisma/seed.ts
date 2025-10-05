@@ -97,10 +97,13 @@ async function main() {
     data: [
       { idType: 1, name: 'Concierto' },
       { idType: 2, name: 'Stand Up' },
-      { idType: 3, name: 'Jornada de Lectura' },
+      { idType: 3, name: 'Festival' },
       { idType: 4, name: 'Fiesta' },
       { idType: 5, name: 'Evento Deportivo' },
       { idType: 6, name: 'Arte' },
+      { idType: 7, name: 'Conferencia' },
+      { idType: 8, name: 'Taller' },
+      { idType: 9, name: 'Feria' },
     ],
   });
   console.log('Tipos de evento cargados');
@@ -185,8 +188,8 @@ async function main() {
 
   // Eventos
   const now = new Date();
-  const in10d = new Date(now.getTime() + 25 * 24 * 3600 * 1000);
-  const in20d = new Date(now.getTime() + 45 * 24 * 3600 * 1000);
+  const in10d = new Date(now.getTime() + 90 * 24 * 3600 * 1000);
+  const in20d = new Date(now.getTime() + 79 * 24 * 3600 * 1000);
 
   const ev1 = await prisma.event.upsert({
     where: { idEvent: 1 },
@@ -194,7 +197,7 @@ async function main() {
     create: {
       idEvent: 1,
       name: 'Nicky Nicole',
-      description: 'Nicky Nicole se presenta en rosario para una noche espectacular.',
+      description: 'Nicky Nicole se presenta en Rosario para una noche espectacular.',
       date: in10d,
       state: 'Approved',
       image: '/uploads/event-1757442435231-517072449.jpeg',
@@ -228,8 +231,8 @@ async function main() {
     create: {
       idEvent: 3,
       name: 'Bizarrap',
-      description: 'Bizarrap llega al bioceres para reventar todo!!',
-      date: new Date('2025-11-12T00:00:00'),
+      description: '¡Bizarrap llega al Bioceres para reventar la ciudad de Rosario en este show exclusivo!',
+      date: new Date('2025-11-30T00:00:00'),
       state: 'Approved',
       image: '/uploads/event-1758722694684-973176483.webp',
       featured: true,
@@ -299,7 +302,7 @@ async function main() {
 
   console.log('SeatEvents y Tickets generados');
 
-  // ⚙️ Usuarios
+  // Usuarios
   await prisma.user.createMany({
     skipDuplicates: true,
     data: [
