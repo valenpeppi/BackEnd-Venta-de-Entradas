@@ -102,9 +102,7 @@ async function main() {
       { idType: 5, name: 'Evento Deportivo' },
       { idType: 6, name: 'Arte' },
       { idType: 7, name: 'Conferencia' },
-      { idType: 8, name: 'Taller' },
-      { idType: 9, name: 'Feria' },
-    ],
+        ],
   });
   console.log('Tipos de evento cargados');
 
