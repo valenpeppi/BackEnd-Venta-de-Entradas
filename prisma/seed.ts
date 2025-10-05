@@ -190,6 +190,8 @@ async function main() {
   const now = new Date();
   const in10d = new Date(now.getTime() + 90 * 24 * 3600 * 1000);
   const in20d = new Date(now.getTime() + 79 * 24 * 3600 * 1000);
+  const in30d = new Date(now.getTime() + 68 * 24 * 3600 * 1000);
+
 
   const ev1 = await prisma.event.upsert({
     where: { idEvent: 1 },
@@ -232,7 +234,7 @@ async function main() {
       idEvent: 3,
       name: 'Bizarrap',
       description: '¡Bizarrap llega al Bioceres para reventar la ciudad de Rosario en este show exclusivo!',
-      date: new Date('2025-11-30T00:00:00'),
+      date: in30d,
       state: 'Approved',
       image: '/uploads/event-1758722694684-973176483.webp',
       featured: true,
