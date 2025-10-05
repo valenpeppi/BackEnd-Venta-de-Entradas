@@ -270,7 +270,7 @@ async function main() {
         idEvent: ev2.idEvent,
         idPlace: 2,
         idSector: s.idSector,
-        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '90000.00' : '130000.00'),
+        price: new Prisma.Decimal(s.name.includes('Tribuna') ? '60000.00' : '80000.00'),
       },
     });
   }
@@ -282,7 +282,7 @@ async function main() {
       idEvent: ev3.idEvent,
       idPlace: 3,
       idSector: 1,
-      price: new Prisma.Decimal('450000.00'),
+      price: new Prisma.Decimal('100000.00'),
     },
   });
 
@@ -293,7 +293,7 @@ async function main() {
       idEvent: ev3.idEvent,
       idPlace: 3,
       idSector: 2,
-      price: new Prisma.Decimal('300000.00'),
+      price: new Prisma.Decimal('150000.00'),
     },
   });
 
