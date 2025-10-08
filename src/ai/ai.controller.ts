@@ -11,27 +11,27 @@ router.post("/", async (req: Request, res: Response) => {
 
   try {
     const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "google/gemma-3-12b-it:free",
+    "https://openrouter.ai/api/v1/chat/completions",
+    {
+        model: "google/gemma-3-12b-it:free", // modelo gratuito
         messages: [
-          {
-            role: "system",
-            content:
-              "Sos TicketBot, un asistente amable que ayuda a los usuarios a comprar entradas, consultar precios y sectores disponibles.",
-          },
-          { role: "user", content: message },
-        ],
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "HTTP-Referer": process.env.FRONTEND_URL,
-          "X-Title": "TicketApp Assistant",
-          "Content-Type": "application/json",
+        {
+            role: "user",
+            content: message,
         },
-      }
+        ],
+    },
+    {
+        headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": process.env.FRONTEND_URL,
+        "X-Title": "TicketApp Assistant",
+        "Content-Type": "application/json",
+        },
+    }
     );
+
+
 
     const reply = response.data.choices[0].message.content;
     res.json({ reply });
