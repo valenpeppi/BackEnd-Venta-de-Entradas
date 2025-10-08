@@ -5,42 +5,67 @@ import dotenv from "dotenv";
 dotenv.config();
 const router = express.Router();
 
-router.post("/", async (req: Request, res: Response) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "Mensaje vacío" });
+const openRouterHeaders = {
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+  "HTTP-Referer": process.env.FRONTEND_URL || "http://localhost:5173",
+  "X-Title": "TicketApp Assistant",
+};
 
-  try {
-    const response = await axios.post(
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms)
+    ),
+  ]);
+}
+
+async function getAIResponse(model: string, message: string) {
+  const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
     {
-        model: "google/gemma-3-12b-it:free", // modelo gratuito
-        messages: [
+      model,
+      messages: [
         {
-            role: "user",
-            content: message,
+          role: "user",
+          content: `Responde en español y con tono natural. Pregunta: ${message}`,
         },
-        ],
+      ],
     },
-    {
-        headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "HTTP-Referer": process.env.FRONTEND_URL,
-        "X-Title": "TicketApp Assistant",
-        "Content-Type": "application/json",
-        },
+    { headers: openRouterHeaders }
+  );
+
+  return (
+    response.data?.choices?.[0]?.message?.content ||
+    "No recibí respuesta del modelo."
+  );
+}
+
+router.post("/", async (req: Request, res: Response) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ reply: "Mensaje vacío." });
+
+  try {
+    console.log("💬 Usuario:", message);
+
+    const replyGemma = await withTimeout(getAIResponse("google/gemma-3-12b-it:free", message), 10000);
+    console.log("✅ Gemma respondió OK");
+    return res.json({ reply: replyGemma });
+  } catch (err1: any) {
+    console.warn("⚠️ Gemma falló o tardó demasiado:", err1.message);
+
+    try {
+      const replyMistral = await withTimeout(getAIResponse("mistralai/mistral-7b-instruct:free", message), 10000);
+      console.log("✅ Fallback Mistral respondió OK");
+      return res.json({ reply: replyMistral });
+    } catch (err2: any) {
+      console.error("❌ Ambos modelos fallaron:", err2.message);
+      return res.status(504).json({
+        reply:
+          "El asistente no pudo responder en este momento. Por favor, intenta más tarde.",
+      });
     }
-    );
-
-
-
-    const reply = response.data.choices[0].message.content;
-    res.json({ reply });
-  } catch (error: any) {
-    console.error("❌ Error OpenRouter:", error.response?.data || error.message);
-    res.status(500).json({
-      error:
-        "Error al conectar con OpenRouter. Verificá tu API key o conexión a Internet.",
-    });
   }
 });
 
