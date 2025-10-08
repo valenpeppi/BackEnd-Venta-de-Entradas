@@ -1,39 +1,46 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
-dotenv.config();
 
+dotenv.config();
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", async (req: Request, res: Response) => {
   const { message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message provided" });
+  if (!message) return res.status(400).json({ error: "Mensaje vacío" });
 
   try {
     const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+      "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "gpt-4o-mini",// rápido y económico
+        model: "google/gemma-3-12b-it:free",
         messages: [
           {
             role: "system",
-            content: "Sos un asistente útil para usuarios de una plataforma de venta de entradas. Respondé claro y breve.",
+            content:
+              "Sos TicketBot, un asistente amable que ayuda a los usuarios a comprar entradas, consultar precios y sectores disponibles.",
           },
           { role: "user", content: message },
         ],
       },
       {
         headers: {
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "HTTP-Referer": process.env.FRONTEND_URL,
+          "X-Title": "TicketApp Assistant",
           "Content-Type": "application/json",
         },
       }
     );
 
-    res.json({ reply: response.data.choices[0].message.content });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Error comunicando con el modelo" });
+    const reply = response.data.choices[0].message.content;
+    res.json({ reply });
+  } catch (error: any) {
+    console.error("❌ Error OpenRouter:", error.response?.data || error.message);
+    res.status(500).json({
+      error:
+        "Error al conectar con OpenRouter. Verificá tu API key o conexión a Internet.",
+    });
   }
 });
 
