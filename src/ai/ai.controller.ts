@@ -21,6 +21,7 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
+// Llamada genérica a OpenRouter - Intermediario con Gemma y Mistral -
 async function getAIResponse(model: string, message: string) {
   const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -29,7 +30,7 @@ async function getAIResponse(model: string, message: string) {
       messages: [
         {
           role: "user",
-          content: `Responde en español y con tono natural. Pregunta: ${message}`,
+          content: message, // el frontend ya manda el prompt completo
         },
       ],
     },
@@ -38,32 +39,45 @@ async function getAIResponse(model: string, message: string) {
 
   return (
     response.data?.choices?.[0]?.message?.content ||
-    "No recibí respuesta del modelo."
+    "No se recibió respuesta del modelo."
   );
 }
 
+// Endpoint principal: reenvía prompt completo del front
 router.post("/", async (req: Request, res: Response) => {
   const { message } = req.body;
-  if (!message) return res.status(400).json({ reply: "Mensaje vacío." });
+  if (!message) {
+    return res.status(400).json({ reply: "No se recibió ningún mensaje." });
+  }
 
   try {
-    console.log("💬 Usuario:", message);
+    console.log("Mensaje recibido desde frontend IA:", message.slice(0, 120) + "...");
 
-    const replyGemma = await withTimeout(getAIResponse("google/gemma-3-12b-it:free", message), 10000);
-    console.log("✅ Gemma respondió OK");
+    // 1️Intentar con Gemma primero
+    const replyGemma = await withTimeout(
+      getAIResponse("google/gemma-3-12b-it:free", message),
+      15000
+    );
+    console.log("Gemma respondió OK");
     return res.json({ reply: replyGemma });
+
   } catch (err1: any) {
-    console.warn("⚠️ Gemma falló o tardó demasiado:", err1.message);
+    console.warn("Gemma falló o tardó demasiado:", err1.message);
 
     try {
-      const replyMistral = await withTimeout(getAIResponse("mistralai/mistral-7b-instruct:free", message), 10000);
-      console.log("✅ Fallback Mistral respondió OK");
+      // 2️⃣ Fallback con Mistral
+      const replyMistral = await withTimeout(
+        getAIResponse("mistralai/mistral-7b-instruct:free", message),
+        20000
+      );
+      console.log("Fallback Mistral respondió OK");
       return res.json({ reply: replyMistral });
+
     } catch (err2: any) {
       console.error("❌ Ambos modelos fallaron:", err2.message);
       return res.status(504).json({
         reply:
-          "El asistente no pudo responder en este momento. Por favor, intenta más tarde.",
+          "El asistente no pudo responder en este momento. Intentalo nuevamente más tarde.",
       });
     }
   }
