@@ -163,4 +163,55 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
+// Liberar reservas manualmente (fallback desde frontend)
+router.post('/release', async (req, res) => {
+  try {
+    const { ticketGroups } = req.body as { ticketGroups: Array<any> };
+
+    console.log('🔄 Solicitud de liberación manual recibida:', ticketGroups);
+
+    if (!Array.isArray(ticketGroups) || ticketGroups.length === 0) {
+      return res.status(400).json({ error: 'ticketGroups inválido' });
+    }
+
+    let totalReleased = 0;
+
+    for (const g of ticketGroups) {
+      const idEvent = Number(g.idEvent);
+      const idPlace = Number(g.idPlace);
+      const idSector = Number(g.idSector);
+      const ids: number[] = Array.isArray(g.ids) ? g.ids.map(Number).filter(Number.isFinite) : [];
+
+      if (!idEvent || !idPlace || !idSector || ids.length === 0) {
+        console.warn('⚠️ Grupo inválido para liberar. Saltando:', g);
+        continue;
+      }
+
+      const updated = await prisma.seatEvent.updateMany({
+        where: {
+          idEvent,
+          idPlace,
+          idSector,
+          idSeat: { in: ids },
+          state: 'reserved',
+        },
+        data: {
+          state: 'available',
+          idSale: null,
+          lineNumber: null,
+        },
+      });
+
+      totalReleased += updated.count;
+      console.log(`✔️ Liberadas ${updated.count} reservas (event ${idEvent}, sector ${idSector})`);
+    }
+
+    return res.status(200).json({ released: totalReleased });
+  } catch (error: any) {
+    console.error('❌ Error liberando reservas manualmente:', error?.message || error);
+    return res.status(500).json({ error: 'Error liberando reservas' });
+  }
+});
+
+
 export default router;
