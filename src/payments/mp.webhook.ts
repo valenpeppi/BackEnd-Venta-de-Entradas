@@ -1,66 +1,86 @@
 import express from 'express';
 import axios from 'axios';
 import { prisma } from '../db/mysql';
+import SalesController from '../sales/sales.controller';
 
 const router = express.Router();
 
-router.post('/webhooks/mp', async (req, res) => {
-  res.sendStatus(200); // MP exige respuesta rápida
+router.post('/', async (req, res) => {
+  console.log("📩 Webhook MP recibido");
+  res.sendStatus(200); 
 
   try {
     const { type, data } = req.body || {};
 
-    if (type === 'payment' && data?.id) {
-      const mpRes = await axios.get(
-        `https://api.mercadopago.com/v1/payments/${data.id}`,
-        { headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` } }
-      );
+    if (type !== 'payment' || !data?.id) return;
 
-      const payment = mpRes.data;
-      const externalRef = payment.external_reference;
-      console.log("Webhook MP:", payment.status, externalRef);
-
-      // Tickets asociados a la orden
-      const tickets = await prisma.ticket.findMany({
-        where: { state: "pending" }
-      });
-
-      if (payment.status === "approved") {
-        // Crear venta
-        const sale = await prisma.sale.create({
-          data: {
-            date: new Date(),
-            dniClient: 12345678, // TODO: buscar user por buyerEmail o sesión
-          }
-        });
-
-        await prisma.saleItem.create({
-          data: {
-            idSale: sale.idSale,
-            dateSaleItem: new Date(),
-            quantity: tickets.length,
-          }
-        });
-
-        await prisma.ticket.updateMany({
-          where: { idTicket: { in: tickets.map(t => t.idTicket) } },
-          data: {
-            state: "sold",
-            idSale: sale.idSale,
-            dateSaleItem: new Date(),
-          }
-        });
+    const mpRes = await axios.get(
+      `https://api.mercadopago.com/v1/payments/${data.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+        },
       }
+    );
 
-      if (payment.status === "rejected") {
-        await prisma.ticket.updateMany({
-          where: { idTicket: { in: tickets.map(t => t.idTicket) } },
-          data: { state: "available" }
+    const payment = mpRes.data;
+    const status = payment.status;
+    const metadata = payment.metadata || {};
+    const dniClient = Number(metadata.dniClient);
+    const ticketGroups = JSON.parse(metadata.ticketGroups || '[]');
+
+    console.log("📦 Metadata:", { dniClient, ticketGroups, status });
+
+    if (!dniClient || ticketGroups.length === 0) {
+      console.warn("⚠️ Metadata incompleta. No se confirma la venta.");
+      return;
+    }
+
+    if (status === 'approved') {
+      await SalesController.confirmSale(
+        {
+          body: { dniClient, tickets: ticketGroups },
+          auth: { dni: dniClient },
+        } as any,
+        {
+          status: () => ({
+            json: (data: any) => {
+              console.log("✅ Venta confirmada desde MP webhook:", data);
+            },
+          }),
+        } as any
+      );
+    }
+
+    if (
+      status === 'rejected' ||
+      status === 'cancelled' ||
+      status === 'expired'
+    ) {
+      for (const g of ticketGroups) {
+        const { idEvent, idPlace, idSector, ids } = g;
+        if (!idEvent || !idPlace || !idSector || !ids?.length) continue;
+
+        const updated = await prisma.seatEvent.updateMany({
+          where: {
+            idSeat: { in: ids },
+            idEvent,
+            idPlace,
+            idSector,
+            state: 'reserved',
+          },
+          data: {
+            state: 'available',
+            idSale: null,
+            lineNumber: null,
+          },
         });
+
+        console.log(`🔄 Liberadas ${updated.count} entradas de MP`);
       }
     }
-  } catch (e) {
-    console.error('Webhook MP error', e);
+  } catch (error: any) {
+    console.error('❌ Error en webhook MP:', error.message || error);
   }
 });
 
