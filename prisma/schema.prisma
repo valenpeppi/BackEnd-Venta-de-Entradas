@@ -175,7 +175,7 @@ model Ticket {
   idTicket      Int        @map("idTicket")
   state         String     @db.VarChar(45) @default("available")
   idSeat        Int        @map("idSeat")
-  lineNumber    Int?       @map("lineNumber") // Nueva FK
+  lineNumber    Int?       @map("lineNumber")
   idSale        Int?       @map("idSale")
 
   event        Event       @relation(fields: [idEvent], references: [idEvent])
