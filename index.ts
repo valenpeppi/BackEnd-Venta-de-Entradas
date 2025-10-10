@@ -35,8 +35,8 @@ app.use(cors({
 }));
 app.use(morgan('dev'));
 
-// ⚠️ El webhook se monta ANTES de express.json()
-app.use('/api/stripe', stripeWebhookRouter);
+// El webhook se monta ANTES de express.json()
+app.use('/api/stripe/webhook', stripeWebhookRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

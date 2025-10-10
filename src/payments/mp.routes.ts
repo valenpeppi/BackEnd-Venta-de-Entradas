@@ -1,5 +1,5 @@
 import express from 'express';
-import { preferences } from './mp';
+import { preferences } from './mp.client';
 import { prisma } from '../db/mysql';
 
 const router = express.Router();

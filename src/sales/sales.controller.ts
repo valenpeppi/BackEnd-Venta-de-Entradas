@@ -19,6 +19,35 @@ class SalesController {
         return;
       }
 
+      // Validar si ya existe una venta con los mismos tickets para evitar duplicados
+      const allTicketIds = tickets.flatMap(group =>
+        group.ids.map((id: number) => ({
+          idEvent: group.idEvent,
+          idPlace: group.idPlace,
+          idSector: group.idSector,
+          idSeat: group.idSector === 0 ? 0 : id,
+        }))
+      );
+
+      const existingTickets = await prisma.ticket.findMany({
+        where: {
+          state: 'sold',
+          idEvent: { in: allTicketIds.map(t => t.idEvent) },
+          idPlace: { in: allTicketIds.map(t => t.idPlace) },
+          idSector: { in: allTicketIds.map(t => t.idSector) },
+          idSeat: { in: allTicketIds.map(t => t.idSeat) },
+          idSale: {
+            not: null,
+          },
+        },
+      });
+
+      if (existingTickets.length >= allTicketIds.length) {
+        console.warn('⚠️ Venta ya registrada previamente. Evitando duplicación.');
+        res.status(200).json({ message: 'Venta ya registrada anteriormente.' });
+        return;
+      }
+
       // Crear venta
       const sale = await prisma.sale.create({
         data: { date: new Date(), dniClient },
@@ -41,22 +70,8 @@ class SalesController {
         });
 
         if (idSector === 0) {
-          // Sector NO enumerado (general)
+          // Sector no enumerado
           for (let i = 0; i < ids.length; i++) {
-            // Validación extra: evitar crear ticket duplicado
-            const exists = await prisma.ticket.findFirst({
-              where: {
-                idEvent,
-                idPlace,
-                idSector: 0,
-                idSeat: 0,
-                idSale: sale.idSale,
-                lineNumber,
-              },
-            });
-
-            if (exists) continue;
-
             const ticketId = await prisma.ticket.count({
               where: { idEvent, idPlace, idSector: 0 },
             }) + 1;
@@ -74,9 +89,10 @@ class SalesController {
               },
             });
           }
-
         } else {
-          // Sector ENUMERADO
+          // Sector enumerado
+
+          // Confirmamos que los asientos aún estén reservados
           const reservedSeats = await prisma.seatEvent.findMany({
             where: {
               idEvent,
@@ -91,6 +107,7 @@ class SalesController {
             throw new Error('Algunos asientos ya no están reservados o no disponibles');
           }
 
+          // Marcar asientos como vendidos
           await prisma.seatEvent.updateMany({
             where: {
               idEvent,
@@ -105,6 +122,7 @@ class SalesController {
             },
           });
 
+          // Actualizar tickets existentes
           for (const idSeat of ids) {
             await prisma.ticket.update({
               where: {
@@ -128,12 +146,13 @@ class SalesController {
       }
 
       res.status(201).json({ message: 'Venta confirmada', idSale: sale.idSale });
-
     } catch (error: any) {
-      console.error('Error al confirmar venta:', error);
+      console.error('❌ Error al confirmar venta:', error);
       res.status(500).json({ error: 'Error al registrar venta', details: error.message });
     }
   }
+
+
 
 
   public async getUserTickets(req: AuthRequest, res: Response): Promise<void> {
