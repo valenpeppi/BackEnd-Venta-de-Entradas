@@ -18,8 +18,8 @@ import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
 import stripeRoutes from './src/payments/stripe.routes';
 import stripeWebhookRouter from './src/payments/stripe.webhook';
-import mpRoutes from './src/payments/mp.routes'; // NUEVO
-import mpWebhookRouter from './src/payments/mp.webhook'; // NUEVO
+import mpRoutes from './src/payments/mp.routes';
+import mpWebhookRouter from './src/payments/mp.webhook'; 
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
 
@@ -33,9 +33,9 @@ app.use(cors({
 }));
 app.use(morgan('dev'));
 
-// Webhooks (¡antes del body-parser!)
+// Webhooks
 app.use('/api/stripe/webhook', stripeWebhookRouter);
-app.use('/api/mp/webhook', mpWebhookRouter); // 
+app.use('/api/mp/webhook', mpWebhookRouter);
 
 // Parser de JSON
 app.use(express.json());
