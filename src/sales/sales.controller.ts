@@ -19,8 +19,8 @@ class SalesController {
         return;
       }
 
-      // Validar si ya existe una venta con los mismos tickets para evitar duplicados
-      const allTicketIds = tickets.flatMap(group =>
+      // Evitar duplicados
+      const allTicketKeys = tickets.flatMap(group =>
         group.ids.map((id: number) => ({
           idEvent: group.idEvent,
           idPlace: group.idPlace,
@@ -29,22 +29,21 @@ class SalesController {
         }))
       );
 
-      const existingTickets = await prisma.ticket.findMany({
+      const duplicates = await prisma.ticket.findMany({
         where: {
-          state: 'sold',
-          idEvent: { in: allTicketIds.map(t => t.idEvent) },
-          idPlace: { in: allTicketIds.map(t => t.idPlace) },
-          idSector: { in: allTicketIds.map(t => t.idSector) },
-          idSeat: { in: allTicketIds.map(t => t.idSeat) },
-          idSale: {
-            not: null,
-          },
+          OR: allTicketKeys.map(k => ({
+            idEvent: k.idEvent,
+            idPlace: k.idPlace,
+            idSector: k.idSector,
+            idSeat: k.idSeat,
+            state: 'sold',
+          })),
         },
       });
 
-      if (existingTickets.length >= allTicketIds.length) {
-        console.warn('⚠️ Venta ya registrada previamente. Evitando duplicación.');
-        res.status(200).json({ message: 'Venta ya registrada anteriormente.' });
+      if (duplicates.length > 0) {
+        console.warn('⚠️ Venta duplicada detectada, se cancela registro.');
+        res.status(200).json({ message: 'Venta ya registrada previamente.' });
         return;
       }
 
@@ -53,6 +52,8 @@ class SalesController {
         data: { date: new Date(), dniClient },
       });
 
+      console.log(`🧾 Venta creada: #${sale.idSale} para DNI ${dniClient}`);
+
       let lineNumber = 1;
 
       for (const group of tickets) {
@@ -60,7 +61,8 @@ class SalesController {
 
         if (!Array.isArray(ids) || ids.length === 0) continue;
 
-        // Crear línea de venta
+        console.log(`🎟️ Procesando grupo: evento ${idEvent}, sector ${idSector}, asientos:`, ids);
+
         await prisma.saleItem.create({
           data: {
             idSale: sale.idSale,
@@ -70,29 +72,50 @@ class SalesController {
         });
 
         if (idSector === 0) {
-          // Sector no enumerado
-          for (let i = 0; i < ids.length; i++) {
-            const ticketId = await prisma.ticket.count({
-              where: { idEvent, idPlace, idSector: 0 },
-            }) + 1;
+          // SECTOR NO ENUMERADO (entradas generales)
+          console.log(`💺 Marcando ${ids.length} entradas generales como vendidas...`);
 
-            await prisma.ticket.create({
+          // Buscar las primeras disponibles (ordenadas por idTicket asc)
+          const availableTickets = await prisma.ticket.findMany({
+            where: {
+              idEvent,
+              idPlace,
+              idSector: 0,
+              state: 'available',
+            },
+            orderBy: { idTicket: 'asc' },
+            take: ids.length,
+          });
+
+          if (availableTickets.length < ids.length) {
+            throw new Error('No hay suficientes tickets disponibles para este evento.');
+          }
+
+          // Actualizarlas a "sold"
+          for (const ticket of availableTickets) {
+            await prisma.ticket.update({
+              where: {
+                ticket_by_seat: {
+                  idEvent,
+                  idPlace,
+                  idSector: 0,
+                  idSeat: 0,
+                },
+              },
               data: {
-                idEvent,
-                idPlace,
-                idSector: 0,
-                idTicket: ticketId,
-                idSeat: 0,
                 state: 'sold',
                 idSale: sale.idSale,
                 lineNumber,
               },
             });
+            console.log(`🟢 Ticket #${ticket.idTicket} marcado como vendido.`);
           }
-        } else {
-          // Sector enumerado
 
-          // Confirmamos que los asientos aún estén reservados
+          console.log(`✅ ${availableTickets.length} tickets generales vendidos.`);
+        } else {
+          // SECTOR ENUMERADO
+          console.log(`🔒 Confirmando asientos reservados en seatEvent...`);
+
           const reservedSeats = await prisma.seatEvent.findMany({
             where: {
               idEvent,
@@ -104,10 +127,10 @@ class SalesController {
           });
 
           if (reservedSeats.length !== ids.length) {
-            throw new Error('Algunos asientos ya no están reservados o no disponibles');
+            throw new Error('Algunos asientos ya no están reservados o disponibles');
           }
 
-          // Marcar asientos como vendidos
+          // 🔁 Actualizar seatEvent → vendido
           await prisma.seatEvent.updateMany({
             where: {
               idEvent,
@@ -122,9 +145,11 @@ class SalesController {
             },
           });
 
-          // Actualizar tickets existentes
+          console.log(`✅ Asientos actualizados a 'sold' en seatEvent`);
+
+          // Actualizar o crear ticket correspondiente
           for (const idSeat of ids) {
-            await prisma.ticket.update({
+            const existing = await prisma.ticket.findUnique({
               where: {
                 ticket_by_seat: {
                   idEvent,
@@ -133,12 +158,44 @@ class SalesController {
                   idSeat,
                 },
               },
-              data: {
-                state: 'sold',
-                idSale: sale.idSale,
-                lineNumber,
-              },
             });
+
+            if (existing) {
+              await prisma.ticket.update({
+                where: {
+                  ticket_by_seat: {
+                    idEvent,
+                    idPlace,
+                    idSector,
+                    idSeat,
+                  },
+                },
+                data: {
+                  state: 'sold',
+                  idSale: sale.idSale,
+                  lineNumber,
+                },
+              });
+              console.log(`🟢 Ticket actualizado: asiento ${idSeat}`);
+            } else {
+              const newTicketId = await prisma.ticket.count({
+                where: { idEvent, idPlace, idSector },
+              }) + 1;
+
+              await prisma.ticket.create({
+                data: {
+                  idEvent,
+                  idPlace,
+                  idSector,
+                  idSeat,
+                  idTicket: newTicketId,
+                  state: 'sold',
+                  idSale: sale.idSale,
+                  lineNumber,
+                },
+              });
+              console.log(`🆕 Ticket creado para asiento ${idSeat}`);
+            }
           }
         }
 
@@ -152,9 +209,7 @@ class SalesController {
     }
   }
 
-
-
-
+  // Obtener tickets del usuario
   public async getUserTickets(req: AuthRequest, res: Response): Promise<void> {
     const dniClient = req.auth?.dni;
 
@@ -182,36 +237,30 @@ class SalesController {
           state: 'sold',
         },
         include: {
-          event: {
-            include: {
-              place: true,
-            },
-          },
-          eventSector: {
-            include: {
-              sector: true,
-            },
-          },
+          event: { include: { place: true } },
+          eventSector: { include: { sector: true } },
         },
-        orderBy: {
-          event: {
-            date: 'asc',
-          },
-        },
+        orderBy: { event: { date: 'asc' } },
       });
-      
+
       const formattedTickets = userTickets.map(ticket => ({
         id: `${ticket.idEvent}-${ticket.idTicket}`,
         eventId: ticket.idEvent,
         eventName: ticket.event.name,
         date: ticket.event.date.toISOString(),
-        time: new Date(ticket.event.date).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs',
+        time:
+          new Date(ticket.event.date).toLocaleTimeString('es-AR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }) + ' hs',
         location: ticket.event.place.name,
         sectorName: ticket.eventSector.sector.name,
         seatNumber: ticket.idSeat,
-        imageUrl: ticket.event.image ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}` : '/ticket.png',
+        imageUrl: ticket.event.image
+          ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}`
+          : '/ticket.png',
         idTicket: ticket.idTicket,
-        idSale: ticket.idSale, 
+        idSale: ticket.idSale,
       }));
 
       res.status(200).json({ data: formattedTickets });
@@ -223,4 +272,3 @@ class SalesController {
 }
 
 export default new SalesController();
-
