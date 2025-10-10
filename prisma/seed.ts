@@ -92,7 +92,7 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
   
   // Para los sectores no enumerados, no se generan tickets individuales.
   // La lógica de venta para estos se manejaría de forma distinta (por capacidad).
-  console.log(`Tickets (si aplica) generados para evento ${idEvent}`);
+  console.log(`Tickets generados para evento ${idEvent}`);
 }
 
 async function main() {
@@ -185,12 +185,9 @@ async function main() {
 
   // Seats
   const allSectors = await prisma.sector.findMany();
-  for (const s of allSectors) {
-    // Solo crear asientos para sectores enumerados
-    if (s.sectorType === 'enumerated') {
-      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);
+    for (const s of allSectors) {
+      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
     }
-  }
   console.log('Asientos cargados');
 
   // Eventos
