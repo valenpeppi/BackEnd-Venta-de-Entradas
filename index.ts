@@ -5,14 +5,11 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { testDbConnection } from './src/db/mysql';
 
-// SDK Mercado Pago
-import { MercadoPagoConfig, Preference } from 'mercadopago';
-
 dotenv.config();
 
 const app: Application = express();
 
-// Rutas
+// Importar rutas
 import placesRoutes from './src/places/places.router';
 import userRoutes from './src/users/users.router';
 import eventRoutes from './src/events/events.router';
@@ -21,9 +18,10 @@ import catalogRoutes from './src/catalog/catalog.router';
 import authRoutes from './src/auth/auth.router';
 import stripeRoutes from './src/payments/stripe.routes';
 import stripeWebhookRouter from './src/payments/stripe.webhook';
+import mpRoutes from './src/payments/mp.routes'; // NUEVO
+import mpWebhookRouter from './src/payments/mp.webhook'; // NUEVO
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
-
 
 // Archivos estáticos
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
@@ -35,13 +33,15 @@ app.use(cors({
 }));
 app.use(morgan('dev'));
 
-// El webhook se monta ANTES de express.json()
+// Webhooks (¡antes del body-parser!)
 app.use('/api/stripe/webhook', stripeWebhookRouter);
+app.use('/api/mp/webhook', mpWebhookRouter); // 
 
+// Parser de JSON
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Montar las rutas
+// Rutas
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
@@ -49,57 +49,18 @@ app.use('/api/catalog', catalogRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/stripe', stripeRoutes);
+app.use('/api/mp', mpRoutes); 
 app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Manejo de errores
+// Middleware de manejo de errores
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
+// Iniciar servidor
 const PORT: number = Number(process.env.PORT) || 3000;
-
-
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN || ''
-});
-app.post("/api/payments/create_preference", async (req: Request, res: Response) => {
-  try {
-    console.log("📩 Body recibido:", req.body);
-
-    const preference = new Preference(client);
-    const payerData = req.body.payer || { email: "test@test.com", name: "Test", surname: "User" };
-
-    const result = await preference.create({
-      body: {
-        items: req.body.items.map((item: any) => ({
-          id: item.id?.toString(),
-          title: item.title,
-          unit_price: Number(item.unit_price),
-          quantity: Number(item.quantity),
-        })),
-        payer: {
-          email: payerData.email,
-          name: payerData.name,
-          surname: payerData.surname,
-        },
-        back_urls: {
-          success: `${process.env.FRONTEND_URL}/pay/success`,
-          failure: `${process.env.FRONTEND_URL}/pay/failure`,
-          pending: `${process.env.FRONTEND_URL}/pay/failure`,
-        },
-      },
-    });
-
-    console.log("✅ Preferencia creada:", result.id);
-    res.json({ id: result.id });
-  } catch (error: any) {
-    console.error("❌ Error creando preferencia:", error);
-    res.status(500).json({ error: error.message || "Error creando preferencia" });
-  }
-});
-
 
 testDbConnection().then(() => {
   app.listen(PORT, () => {
