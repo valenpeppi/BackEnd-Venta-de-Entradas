@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import SalesController from './sales.controller';
 import { verifyToken } from '../auth/auth.middleware'; 
+import { prisma } from '../db/mysql';
+
 
 const router: Router = Router();
 
@@ -10,6 +12,32 @@ router.post('/confirm', (req, res, next) => {
 }, SalesController.confirmSale);
 
 router.get('/my-tickets', verifyToken, SalesController.getUserTickets);
+
+router.get('/check', async (req, res) => {
+  const dniClient = Number(req.query.dniClient);
+
+  if (!dniClient) {
+    return res.status(400).json({ error: 'DNI inválido' });
+  }
+
+  try {
+    const recentSale = await prisma.sale.findFirst({
+      where: { dniClient },
+      orderBy: { date: 'desc' },
+      take: 1,
+    });
+
+    if (!recentSale) {
+      return res.status(200).json({ confirmed: false });
+    }
+
+    // Podés mejorar esto con más lógica, por ejemplo comparar timestamps con la hora actual
+    return res.status(200).json({ confirmed: true, idSale: recentSale.idSale });
+  } catch (err) {
+    console.error('Error verificando venta:', err);
+    return res.status(500).json({ error: 'Error interno' });
+  }
+});
 
 export default router;
 
