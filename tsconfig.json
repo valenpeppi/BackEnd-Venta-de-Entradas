@@ -2,14 +2,13 @@
   "compilerOptions": {
     "target": "es2022",
     "module": "commonjs",
+    "moduleResolution": "bundler",
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node", 
-    "baseUrl": "."
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts"
