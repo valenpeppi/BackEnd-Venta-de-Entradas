@@ -91,15 +91,15 @@ model Place {
 }
 
 model SaleItem {
-  idSale        Int       @map("idSale")
-  dateSaleItem  DateTime  @map("dateSaleItem") @db.DateTime
+  idSale        Int      @map("idSale")
+  lineNumber    Int      @map("lineNumber")
   quantity      Int
 
-  sale          Sale       @relation(fields: [idSale], references: [idSale])
+  sale          Sale      @relation(fields: [idSale], references: [idSale])
   tickets       Ticket[]
   seatEvents    SeatEvent[] @relation("SeatEventToSaleItem")
 
-  @@id([idSale, dateSaleItem])
+  @@id([idSale, lineNumber])
   @@index([idSale])
   @@map("saleitem")
 }
@@ -139,15 +139,15 @@ model SeatEvent {
   state          String  @db.VarChar(45) @default("available")
 
   idSale         Int?
-  dateSaleItem   DateTime?
+  lineNumber     Int?     @map("lineNumber")
 
   event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
   seat           Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
-  saleItem       SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
+  saleItem       SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, lineNumber], references: [idSale, lineNumber])
 
   @@id([idEvent, idPlace, idSector, idSeat])
   @@index([idSeat, idSector, idPlace])
-  @@index([idSale, dateSaleItem])
+  @@index([idSale, lineNumber])
   @@map("seat_event")
 }
 
@@ -175,18 +175,18 @@ model Ticket {
   idTicket      Int        @map("idTicket")
   state         String     @db.VarChar(45) @default("available")
   idSeat        Int        @map("idSeat")
-  dateSaleItem  DateTime?  @map("dateSaleItem") @db.DateTime
+  lineNumber    Int?       @map("lineNumber") // Nueva FK
   idSale        Int?       @map("idSale")
 
   event        Event       @relation(fields: [idEvent], references: [idEvent])
   eventSector  EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
-  saleItem     SaleItem?   @relation(fields: [idSale, dateSaleItem], references: [idSale, dateSaleItem])
+  saleItem     SaleItem?   @relation(fields: [idSale, lineNumber], references: [idSale, lineNumber])
   seat         Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
-  
+
   @@unique([idEvent, idPlace, idSector, idSeat], name: "ticket_by_seat")
 
   @@id([idEvent, idPlace, idSector, idTicket])
-  @@index([idSale, dateSaleItem])
+  @@index([idSale, lineNumber])
   @@index([idPlace, idSector, idSeat])
   @@map("ticket")
 }

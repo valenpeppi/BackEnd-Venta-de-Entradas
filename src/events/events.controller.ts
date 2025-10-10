@@ -490,11 +490,6 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       return;
     }
 
-    if (ev.place.placeType.toLowerCase() === 'nonenumerated') {
-      res.status(200).json({ ok: true, data: [] });
-      return;
-    }
-
     const idPlace = ev.idPlace;
 
     const sectorsWithPrice = await prisma.eventSector.findMany({
@@ -502,39 +497,35 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       select: { idSector: true, price: true },
     });
 
-    const sectorIds = sectorsWithPrice.map(s => s.idSector);
+    const response = await Promise.all(sectorsWithPrice.map(async (sector) => {
+      const sectorMeta = await prisma.sector.findUnique({
+        where: {
+          idSector_idPlace: {
+            idSector: sector.idSector,
+            idPlace: idPlace
+          }
+        },
+        select: { name: true, sectorType: true },
+      });
 
-    const sectorsMeta = await prisma.sector.findMany({
-      where: { idPlace, idSector: { in: sectorIds } },
-      select: { idSector: true, name: true, sectorType: true },
-    });
-    const sectorMetadataMap = new Map(sectorsMeta.map(s => [s.idSector, { name: s.name, type: s.sectorType }]));
+      const availableCount = await prisma.seatEvent.count({
+        where: {
+          idEvent,
+          idPlace,
+          idSector: sector.idSector,
+          state: 'available',
+        },
+      });
 
-    const seatEvents = await prisma.seatEvent.findMany({
-      where: { idEvent, idPlace, idSector: { in: sectorIds } },
-      select: { idSeat: true, idSector: true, state: true },
-      orderBy: { idSeat: 'asc' },
-    });
-
-    const seatsBySector = new Map<number, { idSeat: number; state: string }[]>();
-    for (const se of seatEvents) {
-      if (!seatsBySector.has(se.idSector)) {
-        seatsBySector.set(se.idSector, []);
-      }
-      seatsBySector.get(se.idSector)!.push(se);
-    }
-
-    const response = sectorsWithPrice.map(s => {
-      const metadata = sectorMetadataMap.get(s.idSector);
       return {
         idEvent,
-        idSector: s.idSector,
-        name: metadata?.name ?? `Sector ${s.idSector}`,
-        price: Number(s.price),
-        enumerated: metadata?.type.toLowerCase() === 'enumerated',
-        availableTickets: (seatsBySector.get(s.idSector) ?? []).filter(se => se.state === 'available').length,
+        idSector: sector.idSector,
+        name: sectorMeta?.name ?? `Sector ${sector.idSector}`,
+        price: Number(sector.price),
+        enumerated: sectorMeta?.sectorType.toLowerCase() === 'enumerated',
+        availableTickets: availableCount,
       };
-    });
+    }));
 
     res.status(200).json({ ok: true, data: response });
   } catch (err) {
@@ -542,6 +533,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
     res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
+
 
 
 export const getSeatsForEventSector: RequestHandler = async (req, res) => {

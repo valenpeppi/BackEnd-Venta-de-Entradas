@@ -18,22 +18,21 @@ async function ensureSeatsForSector(idPlace: number, idSector: number, capacity:
   }
 }
 
-async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
+export async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
   const sectors = await prisma.sector.findMany({
     where: { idPlace },
     include: { seats: true },
   });
 
-  // Solo iterar y crear si el sector es de tipo enumerado
-  for (const sec of sectors.filter(s => s.sectorType === 'enumerated')) {
-    for (const st of sec.seats) {
+  for (const sec of sectors) {
+    for (const seat of sec.seats) {
       await prisma.seatEvent.upsert({
         where: {
           idEvent_idPlace_idSector_idSeat: {
             idEvent,
             idPlace,
             idSector: sec.idSector,
-            idSeat: st.idSeat,
+            idSeat: seat.idSeat,
           },
         },
         update: {},
@@ -41,13 +40,14 @@ async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
           idEvent,
           idPlace,
           idSector: sec.idSector,
-          idSeat: st.idSeat,
+          idSeat: seat.idSeat,
           state: 'available',
         },
       });
     }
   }
 }
+
 
 async function generateTicketsForEvent(idEvent: number, idPlace: number) {
   const seatEvents = await prisma.seatEvent.findMany({
@@ -83,13 +83,16 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
         idTicket: ticketCount + 1,
         idSeat: se.idSeat,
         state: 'available',
+        idSale: null,
+        lineNumber: null,
       },
     });
+
   }
   
   // Para los sectores no enumerados, no se generan tickets individuales.
   // La lógica de venta para estos se manejaría de forma distinta (por capacidad).
-  console.log(`Tickets (si aplica) generados para evento ${idEvent}`);
+  console.log(`Tickets generados para evento ${idEvent}`);
 }
 
 async function main() {
@@ -182,12 +185,9 @@ async function main() {
 
   // Seats
   const allSectors = await prisma.sector.findMany();
-  for (const s of allSectors) {
-    // Solo crear asientos para sectores enumerados
-    if (s.sectorType === 'enumerated') {
-      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);
+    for (const s of allSectors) {
+      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
     }
-  }
   console.log('Asientos cargados');
 
   // Eventos
