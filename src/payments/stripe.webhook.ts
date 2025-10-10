@@ -6,10 +6,16 @@ import SalesController from '../sales/sales.controller';
 const router = express.Router();
 
 router.post(
-  '/webhook',
+  '/',
   express.raw({ type: 'application/json' }),
   async (req: Request, res: Response) => {
+    console.log("📩 Webhook recibido");
+
     const sig = req.headers['stripe-signature'];
+    if (!sig) {
+      console.error("❌ No se encontró la firma de Stripe en headers");
+      return res.status(400).send("Missing Stripe signature");
+    }
 
     if (!process.env.STRIPE_WEBHOOK_SECRET) {
       console.error('❌ STRIPE_WEBHOOK_SECRET no está configurado');
@@ -20,19 +26,19 @@ router.post(
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
-        sig as string,
+        sig,
         process.env.STRIPE_WEBHOOK_SECRET
       );
+      console.log(`✅ Webhook verificado con tipo: ${event.type}`);
     } catch (err: any) {
-      console.error('❌ Webhook signature verification failed:', err.message);
+      console.error('❌ Falló la verificación del webhook:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    console.log(`➡️ Stripe event recibido: ${event.type}`);
-
-    // ✅ Pago completado → confirmamos venta
+    // 💳 PAGO COMPLETADO
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
+      console.log("💳 Evento de pago completado recibido desde Stripe");
 
       try {
         const dniClient = session.metadata?.dniClient
@@ -40,46 +46,64 @@ router.post(
           : null;
         const ticketGroups = JSON.parse(session.metadata?.ticketGroups || '[]');
 
-        console.log("✅ Confirmando venta para:", { dniClient, ticketGroups });
+        console.log("📦 Metadata recibida desde Stripe:");
+        console.log("dniClient:", dniClient);
+        console.log("ticketGroups:", ticketGroups);
 
-        // Reusar SalesController.confirmSale
-        await SalesController.confirmSale(
-          { body: { dniClient, tickets: ticketGroups } } as any,
-          {
-            status: (code: number) => ({
-              json: (data: any) =>
-                console.log("➡️ confirmSale response:", code, data),
-            }),
-          } as any
-        );
-      } catch (error) {
-        console.error('❌ Error confirmando venta desde webhook:', error);
+        if (!dniClient || !ticketGroups.length) {
+          console.warn("⚠️ Metadata incompleta. No se confirma la venta.");
+          return res.status(400).send("Metadata incompleta");
+        }
+
+        console.log("📞 Llamando a SalesController.confirmSale...");
+    
+    
+    console.log("🧪 Ejecutando confirmSale manual desde webhook...");
+
+    await SalesController.confirmSale(
+      {
+        body: { dniClient, tickets: ticketGroups },
+        auth: { dni: dniClient },
+      } as any,
+      {
+        status: (code: number) => {
+          return {
+            json: (data: any) => {
+              console.log("✅ confirmSale mock response:", code, data);
+              return { code, data };
+            }
+          };
+        },
+      } as any
+    );
+
+
+        console.log("✅ Venta confirmada desde webhook");
+      } catch (error: any) {
+        console.error('❌ Error ejecutando confirmSale desde webhook:', error.message || error);
       }
     }
 
-    // ❌ Pago fallido o expirado → liberar tickets reservados
+    // 🛑 PAGO FALLIDO O EXPIRADO
     if (
       event.type === 'checkout.session.expired' ||
       event.type === 'checkout.session.async_payment_failed'
     ) {
       const session = event.data.object as any;
+      console.log(`🛑 Evento de pago fallido o expirado: ${event.type}`);
 
       try {
         const ticketGroups = JSON.parse(session.metadata?.ticketGroups || '[]');
-
-        console.log("♻️ Liberando tickets reservados:", ticketGroups);
+        console.log("🔄 Liberando entradas reservadas:", ticketGroups);
 
         for (const g of ticketGroups) {
-          const idEvent = Number(g.idEvent);
-          const idPlace = Number(g.idPlace);
-          const idSector = Number(g.idSector);
-          const ids = Array.isArray(g.ids)
-            ? g.ids.map((id: any) => Number(id))
-            : [];
+          const { idEvent, idPlace, idSector, ids } = g;
+          if (!idEvent || !idPlace || !idSector || !ids?.length) {
+            console.warn("⚠️ Grupo inválido. Saltando:", g);
+            continue;
+          }
 
-          if (!idEvent || !idPlace || !idSector || ids.length === 0) continue;
-
-          await prisma.seatEvent.updateMany({
+          const updated = await prisma.seatEvent.updateMany({
             where: {
               idSeat: { in: ids },
               idEvent,
@@ -93,9 +117,11 @@ router.post(
               lineNumber: null,
             },
           });
+
+          console.log(`✔️ Liberadas ${updated.count} entradas reservadas`);
         }
-      } catch (error) {
-        console.error('❌ Error liberando tickets en fallo Stripe:', error);
+      } catch (error: any) {
+        console.error('❌ Error liberando entradas:', error.message || error);
       }
     }
 
