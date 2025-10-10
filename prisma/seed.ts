@@ -18,22 +18,21 @@ async function ensureSeatsForSector(idPlace: number, idSector: number, capacity:
   }
 }
 
-async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
+export async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
   const sectors = await prisma.sector.findMany({
     where: { idPlace },
     include: { seats: true },
   });
 
-  // Solo iterar y crear si el sector es de tipo enumerado
-  for (const sec of sectors.filter(s => s.sectorType === 'enumerated')) {
-    for (const st of sec.seats) {
+  for (const sec of sectors) {
+    for (const seat of sec.seats) {
       await prisma.seatEvent.upsert({
         where: {
           idEvent_idPlace_idSector_idSeat: {
             idEvent,
             idPlace,
             idSector: sec.idSector,
-            idSeat: st.idSeat,
+            idSeat: seat.idSeat,
           },
         },
         update: {},
@@ -41,15 +40,14 @@ async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
           idEvent,
           idPlace,
           idSector: sec.idSector,
-          idSeat: st.idSeat,
+          idSeat: seat.idSeat,
           state: 'available',
-          idSale: null,
-          lineNumber: null,
         },
       });
     }
   }
 }
+
 
 async function generateTicketsForEvent(idEvent: number, idPlace: number) {
   const seatEvents = await prisma.seatEvent.findMany({
