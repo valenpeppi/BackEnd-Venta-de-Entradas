@@ -53,7 +53,7 @@ router.post("/", async (req: Request, res: Response) => {
   try {
     console.log("Mensaje recibido desde frontend IA:", message.slice(0, 120) + "...");
 
-    // 1️Intentar con Gemma primero
+    // 1Intentar con Gemma primero
     const replyGemma = await withTimeout(
       getAIResponse("google/gemma-3-12b-it:free", message),
       15000
@@ -65,7 +65,7 @@ router.post("/", async (req: Request, res: Response) => {
     console.warn("Gemma falló o tardó demasiado:", err1.message);
 
     try {
-      // 2️⃣ Fallback con Mistral
+      // Fallback con Mistral
       const replyMistral = await withTimeout(
         getAIResponse("mistralai/mistral-7b-instruct:free", message),
         20000

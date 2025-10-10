@@ -64,7 +64,6 @@ router.post('/checkout', async (req, res) => {
           });
         }
 
-        // Reservar 'quantity' asientos disponibles
         const availableSeats = await prisma.seatEvent.findMany({
           where: {
             idEvent,
@@ -142,7 +141,7 @@ router.post('/checkout', async (req, res) => {
       console.log(`✅ Asientos reservados:`, seatIds);
     }
 
-    // 💳 Crear sesión de Stripe
+    // Crear sesión de Stripe
     console.log('💳 Creando sesión de Stripe...');
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

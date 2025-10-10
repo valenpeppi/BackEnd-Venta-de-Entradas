@@ -130,7 +130,7 @@ class SalesController {
             throw new Error('Algunos asientos ya no están reservados o disponibles');
           }
 
-          // 🔁 Actualizar seatEvent → vendido
+          // Actualizar seatEvent a vendido
           await prisma.seatEvent.updateMany({
             where: {
               idEvent,

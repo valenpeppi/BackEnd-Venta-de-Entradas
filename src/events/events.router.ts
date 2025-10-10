@@ -49,10 +49,10 @@ const upload = multer({
       ? cb(null, true)
       : cb(new Error('Tipo de archivo no permitido'));
   },
-  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 } 
 });
 
-// === Rutas Protegidas para Empresas ===
+// Rutas Protegidas para Empresas 
 router.post(
   '/createEvent',
   verifyToken, 
@@ -61,7 +61,7 @@ router.post(
   createEvent
 );
 
-// === Rutas de Admin ===
+// Rutas de Admin 
 router.get('/pending', verifyToken, isAdmin, getPendingEvents);
 router.get('/all', verifyToken, isAdmin, getAdminAllEvents);
 router.patch("/:id/approve", verifyToken, isAdmin, approveEvent);
@@ -69,7 +69,7 @@ router.patch("/:id/reject", verifyToken, isAdmin, rejectEvent);
 router.patch('/:id/feature', verifyToken, isAdmin, toggleFeatureStatus);
 
 
-// === Rutas Públicas ===
+// Rutas Públicas 
 router.get('/types', getAllEventTypes);
 router.get('/featured', getFeaturedEvents);
 router.get('/approved', getApprovedEvents);

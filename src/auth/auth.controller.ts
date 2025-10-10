@@ -52,7 +52,7 @@ export const register = async (req: Request, res: Response) => {
       data: {
         dni,
         name,
-        surname: surname || '', // Si viene vacío, guardar como string vacío
+        surname: surname || '',
         mail,
         password: hashedPassword,
         birthDate: new Date(birthDate)

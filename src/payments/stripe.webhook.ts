@@ -35,7 +35,7 @@ router.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // 💳 PAGO COMPLETADO
+    // PAGO COMPLETADO
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as any;
       console.log("💳 Evento de pago completado recibido desde Stripe");
@@ -84,7 +84,7 @@ router.post(
       }
     }
 
-    // 🛑 PAGO FALLIDO O EXPIRADO
+    // PAGO FALLIDO O EXPIRADO
     if (
       event.type === 'checkout.session.expired' ||
       event.type === 'checkout.session.async_payment_failed'
