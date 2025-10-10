@@ -43,6 +43,8 @@ async function createSeatEventGridForEvent(idEvent: number, idPlace: number) {
           idSector: sec.idSector,
           idSeat: st.idSeat,
           state: 'available',
+          idSale: null,
+          lineNumber: null,
         },
       });
     }
@@ -83,8 +85,11 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
         idTicket: ticketCount + 1,
         idSeat: se.idSeat,
         state: 'available',
+        idSale: null,
+        lineNumber: null,
       },
     });
+
   }
   
   // Para los sectores no enumerados, no se generan tickets individuales.
