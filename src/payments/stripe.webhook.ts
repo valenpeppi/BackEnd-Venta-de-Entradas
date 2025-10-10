@@ -90,7 +90,7 @@ router.post(
             data: {
               state: 'available',
               idSale: null,
-              dateSaleItem: null,
+              lineNumber: null,
             },
           });
         }
