@@ -3,16 +3,13 @@ import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
-import helmet from 'helmet';
-import compression from 'compression';
-import { testDbConnection, prisma } from './src/db/mysql';
-import { env } from './src/config/env';
+import { testDbConnection } from './src/db/mysql';
 
 dotenv.config();
 
 const app: Application = express();
 
-// Rutas
+// Importar rutas
 import placesRoutes from './src/places/places.router';
 import userRoutes from './src/users/users.router';
 import eventRoutes from './src/events/events.router';
@@ -24,36 +21,31 @@ import stripeWebhookRouter from './src/payments/stripe.webhook';
 import mpRoutes from './src/payments/mp.routes';
 import mpWebhookRouter from './src/payments/mp.webhook';
 import seatsRoutes from './src/seats/seats.router';
-import aiRoutes from './src/ai/ai.controller';
+import aiRoutes from "./src/ai/ai.controller";
+import systemRoutes from './src/system/system.router';
 
-// Webhooks
+// Archivos estáticos
+app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+
+// CORS
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true
+}));
+
+// Logs
+app.use(morgan('dev'));
+
+// ⚠️ Webhooks (raw antes de json)
 app.use('/api/stripe/webhook', stripeWebhookRouter);
 app.use('/api/mp/webhook', mpWebhookRouter);
 
-// Estáticos
-app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
-
-// Seguridad y rendimiento
-app.use(helmet());
-app.use(compression());
-
-// CORS
-app.use(
-  cors({
-    origin: [env.FRONTEND_URL, 'http://127.0.0.1:5173'],
-    credentials: true,
-  })
-);
-
-// Logger
-morgan.token('id', () => Math.random().toString(36).slice(2, 8));
-app.use(morgan(':id :method :url :status :response-time ms - :res[content-length]'));
-
-// Parsers (después de webhooks)
+// Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas API
+// Rutas
+app.use('/api/system', systemRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
@@ -63,41 +55,23 @@ app.use('/api/places', placesRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/mp', mpRoutes);
 app.use('/api/seats', seatsRoutes);
-app.use('/api/ai', aiRoutes);
+app.use("/api/ai", aiRoutes);
 
-// Health
-app.get('/api/health', (_req, res) => res.json({ ok: true }));
-
-// Errores
-app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+// Error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
 // Start
-const PORT = env.PORT_NUM;
-let server: any;
+const PORT: number = Number(process.env.PORT) || 3000;
 
-testDbConnection()
-  .then(() => {
-    server = app.listen(PORT, () => {
-      console.log(`Servidor escuchando en http://localhost:${PORT} 🚀`);
-      console.log(`➡️ Webhook Stripe: POST http://localhost:${PORT}/api/stripe/webhook`);
-    });
-  })
-  .catch((error) => {
-    console.error('No se pudo iniciar el servidor (DB):', error);
-    process.exit(1);
+testDbConnection().then(() => {
+  app.listen(PORT, () => {
+    console.log(`Servidor escuchando en http://localhost:${PORT} 🚀`);
+    console.log(`➡️ Webhook Stripe: POST http://localhost:${PORT}/api/stripe/webhook`);
   });
-
-const shutdown = async () => {
-  console.log('🛑 Cerrando servidor...');
-  server?.close(async () => {
-    try {
-      await prisma.$disconnect();
-    } catch {}
-    process.exit(0);
-  });
-};
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+}).catch((error) => {
+  console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
+  process.exit(1);
+});

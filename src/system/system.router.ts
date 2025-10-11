@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { BOOT_ID } from './boot';
+
+const router = Router();
+
+// Devuelve el BOOT_ID actual del server
+router.get('/boot', (req, res) => {
+  res.json({ bootId: BOOT_ID });
+});
+
+export default router;
