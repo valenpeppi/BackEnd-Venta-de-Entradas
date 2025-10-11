@@ -1,13 +1,12 @@
 import { Router } from 'express';
 import SalesController from './sales.controller';
-import { verifyToken } from '../auth/auth.middleware'; 
+import { verifyToken } from '../auth/auth.middleware';
 import { prisma } from '../db/mysql';
-
 
 const router: Router = Router();
 
 router.post('/confirm', (req, res, next) => {
-  console.log("📩 /api/sales/confirm recibido:", req.body);
+  console.log('📩 /api/sales/confirm recibido:', req.body);
   next();
 }, SalesController.confirmSale);
 
@@ -15,14 +14,14 @@ router.get('/my-tickets', verifyToken, SalesController.getUserTickets);
 
 router.get('/check', async (req, res) => {
   const dniClient = Number(req.query.dniClient);
-
-  if (!dniClient) {
+  if (!Number.isFinite(dniClient)) {
     return res.status(400).json({ error: 'DNI inválido' });
   }
 
   try {
+    const since = new Date(Date.now() - 5 * 60 * 1000);
     const recentSale = await prisma.sale.findFirst({
-      where: { dniClient },
+      where: { dniClient, date: { gte: since } },
       orderBy: { date: 'desc' },
       take: 1,
     });
@@ -30,8 +29,6 @@ router.get('/check', async (req, res) => {
     if (!recentSale) {
       return res.status(200).json({ confirmed: false });
     }
-
-    // Podés mejorar esto con más lógica, por ejemplo comparar timestamps con la hora actual
     return res.status(200).json({ confirmed: true, idSale: recentSale.idSale });
   } catch (err) {
     console.error('Error verificando venta:', err);
@@ -40,4 +37,3 @@ router.get('/check', async (req, res) => {
 });
 
 export default router;
-
