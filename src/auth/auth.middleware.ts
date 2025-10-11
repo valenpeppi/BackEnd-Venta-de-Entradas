@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { BOOT_ID } from '../system/boot';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
@@ -11,6 +12,7 @@ export interface AuthRequest extends Request {
     contactEmail?: string;
     role?: string;
     type?: 'user' | 'company';
+    bootId?: string; // agregado
   };
 }
 
@@ -33,7 +35,16 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       contactEmail?: string;
       role?: string;
       type?: 'user' | 'company';
+      bootId?: string; // agregado
     };
+
+    //  Verificación de reinicio: el token debe traer bootId y coincidir
+    if (!decoded.bootId || decoded.bootId !== BOOT_ID) {
+      return res.status(401).json({
+        code: 'RESTART_INVALIDATED_TOKEN',
+        message: 'Token inválido por reinicio del servidor.'
+      });
+    }
 
     req.auth = decoded;
     console.log('Usuario autenticado:', req.auth);
@@ -66,4 +77,3 @@ export const isAdmin = (req: AuthRequest, res: Response, next: NextFunction) => 
   }
   next();
 };
-
