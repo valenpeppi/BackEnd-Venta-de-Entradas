@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
+import { env } from '../config/env';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY no está configurado en las variables de entorno');
-}
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
+  typescript: true,
+});
