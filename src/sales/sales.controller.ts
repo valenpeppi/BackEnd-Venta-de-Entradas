@@ -189,7 +189,7 @@ class SalesController {
     }
   }
 
-  // Obtener tickets del usuario (sin cambios)
+ // Obtener tickets del usuario
   public async getUserTickets(req: AuthRequest, res: Response): Promise<void> {
     const dniClient = req.auth?.dni;
 
@@ -218,7 +218,7 @@ class SalesController {
         },
         include: {
           event: { include: { place: true } },
-          eventSector: { include: { sector: true } },
+          eventSector: { include: { sector: true } }, // sector.sectorType disponible acá
         },
         orderBy: { event: { date: 'asc' } },
       });
@@ -235,6 +235,8 @@ class SalesController {
           }) + ' hs',
         location: ticket.event.place.name,
         sectorName: ticket.eventSector.sector.name,
+        // 👇 ahora enviamos el tipo de sector
+        sectorType: ticket.eventSector.sector.sectorType as 'enumerated' | 'nonEnumerated' | string,
         seatNumber: ticket.idSeat,
         imageUrl: ticket.event.image
           ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}`
@@ -249,6 +251,7 @@ class SalesController {
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
   }
+
 }
 
 export default new SalesController();
