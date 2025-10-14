@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -18,7 +18,8 @@ import {
   getEventSummary,
   getSeatsForEventSector,
   searchEvents,
-  getTicketMap
+  getTicketMap,
+  getEventTypes
 } from './events.controller';
 
 
@@ -69,7 +70,8 @@ router.patch("/:id/reject", verifyToken, isAdmin, rejectEvent);
 router.patch('/:id/feature', verifyToken, isAdmin, toggleFeatureStatus);
 
 
-// Rutas Públicas 
+// Rutas Públicas
+router.get('/event-types', getEventTypes);
 router.get('/types', getAllEventTypes);
 router.get('/featured', getFeaturedEvents);
 router.get('/approved', getApprovedEvents);
