@@ -9,6 +9,7 @@ dotenv.config();
 
 const app: Application = express();
 
+
 // Importar rutas
 import placesRoutes from './src/places/places.router';
 import userRoutes from './src/users/users.router';
@@ -61,15 +62,20 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// Start
-const PORT: number = Number(process.env.PORT) || 3000;
+// 🔹 Solo levantar el servidor si NO estamos en modo test
+if (process.env.NODE_ENV !== 'test') {
+  const PORT: number = Number(process.env.PORT) || 3000;
 
-testDbConnection().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Servidor escuchando en http://localhost:${PORT} 🚀`);
-    console.log(`➡️ Webhook Stripe: POST http://localhost:${PORT}/api/stripe/webhook`);
+  testDbConnection().then(() => {
+    app.listen(PORT, () => {
+      console.log(`Servidor escuchando en http://localhost:${PORT} 🚀`);
+      console.log(`➡️ Webhook Stripe: POST http://localhost:${PORT}/api/stripe/webhook`);
+    });
+  }).catch((error) => {
+    console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
+    process.exit(1);
   });
-}).catch((error) => {
-  console.error('No se pudo iniciar el servidor debido a un error de conexión a la base de datos:', error);
-  process.exit(1);
-});
+}
+
+// 👇 Esto es lo que permite que Supertest lo use sin abrir puerto
+export default app;

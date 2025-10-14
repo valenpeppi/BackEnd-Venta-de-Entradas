@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,45 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Event {
-  idEvent      Int        @id @default(autoincrement()) @map("idEvent")
-  name         String     @db.VarChar(45)
-  description  String     @db.VarChar(255)
-  date         DateTime   @db.DateTime
-  state        String     @db.VarChar(45)
-  image        String?    @db.VarChar(255)
-  featured     Boolean    @default(false)
-
-  // FKs
-  idEventType  Int        @map("idEventType")
-  idOrganiser  Int        @map("idOrganiser")
-  idPlace      Int
-
-  // Relaciones
-  place        Place      @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
-  eventType    EventType  @relation(fields: [idEventType], references: [idType])
-  organiser    Organiser  @relation(fields: [idOrganiser], references: [idOrganiser])
-
-  // Inversas
-  eventSectors EventSector[]
-  seatEvents   SeatEvent[]
-  tickets      Ticket[]
-
-  @@index([idPlace])
-  @@index([idEventType])
-  @@index([idOrganiser])
-  @@map("Event")
-}
-
 model EventSector {
-  idEvent   Int     @map("idEvent")
-  idPlace   Int     @map("idPlace")
-  idSector  Int     @map("idSector")
-  price     Decimal @db.Decimal(10, 2)
-
-  event     Event   @relation(fields: [idEvent], references: [idEvent])
-  sector    Sector  @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
-  tickets   Ticket[]
+  idEvent  Int      @map("idEvent")
+  idPlace  Int      @map("idPlace")
+  idSector Int      @map("idSector")
+  price    Decimal  @db.Decimal(10, 2)
+  event    event    @relation(fields: [idEvent], references: [idEvent])
+  sector   Sector   @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets  Ticket[]
 
   @@id([idEvent, idPlace, idSector])
   @@index([idSector, idPlace])
@@ -56,23 +22,22 @@ model EventSector {
 }
 
 model EventType {
-  idType  Int     @id @default(autoincrement()) @map("idType")
-  name    String  @db.VarChar(45)
-  events  Event[]
+  idType Int     @id @default(autoincrement()) @map("idType")
+  name   String  @db.VarChar(45)
+  event  event[]
 
   @@map("eventtype")
 }
 
 model Organiser {
-  idOrganiser   Int      @id @default(autoincrement()) @map("idOrganiser")
-  companyName   String?  @map("company_name") @db.VarChar(100)
-  cuil          String?  @unique @map("cuil") @db.VarChar(20)
-  contactEmail  String?  @unique @map("contact_email") @db.VarChar(100)
-  password      String   @db.VarChar(255)
-  phone         String?  @db.VarChar(20)
-  address       String?  @db.VarChar(100)
-
-  events        Event[]
+  idOrganiser  Int     @id @default(autoincrement()) @map("idOrganiser")
+  companyName  String? @map("company_name") @db.VarChar(100)
+  cuil         String? @unique @map("cuil") @db.VarChar(20)
+  contactEmail String? @unique @map("contact_email") @db.VarChar(100)
+  password     String  @db.VarChar(255)
+  phone        String? @db.VarChar(20)
+  address      String? @db.VarChar(100)
+  event        event[]
 
   @@map("organiser_company")
 }
@@ -83,21 +48,19 @@ model Place {
   totalCap  Int      @map("totalCap")
   address   String   @db.VarChar(45)
   placeType String   @db.VarChar(45)
-
-  events    Event[]
+  event     event[]
   sectors   Sector[]
 
   @@map("places")
 }
 
 model SaleItem {
-  idSale        Int      @map("idSale")
-  lineNumber    Int      @map("lineNumber")
-  quantity      Int
-
-  sale          Sale      @relation(fields: [idSale], references: [idSale])
-  tickets       Ticket[]
-  seatEvents    SeatEvent[] @relation("SeatEventToSaleItem")
+  idSale     Int         @map("idSale")
+  quantity   Int
+  lineNumber Int         @map("lineNumber")
+  sale       Sale        @relation(fields: [idSale], references: [idSale])
+  seatEvents SeatEvent[] @relation("SeatEventToSaleItem")
+  tickets    Ticket[]
 
   @@id([idSale, lineNumber])
   @@index([idSale])
@@ -106,24 +69,22 @@ model SaleItem {
 
 model Sale {
   idSale    Int        @id @default(autoincrement()) @map("idSale")
-  date      DateTime   @db.DateTime
+  date      DateTime   @db.DateTime(0)
   dniClient Int        @map("dniClient")
-
-  client    User       @relation(fields: [dniClient], references: [dni])
   saleItems SaleItem[]
+  client    User       @relation(fields: [dniClient], references: [dni])
 
   @@index([dniClient])
   @@map("sales")
 }
 
 model Seat {
-  idSeat    Int  @map("idSeat")
-  idSector  Int  @map("idSector")
-  idPlace   Int  @map("idPlace")
-
-  sector     Sector    @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
-  tickets    Ticket[]
+  idSeat     Int         @map("idSeat")
+  idSector   Int         @map("idSector")
+  idPlace    Int         @map("idPlace")
   seatEvents SeatEvent[]
+  sector     Sector      @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets    Ticket[]
 
   @@id([idSeat, idSector, idPlace])
   @@unique([idPlace, idSector, idSeat])
@@ -132,18 +93,16 @@ model Seat {
 }
 
 model SeatEvent {
-  idEvent        Int
-  idPlace        Int
-  idSector       Int
-  idSeat         Int     @map("idSeat")
-  state          String  @db.VarChar(45) @default("available")
-
-  idSale         Int?
-  lineNumber     Int?     @map("lineNumber")
-
-  event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
-  seat           Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
-  saleItem       SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, lineNumber], references: [idSale, lineNumber])
+  idEvent    Int
+  idPlace    Int
+  idSector   Int
+  idSeat     Int       @map("idSeat")
+  state      String    @default("available") @db.VarChar(45)
+  idSale     Int?
+  lineNumber Int?      @map("lineNumber")
+  event      event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
+  saleItem   SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, lineNumber], references: [idSale, lineNumber])
+  seat       Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
 
   @@id([idEvent, idPlace, idSector, idSeat])
   @@index([idSeat, idSector, idPlace])
@@ -151,17 +110,15 @@ model SeatEvent {
   @@map("seat_event")
 }
 
-
 model Sector {
-  idSector   Int     @map("idSector")
-  idPlace    Int     @map("idPlace")
-  name       String  @db.VarChar(45)
-  sectorType String  @db.VarChar(45)
-  capacity   Int
-
-  place        Place       @relation(fields: [idPlace], references: [idPlace])
+  idSector     Int           @map("idSector")
+  idPlace      Int           @map("idPlace")
+  name         String        @db.VarChar(45)
+  capacity     Int
+  sectorType   String        @db.VarChar(45)
   eventSectors EventSector[]
   seats        Seat[]
+  place        Place         @relation(fields: [idPlace], references: [idPlace])
 
   @@id([idSector, idPlace])
   @@index([idPlace])
@@ -169,23 +126,21 @@ model Sector {
 }
 
 model Ticket {
-  idEvent       Int        @map("idEvent")
-  idPlace       Int        @map("idPlace")
-  idSector      Int        @map("idSector")
-  idTicket      Int        @map("idTicket")
-  state         String     @db.VarChar(45) @default("available")
-  idSeat        Int        @map("idSeat")
-  lineNumber    Int?       @map("lineNumber")
-  idSale        Int?       @map("idSale")
-
-  event        Event       @relation(fields: [idEvent], references: [idEvent])
-  eventSector  EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
-  saleItem     SaleItem?   @relation(fields: [idSale, lineNumber], references: [idSale, lineNumber])
-  seat         Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
-
-  @@unique([idEvent, idPlace, idSector, idSeat], name: "ticket_by_seat")
+  idEvent     Int         @map("idEvent")
+  idPlace     Int         @map("idPlace")
+  idSector    Int         @map("idSector")
+  idTicket    Int         @map("idTicket")
+  state       String      @default("available") @db.VarChar(45)
+  idSeat      Int         @map("idSeat")
+  idSale      Int?        @map("idSale")
+  lineNumber  Int?        @map("lineNumber")
+  event       event       @relation(fields: [idEvent], references: [idEvent])
+  eventSector EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
+  seat        Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
+  saleItem    SaleItem?   @relation(fields: [idSale, lineNumber], references: [idSale, lineNumber])
 
   @@id([idEvent, idPlace, idSector, idTicket])
+  @@unique([idEvent, idPlace, idSector, idSeat], name: "ticket_by_seat")
   @@index([idSale, lineNumber])
   @@index([idPlace, idSector, idSeat])
   @@map("ticket")
@@ -199,10 +154,32 @@ model User {
   birthDate DateTime @db.Date
   password  String   @db.VarChar(255)
   role      Role     @default(user)
-
   sales     Sale[]
 
   @@map("users")
+}
+
+model event {
+  idEvent           Int           @id @default(autoincrement())
+  name              String        @db.VarChar(45)
+  description       String        @db.VarChar(255)
+  date              DateTime      @db.DateTime(0)
+  state             String        @db.VarChar(45)
+  image             String?       @db.VarChar(255)
+  featured          Boolean       @default(false)
+  idEventType       Int
+  idOrganiser       Int
+  idPlace           Int
+  eventtype         EventType     @relation(fields: [idEventType], references: [idType], map: "Event_idEventType_fkey")
+  organiser_company Organiser     @relation(fields: [idOrganiser], references: [idOrganiser], map: "Event_idOrganiser_fkey")
+  places            Place         @relation(fields: [idPlace], references: [idPlace], map: "Event_idPlace_fkey")
+  eventSectors      EventSector[]
+  seatEvents        SeatEvent[]
+  tickets           Ticket[]
+
+  @@index([idEventType], map: "Event_idEventType_idx")
+  @@index([idOrganiser], map: "Event_idOrganiser_idx")
+  @@index([idPlace], map: "Event_idPlace_idx")
 }
 
 enum Role {
