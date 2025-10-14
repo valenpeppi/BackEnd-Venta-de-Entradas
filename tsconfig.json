@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "baseUrl": ".",
     "lib": ["ES2022"],          
-    "types": ["node"]  
+    "types": ["node", "jest"]  
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]
