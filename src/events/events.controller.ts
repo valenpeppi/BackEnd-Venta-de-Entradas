@@ -154,6 +154,17 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
   }
 };
 
+export const getEventTypes: RequestHandler = async (_req, res) => {
+  try {
+    const rows = await prisma.eventType.findMany();
+    res.status(200).json(rows);
+  } catch (error: any) {
+    console.error('Error al obtener tipos de eventos:', error);
+    res.status(500).json({ error: 'Error interno del servidor', details: error.message });
+  }
+};
+
+
 export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const rows = await prisma.eventType.findMany({ orderBy: { name: 'asc' } });
