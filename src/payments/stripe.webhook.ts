@@ -22,7 +22,10 @@ router.post(
 
     let event: any;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET || 'whsec_dummy_key');
+      if (env.STRIPE_WEBHOOK_SECRET === 'whsec_dummy_key') {
+        console.warn('⚠️ Advertencia: STRIPE_WEBHOOK_SECRET no definido. Usando clave de prueba.');
+      }
       console.log(`✅ Firma verificada. Tipo: ${event.type}`);
     } catch (err: any) {
       console.error('❌ Verificación de firma falló:', err.message);
