@@ -586,45 +586,17 @@ export const getSeatsForEventSector: RequestHandler = async (req, res) => {
 
 export const searchEvents: RequestHandler = async (req, res, next) => {
   try {
-    const rawQuery = req.query.query as string;
-    if (!rawQuery || rawQuery.trim().length < 1) {
+    const rawQuery = String(req.query.query || '').trim();
+    if (!rawQuery || rawQuery.length < 1) {
       return res.status(400).json({ ok: false, message: 'Consulta demasiado corta' });
     }
 
-    const query = rawQuery.trim().toLowerCase();
+    const query = rawQuery; 
+    const qLower = query.toLowerCase();
 
     const events = await prisma.event.findMany({
       where: {
-        OR: [
-          {
-            state: 'Approved',
-            eventType: {
-              name: {
-                equals: query,
-              } as any,
-            },
-          },
-          {
-            state: 'Featured',
-            eventType: {
-              name: {
-                equals: query,
-              } as any,
-            },
-          },
-          {
-            state: 'Approved',
-            name: {
-              startsWith: query,
-            } as any,
-          },
-          {
-            state: 'Featured',
-            name: {
-              startsWith: query,
-            } as any,
-          },
-        ],
+        state: { in: ['Approved', 'Featured'] },
       },
       include: {
         eventType: true,
@@ -636,8 +608,22 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
       },
     });
 
+    const matched = events.filter((ev) => {
+      const name = String(ev.name || '');
+      const typeName = String(ev.eventType?.name || '');
+
+      const nameLower = name.toLowerCase();
+      const typeLower = typeName.toLowerCase();
+
+      return (
+        nameLower.startsWith(qLower) ||
+        nameLower.includes(' ' + qLower) ||
+        typeLower === qLower
+      );
+    });
+
     const enrichedEvents = await Promise.all(
-      events.map(async (event) => {
+      matched.map(async (event) => {
         const seatCounts = await prisma.seatEvent.groupBy({
           by: ['state'],
           where: { idEvent: event.idEvent },
