@@ -7,7 +7,6 @@ export const prisma = new PrismaClient({
   },
 });
 
-
 export async function testDbConnection(): Promise<void> {
   try {
     await prisma.$connect();
