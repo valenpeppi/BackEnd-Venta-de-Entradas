@@ -121,7 +121,7 @@ router.post('/checkout', async (req, res) => {
     console.log('🔁 MercadoPago checkout iniciado');
     console.log('📦 Body recibido:', JSON.stringify(req.body, null, 2));
 
-    // ✅ validar env antes de seguir
+    // validar env antes de seguir
     const envError = assertEnv();
     if (envError) return res.status(500).json({ error: envError });
 
@@ -146,7 +146,7 @@ router.post('/checkout', async (req, res) => {
       .update(`${dniClient}:${customerEmail}:${JSON.stringify(ticketGroups)}`)
       .digest('hex');
 
-    const successUrl = `${FRONTEND_URL}/pay/processing`; // MP agrega payment_id, status, etc.
+    const successUrl = `${FRONTEND_URL}/pay/processing`; 
     const failureUrl = `${FRONTEND_URL}/pay/failure`;
     const pendingUrl = `${FRONTEND_URL}/pay/failure`;
     const notificationUrl = `${BACKEND_URL}/api/mp/webhook`;
@@ -157,7 +157,7 @@ router.post('/checkout', async (req, res) => {
     const pref = await preferences.create({
       body: {
         items: items.map((item: any, index: number) => {
-          const unit_price = Math.round(Number(item.amount)) / 100; // tu front manda centavos
+          const unit_price = Math.round(Number(item.amount)) / 100; 
           if (!Number.isFinite(unit_price) || unit_price <= 0) {
             throw new Error('Monto inválido en ítems');
           }
@@ -169,14 +169,13 @@ router.post('/checkout', async (req, res) => {
             currency_id: 'ARS',
           };
         }),
-        payer: { email: customerEmail }, // guest checkout
+        payer: { email: customerEmail }, 
         back_urls: {
           success: successUrl,
           failure: failureUrl,
           pending: pendingUrl,
         },
-        // ❌ NO usar auto_return en local para evitar "back_url.success must be defined"
-        // auto_return: 'approved',
+
         notification_url: notificationUrl,
         metadata: {
           dniClient: String(dniClient),
@@ -194,10 +193,7 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
-/**
- * ✅ Fallback de confirmación por payment_id (cuando el webhook no llega)
- * GET /api/mp/confirm-payment?payment_id=NNNN
- */
+
 router.get('/confirm-payment', async (req, res) => {
   try {
     const envError = assertEnv();
