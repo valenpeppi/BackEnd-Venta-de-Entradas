@@ -5,6 +5,8 @@ import SalesController from '../sales/sales.controller';
 import { webhookRateLimit } from '../middlewares/rateLimit';
 import { env } from '../config/env';
 
+const STRIPE_WEBHOOK = (env.STRIPE_WEBHOOK_SECRET ?? '') as string;
+
 const router = express.Router();
 
 router.post(
@@ -22,7 +24,7 @@ router.post(
 
     let event: any;
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, env.STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK);
       console.log(`✅ Firma verificada. Tipo: ${event.type}`);
     } catch (err: any) {
       console.error('❌ Verificación de firma falló:', err.message);

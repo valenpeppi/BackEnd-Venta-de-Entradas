@@ -23,7 +23,7 @@ describe('🧩 Test de Integración General - Backend Venta de Entradas', () => 
 
   it('GET /api/places/:id/sectors debería devolver sectores o array vacío', async () => {
     const idPlace = 1;
-    const res = await request(app).get(/api/places/${idPlace}/sectors);
+    const res = await request(app).get('/api/places/${idPlace}/sectors');
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
