@@ -236,7 +236,7 @@ async function main() {
     where: { idEvent: 5 }, update: {}, create: {
       idEvent: 5, name: 'Vuelve Yayo a Rosario!', description: 'Vuelve el mejor humorista de la historia de Argentina, preparate para reirte con humor de todo tipo!',
       date: new Date('2026-11-20 23:00:00'), state: 'Approved', image: '/uploads/event-1759701392664-86226707.jpg',
-      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
+      featured: true, idEventType: 2, idOrganiser: 3, idPlace: 4
     }
   });
 
