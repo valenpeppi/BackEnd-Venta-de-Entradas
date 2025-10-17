@@ -1,9 +1,11 @@
-import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import fs from 'fs';
 import { AuthRequest } from '../auth/auth.middleware';
 import { RequestHandler } from 'express';
 import { createSeatEventGridForEvent } from '../seats/seats.controller'
+import { sectorDisplayName } from '../utils/names';
+import type { Request as ExpressRequest, Response } from 'express';
+
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -707,5 +709,50 @@ export const getTicketMap: RequestHandler = async (req, res) => {
     console.error('Error al obtener mapa de tickets:', err);
     res.status(500).json({ ok: false, message: 'Error interno del servidor' });
   }
+};
+
+export async function getSectorsByEvent(
+  req: ExpressRequest<{ id: string }>, 
+  res: Response
+) {
+  const idEvent = Number(req.params.id);
+  if (!Number.isFinite(idEvent)) {
+    return res.status(400).json({ error: 'id inválido' });
+  }
+  // Traigo el evento y su place (para placeType)
+  const event = await prisma.event.findUnique({
+    where: { idEvent },
+    include: { place: true },
+  });
+  if (!event) return res.status(404).json({ error: 'Evento no encontrado' });
+
+  const sectorsFromDb = await prisma.sector.findMany({
+    where: { idPlace: event.idPlace },
+    include: {
+      eventSectors: {
+        where: { idEvent },
+        select: { price: true },
+      },
+    },
+    orderBy: { idSector: 'asc' },
+  });
+
+  const dto = sectorsFromDb.map((sec) => ({
+    idSector: sec.idSector,
+    idPlace: sec.idPlace,
+    name: sec.name, // nombre real
+    enumerated: sec.sectorType === 'enumerated',
+    availableTickets: undefined as any,
+    price: Number(sec.eventSectors?.[0]?.price ?? 0),
+
+    displayName: sectorDisplayName({
+      placeType: event.place.placeType,    
+      sectorType: sec.sectorType,
+      name: sec.name,
+      publicAlias: (sec as any).publicAlias ?? null, 
+    }),
+  }));
+
+  return res.status(200).json({ data: dto });
 };
 
