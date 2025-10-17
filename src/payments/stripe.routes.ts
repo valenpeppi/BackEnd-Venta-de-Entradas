@@ -40,7 +40,6 @@ router.post('/checkout', async (req, res) => {
         return res.status(400).json({ error: 'ticketGroup inválido: faltan idEvent/idPlace/idSector' });
       }
 
-      // Traer el tipo de sector desde DB
       const sector = await prisma.sector.findUnique({
         where: { idSector_idPlace: { idSector, idPlace } },
         select: { sectorType: true, name: true },
@@ -50,7 +49,7 @@ router.post('/checkout', async (req, res) => {
         return res.status(400).json({ error: `Sector ${idSector} en lugar ${idPlace} no existe` });
       }
 
-      const sectorType = sector.sectorType; // 'enumerated' | 'nonEnumerated'
+      const sectorType = sector.sectorType; 
       const incomingIds: number[] = Array.isArray(g.ids)
         ? (g.ids as (number | string)[]).map(Number).filter((n) => Number.isFinite(n) && n > 0)
         : [];
@@ -62,7 +61,6 @@ router.post('/checkout', async (req, res) => {
       });
 
       if (sectorType === 'nonEnumerated') {
-        // NO ENUMERADO: ignorar ids del front; usar quantity
         if (!quantity || quantity <= 0) {
           return res.status(400).json({ error: `Para sector no enumerado se requiere quantity > 0` });
         }
@@ -95,7 +93,6 @@ router.post('/checkout', async (req, res) => {
         g.ids = seatIds;
         console.log('✅ No enumerado: asientos (abstractos) reservados:', seatIds);
       } else {
-        // ENUMERADO
         if (incomingIds.length > 0) {
           const availableCount = await prisma.seatEvent.count({
             where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
@@ -139,20 +136,17 @@ router.post('/checkout', async (req, res) => {
       }
     }
 
-    // Crear sesión de Stripe
     console.log('💳 Creando sesión de Stripe...');
 
-    // Sanitizamos items
     const line_items = items.map((item: any) => ({
       price_data: {
         currency: 'ars',
         product_data: { name: String(item.name).slice(0, 120) },
-        unit_amount: toMinorUnits(Number(item.amount)), // ya viene en centavos
+        unit_amount: toMinorUnits(Number(item.amount)), 
       },
       quantity: Number(item.quantity) || 1,
     }));
 
-    // Idempotencia por dni + contenido
     const idemKey = crypto
       .createHash('sha256')
       .update(`${dniClient}:${customerEmail}:${JSON.stringify(ticketGroups)}`)
@@ -183,7 +177,6 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
-// Liberar reservas manualmente (fallback desde frontend)
 router.post('/release', async (req, res) => {
   try {
     const { ticketGroups } = req.body as { ticketGroups: Array<any> };
@@ -233,10 +226,6 @@ router.post('/release', async (req, res) => {
   }
 });
 
-/**
- * Permite confirmar la venta aunque el webhook no llegue.
- */
-
 router.get('/confirm-session', async (req, res) => {
   try {
     const sessionId = String(req.query.session_id || '');
@@ -257,7 +246,6 @@ router.get('/confirm-session', async (req, res) => {
       return res.status(409).json({ error: 'El pago aún no está confirmado' });
     }
 
-    // Parsear metadata
     let dniClient: number | null = null;
     let ticketGroups: any[] = [];
     try {
@@ -269,7 +257,6 @@ router.get('/confirm-session', async (req, res) => {
       return res.status(400).json({ error: 'Metadata incompleta para confirmar la venta' });
     }
 
-    // Idempotencia: si ya hay vendidos, devolvemos ok
     const anySold = await prisma.seatEvent.count({
       where: {
         OR: ticketGroups.flatMap((g: any) => {
@@ -287,7 +274,6 @@ router.get('/confirm-session', async (req, res) => {
       return res.status(200).json({ confirmed: true, message: 'Venta ya confirmada previamente' });
     }
 
-    // Reutilizamos el controlador de ventas
     const mockReq = { body: { dniClient, tickets: ticketGroups }, auth: { dni: dniClient } } as any;
     const mockRes = {
       status: (code: number) => ({

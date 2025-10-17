@@ -7,7 +7,6 @@ import SalesController from '../sales/sales.controller';
 
 const router = express.Router();
 
-// ✅ Tomamos URLs del entorno y validamos
 const FRONTEND_URL = (process.env.FRONTEND_URL || '').trim();
 const BACKEND_URL = (process.env.BACKEND_URL || '').trim();
 const MP_ACCESS_TOKEN = (process.env.MP_ACCESS_TOKEN || '').trim();
@@ -26,11 +25,7 @@ function assertEnv() {
   return null;
 }
 
-/**
- * Normaliza y reserva asientos como en Stripe:
- * - sectorType 'nonEnumerated': ignora ids, reserva por quantity.
- * - sectorType 'enumerated': si hay ids, valida y reserva; si no, reserva por quantity.
- */
+
 async function normalizeAndReserve(ticketGroups: any[]) {
   for (const g of ticketGroups) {
     const idEvent = Number(g.idEvent);
@@ -81,7 +76,6 @@ async function normalizeAndReserve(ticketGroups: any[]) {
 
       g.ids = seatIds;
     } else {
-      // enumerated
       if (incomingIds.length > 0) {
         const availableCount = await prisma.seatEvent.count({
           where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
@@ -121,7 +115,6 @@ router.post('/checkout', async (req, res) => {
     console.log('🔁 MercadoPago checkout iniciado');
     console.log('📦 Body recibido:', JSON.stringify(req.body, null, 2));
 
-    // validar env antes de seguir
     const envError = assertEnv();
     if (envError) return res.status(500).json({ error: envError });
 
@@ -140,7 +133,6 @@ router.post('/checkout', async (req, res) => {
     console.log('🎫 Procesando ticketGroups:', ticketGroups);
     await normalizeAndReserve(ticketGroups);
 
-    // Idempotencia/external reference
     const external_reference = crypto
       .createHash('sha256')
       .update(`${dniClient}:${customerEmail}:${JSON.stringify(ticketGroups)}`)
@@ -225,7 +217,6 @@ router.get('/confirm-payment', async (req, res) => {
       return res.status(409).json({ error: 'El pago no está aprobado aún', status });
     }
 
-    // Idempotencia: si ya hay vendidos
     const anySold = await prisma.seatEvent.count({
       where: {
         OR: ticketGroups.flatMap((g: any) => {
@@ -242,7 +233,6 @@ router.get('/confirm-payment', async (req, res) => {
       return res.status(200).json({ confirmed: true, message: 'Venta ya confirmada previamente' });
     }
 
-    // Confirmar venta
     const mockReq = { body: { dniClient, tickets: ticketGroups }, auth: { dni: dniClient } } as any;
     const mockRes = {
       status: (code: number) => ({

@@ -18,9 +18,7 @@ class SalesController {
         return;
       }
 
-      // VALIDACIÓN: no más de 6 tickets por evento (acumulado)
-      // - contamos lo que ya tiene vendido y lo que viene en esta confirmación
-      const eventQtyMap = new Map<number, number>(); // idEvent -> qty en este pedido
+      const eventQtyMap = new Map<number, number>();
       const requestedSeatsByEvent = new Map<number, { idPlace: number; idSector: number; ids: number[] }[]>();
 
       for (const group of tickets) {
@@ -40,14 +38,12 @@ class SalesController {
         requestedSeatsByEvent.set(idEvent, arr);
       }
 
-      // Buscar ventas del usuario
       const userSales = await prisma.sale.findMany({
         where: { dniClient },
         select: { idSale: true },
       });
       const saleIds = userSales.map(s => s.idSale);
 
-      // Para cada evento, contar ya vendidos + solicitados
       for (const [idEvent, reqQty] of eventQtyMap.entries()) {
         const alreadyBought = await prisma.ticket.count({
           where: {
@@ -65,7 +61,6 @@ class SalesController {
         }
       }
 
-      // Idempotencia: si ya hay alguno sold, no duplicar
       const allTicketKeys = tickets.flatMap((group: any) =>
         (group.ids || []).map((idSeat: number) => ({
           idEvent: Number(group.idEvent),
@@ -98,7 +93,6 @@ class SalesController {
         return;
       }
 
-      // Transacción
       const result = await prisma.$transaction(async (tx) => {
         const sale = await tx.sale.create({
           data: { date: new Date(), dniClient },
@@ -125,7 +119,6 @@ class SalesController {
             },
           });
 
-          // Confirmar todavía reservados
           const reservedSeats = await tx.seatEvent.findMany({
             where: { idEvent, idPlace, idSector, idSeat: { in: ids }, state: 'reserved' },
           });
@@ -133,13 +126,11 @@ class SalesController {
             throw new Error('Algunos asientos ya no están reservados o disponibles');
           }
 
-          // seatEvent -> sold
           await tx.seatEvent.updateMany({
             where: { idEvent, idPlace, idSector, idSeat: { in: ids } },
             data: { state: 'sold', idSale: sale.idSale, lineNumber },
           });
 
-          // ticket por asiento (update si existe, create si no)
           for (const idSeat of ids) {
             const existing = await tx.ticket.findUnique({
               where: {
@@ -189,7 +180,6 @@ class SalesController {
     }
   }
 
- // Obtener tickets del usuario
   public async getUserTickets(req: AuthRequest, res: Response): Promise<void> {
     const dniClient = req.auth?.dni;
 
@@ -218,7 +208,7 @@ class SalesController {
         },
         include: {
           event: { include: { place: true } },
-          eventSector: { include: { sector: true } }, // sector.sectorType disponible acá
+          eventSector: { include: { sector: true } }, 
         },
         orderBy: { event: { date: 'asc' } },
       });
@@ -235,7 +225,6 @@ class SalesController {
           }) + ' hs',
         location: ticket.event.place.name,
         sectorName: ticket.eventSector.sector.name,
-        // 👇 ahora enviamos el tipo de sector
         sectorType: ticket.eventSector.sector.sectorType as 'enumerated' | 'nonEnumerated' | string,
         seatNumber: ticket.idSeat,
         imageUrl: ticket.event.image

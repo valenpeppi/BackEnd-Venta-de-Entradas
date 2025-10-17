@@ -1,7 +1,6 @@
 import { getPlaces, getSectorsByPlace } from './places.controller';
 import { prisma } from '../db/mysql';
 
-// 🧠 Mockeamos Prisma para no tocar la base real
 jest.mock('../db/mysql', () => ({
   prisma: {
     place: { findMany: jest.fn() },
@@ -9,7 +8,6 @@ jest.mock('../db/mysql', () => ({
   },
 }));
 
-// 🧩 Mock de Response (Express)
 const mockResponse = () => {
   const res: any = {};
   res.status = jest.fn().mockReturnValue(res);
@@ -22,7 +20,6 @@ describe('place.controller', () => {
     jest.clearAllMocks();
   });
 
-  // ✅ TEST 1 - getPlaces
   describe('getPlaces', () => {
     it('debería devolver una lista ordenada de lugares', async () => {
       const mockLugares = [
@@ -33,7 +30,6 @@ describe('place.controller', () => {
 
       const res = mockResponse();
 
-      // 👉 se agrega un tercer argumento (next) falso
       await getPlaces({} as any, res, (() => {}) as any);
 
       expect(prisma.place.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } });
@@ -45,7 +41,6 @@ describe('place.controller', () => {
       (prisma.place.findMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
       const res = mockResponse();
 
-      // 👉 también pasamos el next
       await getPlaces({} as any, res, (() => {}) as any);
 
       expect(res.status).toHaveBeenCalledWith(500);
@@ -58,7 +53,6 @@ describe('place.controller', () => {
     });
   });
 
-  // ✅ TEST 2 - getSectorsByPlace
   describe('getSectorsByPlace', () => {
     it('debería devolver los sectores de un lugar dado', async () => {
       const req = { params: { idPlace: '1' } } as any;

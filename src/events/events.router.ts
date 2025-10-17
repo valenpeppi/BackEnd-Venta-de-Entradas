@@ -25,7 +25,6 @@ import {
 
 const router = Router();
 
-// Configuración de Multer 
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });

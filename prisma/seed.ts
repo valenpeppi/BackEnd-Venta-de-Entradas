@@ -90,15 +90,12 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
 
   }
   
-  // Para los sectores no enumerados, no se generan tickets individuales.
-  // La lógica de venta para estos se manejaría de forma distinta (por capacidad).
   console.log(`Tickets generados para evento ${idEvent}`);
 }
 
 async function main() {
   console.log('Iniciando el proceso de seeding...');
 
-  // Event Types
   await prisma.eventType.createMany({
     skipDuplicates: true,
     data: [
@@ -112,7 +109,6 @@ async function main() {
   });
   console.log('Tipos de evento cargados');
 
-  // Organizadores
   await prisma.organiser.createMany({
     skipDuplicates: true,
     data: [
@@ -147,7 +143,6 @@ async function main() {
   });
   console.log('Organizadores cargados');
 
-  // Lugares
   await prisma.place.createMany({
     skipDuplicates: true,
     data: [
@@ -159,7 +154,6 @@ async function main() {
   });
   console.log('Lugares cargados');
 
-  // Sectores
   const sectores: { idSector: number; idPlace: number; name: string; sectorType: string; capacity: number }[] = [
     { idSector: 1, idPlace: 1, name: 'Platea Inferior', sectorType: 'nonEnumerated', capacity: 40 },
     { idSector: 1, idPlace: 2, name: 'Campo', sectorType: 'nonEnumerated', capacity: 80 },
@@ -181,14 +175,12 @@ async function main() {
   }
   console.log('Sectores cargados');
 
-  // Seats
   const allSectors = await prisma.sector.findMany();
     for (const s of allSectors) {
       await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
     }
   console.log('Asientos cargados');
 
-  // Eventos
   const now = new Date();
   const in10d = new Date(now.getTime() + 90 * 24 * 3600 * 1000);
   in10d.setHours(22, 0, 0, 0);
@@ -221,7 +213,6 @@ async function main() {
     },
   });
   
-  // Se agregan los nuevos eventos
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
       idEvent: 4, name: 'Lucho Mellera', description: 'Preparate para una noche espectacular llena de risas!',
@@ -279,7 +270,6 @@ async function main() {
   });
   console.log('Todos los eventos han sido cargados.');
 
-  // Precios por sector para todos los eventos
   const eventSectorsData = [
     { idEvent: ev1.idEvent, idPlace: 2, idSector: 1, price: '80000.00' },
     { idEvent: ev1.idEvent, idPlace: 2, idSector: 2, price: '65000.00' },
@@ -322,7 +312,6 @@ async function main() {
   }
   console.log('EventSectors cargados');
 
-  // Generación de Grilla y Tickets para todos los eventos de forma automática
   const allEvents = await prisma.event.findMany();
   for (const event of allEvents) {
     await createSeatEventGridForEvent(event.idEvent, event.idPlace);
@@ -330,7 +319,6 @@ async function main() {
   }
   console.log('SeatEvents y Tickets generados para todos los eventos');
 
-  // Usuarios
   await prisma.user.createMany({
     skipDuplicates: true,
     data: [

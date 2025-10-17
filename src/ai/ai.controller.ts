@@ -21,7 +21,6 @@ async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-// Llamada genérica a OpenRouter - Intermediario con Gemma y Mistral -
 async function getAIResponse(model: string, message: string) {
   const response = await axios.post(
     "https://openrouter.ai/api/v1/chat/completions",
@@ -30,7 +29,7 @@ async function getAIResponse(model: string, message: string) {
       messages: [
         {
           role: "user",
-          content: message, // el frontend ya manda el prompt completo
+          content: message,
         },
       ],
     },
@@ -43,7 +42,6 @@ async function getAIResponse(model: string, message: string) {
   );
 }
 
-// Endpoint principal: reenvía prompt completo del front
 router.post("/", async (req: Request, res: Response) => {
   const { message } = req.body;
   if (!message) {
@@ -53,7 +51,6 @@ router.post("/", async (req: Request, res: Response) => {
   try {
     console.log("Mensaje recibido desde frontend IA:", message.slice(0, 120) + "...");
 
-    // 1Intentar con Gemma primero
     const replyGemma = await withTimeout(
       getAIResponse("google/gemma-3-12b-it:free", message),
       15000
@@ -65,7 +62,6 @@ router.post("/", async (req: Request, res: Response) => {
     console.warn("Gemma falló o tardó demasiado:", err1.message);
 
     try {
-      // Fallback con Mistral
       const replyMistral = await withTimeout(
         getAIResponse("mistralai/mistral-7b-instruct:free", message),
         20000

@@ -5,13 +5,10 @@ import SalesController from '../sales/sales.controller';
 
 const router = express.Router();
 
-/**
- * Este router puede ir después de express.json (MP manda JSON normal).
- * Igual, en tu index.ts ya lo montaste antes: perfecto.
- */
+
 router.post('/', async (req, res) => {
   console.log('📩 Webhook MP recibido');
-  res.sendStatus(200); // responder rápido a MP
+  res.sendStatus(200); 
 
   try {
     const { type, data } = req.body || {};
@@ -36,7 +33,6 @@ router.post('/', async (req, res) => {
     }
 
     if (status === 'approved') {
-      // idempotencia: evitar doble confirmación
       const anySold = await prisma.seatEvent.count({
         where: {
           OR: ticketGroups.flatMap((g: any) => {

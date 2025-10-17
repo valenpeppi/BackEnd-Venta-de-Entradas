@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
     contactEmail?: string;
     role?: string;
     type?: 'user' | 'company';
-    bootId?: string; // agregado
+    bootId?: string; 
   };
 }
 
@@ -35,7 +35,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       contactEmail?: string;
       role?: string;
       type?: 'user' | 'company';
-      bootId?: string; // agregado
+      bootId?: string; 
     };
 
     //  Verificación de reinicio: el token debe traer bootId y coincidir

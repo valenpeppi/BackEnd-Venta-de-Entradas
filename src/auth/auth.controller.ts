@@ -8,7 +8,6 @@ import { BOOT_ID } from '../system/boot';
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
-// Función para verificar el token de reCAPTCHA
 const verifyRecaptcha = async (token: string): Promise<boolean> => {
   if (!RECAPTCHA_SECRET) {
     console.error('La clave secreta de reCAPTCHA no está configurada en .env');

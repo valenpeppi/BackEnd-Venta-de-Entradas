@@ -51,7 +51,6 @@ router.post(
         return res.status(200).json({ ignored: true, reason: 'incomplete-metadata' });
       }
 
-      // idempotencia básica: si alguno ya está sold, no repetimos
       const anySold = await prisma.seatEvent.count({
         where: {
           OR: ticketGroups.flatMap((g: any) => {

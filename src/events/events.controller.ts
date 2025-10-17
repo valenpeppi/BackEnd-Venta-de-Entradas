@@ -671,7 +671,6 @@ export const getTicketMap: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Obtener el evento para saber el idPlace
     const event = await prisma.event.findUnique({
       where: { idEvent },
       select: { idPlace: true }
@@ -682,7 +681,6 @@ export const getTicketMap: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Obtener los seatEvents disponibles para este evento
     const seatEvents = await prisma.seatEvent.findMany({
       where: { 
         idEvent,
@@ -699,7 +697,7 @@ export const getTicketMap: RequestHandler = async (req, res) => {
     const ticketMap: Record<string, number> = {};
     seatEvents.forEach(seatEvent => {
       const key = `${seatEvent.idPlace}-${seatEvent.idSector}-${seatEvent.idSeat}`;
-      ticketMap[key] = seatEvent.idSeat; // Usar idSeat como ticketId temporal
+      ticketMap[key] = seatEvent.idSeat; 
     });
 
     res.status(200).json({ ok: true, data: ticketMap });

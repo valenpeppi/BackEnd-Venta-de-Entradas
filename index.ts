@@ -10,7 +10,6 @@ dotenv.config();
 const app: Application = express();
 
 
-// Importar rutas
 import placesRoutes from './src/places/places.router';
 import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
@@ -23,27 +22,21 @@ import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
 import systemRoutes from './src/system/system.router';
 
-// Archivos estáticos
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
-// CORS
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
-// Logs
 app.use(morgan('dev'));
 
-// Webhooks (raw antes de json)
 app.use('/api/stripe/webhook', stripeWebhookRouter);
 app.use('/api/mp/webhook', mpWebhookRouter);
 
-// Parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rutas
 app.use('/api/system', systemRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
@@ -54,13 +47,11 @@ app.use('/api/mp', mpRoutes);
 app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
 
-// Error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal Server Error' });
 });
 
-// Solo levantar el servidor si NO estamos en modo test
 if (process.env.NODE_ENV !== 'test') {
   const PORT: number = Number(process.env.PORT) || 3000;
 

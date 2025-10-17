@@ -12,7 +12,7 @@ import {
 
 import type { AuthRequest } from '../auth/auth.middleware';
 
-// --- 🧩 Mocks globales ---
+// Mocks globales
 jest.mock('../db/mysql', () => ({
   prisma: {
     $transaction: jest.fn(),

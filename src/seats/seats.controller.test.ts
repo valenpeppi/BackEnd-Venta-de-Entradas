@@ -1,7 +1,6 @@
 import { createSeatEventGridForEvent, getSeatsForSector } from './seats.controller';
 import { prisma } from '../db/mysql';
 
-// 🧠 Mockeamos Prisma
 jest.mock('../db/mysql', () => ({
   prisma: {
     sector: { findMany: jest.fn() },
@@ -12,7 +11,6 @@ jest.mock('../db/mysql', () => ({
   },
 }));
 
-// 🧩 Mock de Response
 const mockResponse = () => {
   const res: any = {};
   res.status = jest.fn().mockReturnValue(res);
@@ -22,13 +20,11 @@ const mockResponse = () => {
 
 describe('seats.controller', () => {
   beforeAll(() => {
-    // Silenciar errores en consola
     jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   beforeEach(() => jest.clearAllMocks());
 
-  // ✅ TEST 1: createSeatEventGridForEvent
   describe('createSeatEventGridForEvent', () => {
     it('debería crear grilla de asientos para cada sector y asiento', async () => {
       (prisma.sector.findMany as jest.Mock).mockResolvedValue([
@@ -49,7 +45,6 @@ describe('seats.controller', () => {
         include: { seats: true },
       });
 
-      // Se deberían haber hecho 3 upserts (2 + 1)
       expect(prisma.seatEvent.upsert).toHaveBeenCalledTimes(3);
       expect(prisma.seatEvent.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -71,7 +66,6 @@ describe('seats.controller', () => {
     });
   });
 
-  // ✅ TEST 2: getSeatsForSector
   describe('getSeatsForSector', () => {
     it('debería devolver asientos formateados correctamente', async () => {
       const req = { params: { idEvent: '10', idSector: '1' } } as any;

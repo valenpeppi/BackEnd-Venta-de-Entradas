@@ -1,7 +1,6 @@
 import SalesController from './sales.controller';
 import { prisma } from '../db/mysql';
 
-// 🧠 Mockeamos Prisma
 jest.mock('../db/mysql', () => ({
   prisma: {
     sale: { findMany: jest.fn() },
@@ -9,7 +8,6 @@ jest.mock('../db/mysql', () => ({
   },
 }));
 
-// 🧩 Mock Response de Express
 const mockResponse = () => {
   const res: any = {};
   res.status = jest.fn().mockReturnValue(res);
