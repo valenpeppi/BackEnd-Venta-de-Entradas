@@ -12,7 +12,6 @@ const app: Application = express();
 
 // Importar rutas
 import placesRoutes from './src/places/places.router';
-import userRoutes from './src/users/users.router';
 import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
 import authRoutes from './src/auth/auth.router';
@@ -46,7 +45,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use('/api/system', systemRoutes);
-app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/auth', authRoutes);
