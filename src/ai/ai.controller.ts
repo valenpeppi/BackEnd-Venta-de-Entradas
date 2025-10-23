@@ -50,30 +50,30 @@ router.post("/", async (req: Request, res: Response) => {
 
   try {
     console.log("Mensaje recibido desde frontend IA:", message.slice(0, 120) + "...");
-
-    const replyGemma = await withTimeout(
-      getAIResponse("google/gemma-3-12b-it:free", message),
+    // Principal: DeepSeek.
+    const replyDeepSeek = await withTimeout(
+      getAIResponse("deepseek/deepseek-chat-v3.1:free", message),
       15000
     );
-    console.log("Gemma respondió OK");
-    return res.json({ reply: replyGemma });
+    console.log("DeepSeek respondió OK");
+    return res.json({ reply: replyDeepSeek });
 
   } catch (err1: any) {
-    console.warn("Gemma falló o tardó demasiado:", err1.message);
+    console.warn("DeepSeek falló o tardó demasiado:", err1?.message);
 
     try {
-      const replyMistral = await withTimeout(
-        getAIResponse("mistralai/mistral-7b-instruct:free", message),
+      // Modelo de Backup: Gemma.
+      const replyGemma = await withTimeout(
+        getAIResponse("google/gemma-3-12b-it:free", message),
         20000
       );
-      console.log("Fallback Mistral respondió OK");
-      return res.json({ reply: replyMistral });
+      console.log("Backup Gemma respondió OK");
+      return res.json({ reply: replyGemma });
 
     } catch (err2: any) {
-      console.error("❌ Ambos modelos fallaron:", err2.message);
+      console.error("❌ Ambos modelos fallaron:", err2?.message);
       return res.status(504).json({
-        reply:
-          "El asistente no pudo responder en este momento. Intentalo nuevamente más tarde.",
+        reply: "El asistente no pudo responder en este momento. Intentalo nuevamente más tarde.",
       });
     }
   }
