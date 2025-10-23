@@ -345,7 +345,7 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
 ## IA
 
 ### POST `/api/ai/`
-- **Descripcion:** proxy que reenvia prompts a OpenRouter (Gemma/Mistral).
+- **Descripcion:** proxy que reenvia prompts a OpenRouter (Deepseek/Gemma).
 - **Body:** `{ "message": "texto libre" }`.
 - **Respuesta 200:** `{ "reply": "respuesta del modelo" }`.
 - **Errores:** `400` sin mensaje, `504` timeout en ambos modelos.
