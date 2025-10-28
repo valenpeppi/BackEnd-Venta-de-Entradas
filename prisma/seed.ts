@@ -199,7 +199,7 @@ async function main() {
 
   const ev2 = await prisma.event.upsert({
     where: { idEvent: 2 }, update: {}, create: {
-      idEvent: 2, name: 'Bad Bunny', description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones.',
+      idEvent: 2, name: 'Bad Bunny', description: 'Bad Bunny se presenta en el Gigante de Arroyito en una noche que romperá corazones y emocionará a la ciudad de Rosario.',
       date: in20d, state: 'Approved', image: '/uploads/event-1755092653867-52272554.jpg',
       featured: true, idEventType: 1, idOrganiser: 2, idPlace: 2,
     },
@@ -207,7 +207,7 @@ async function main() {
 
   const ev3 = await prisma.event.upsert({
     where: { idEvent: 3 }, update: {}, create: {
-      idEvent: 3, name: 'Bizarrap', description: '¡Bizarrap llega al Bioceres para reventar la ciudad de Rosario en este show exclusivo!',
+      idEvent: 3, name: 'Bizarrap', description: '¡Bizarrap llega al Bioceres para revolucionar la ciudad en este show exclusivo!',
       date: in30d, state: 'Approved', image: '/uploads/event-1758722694684-973176483.webp',
       featured: true, idEventType: 1, idOrganiser: 1, idPlace: 3,
     },
@@ -215,7 +215,7 @@ async function main() {
   
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
-      idEvent: 4, name: 'Lucho Mellera', description: 'Preparate para una noche espectacular llena de risas!',
+      idEvent: 4, name: 'Lucho Mellera', description: '¡Preparate para una noche espectacular llena de risas de la mano de Lucho Mellera!',
       date: new Date('2026-12-13 00:00:00'), state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
       featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
     }
@@ -223,7 +223,7 @@ async function main() {
 
   const ev5 = await prisma.event.upsert({
     where: { idEvent: 5 }, update: {}, create: {
-      idEvent: 5, name: 'Vuelve Yayo a Rosario!', description: 'Vuelve el mejor humorista de la historia de Argentina, preparate para reirte con humor de todo tipo!',
+      idEvent: 5, name: '¡Vuelve Yayo a Rosario!', description: 'Vuelve el mejor humorista de la historia de la Republica Argentina a esta ciudad, preparate para reirte con humor de todo tipo!',
       date: new Date('2026-11-20 23:00:00'), state: 'Approved', image: '/uploads/event-1759701392664-86226707.jpg',
       featured: true, idEventType: 2, idOrganiser: 3, idPlace: 4
     }
@@ -239,7 +239,7 @@ async function main() {
 
   const ev7 = await prisma.event.upsert({
     where: { idEvent: 7 }, update: {}, create: {
-      idEvent: 7, name: 'La Bresh', description: 'Somos un movimiento que conecta a miles de personas a través de la música, la alegría y la inclusión. Hitazo tras hitazo. Revive cada fiesta.',
+      idEvent: 7, name: 'La Bresh', description: 'Somos un movimiento que conecta a miles de personas a través de la música y la alegría. Hitazo tras hitazo. Revive cada fiesta.',
       date: new Date('2026-01-15 18:00:00'), state: 'Approved', image: '/uploads/event-1759701709738-724959945.jpg',
       featured: false, idEventType: 4, idOrganiser: 3, idPlace: 2
     }
@@ -255,7 +255,7 @@ async function main() {
 
   const ev9 = await prisma.event.upsert({
     where: { idEvent: 9 }, update: {}, create: {
-      idEvent: 9, name: 'La previa de 9 de Julio contra Belgrano', description: 'El mejor clasico de la liga se juega, compra tus entradas con 1 año de anticipacion!!',
+      idEvent: 9, name: 'La previa de 9 de Julio contra Belgrano', description: 'El mejor clasico de la liga se jugará pronto, compra tus entradas con 1 año de anticipacion!',
       date: new Date('2026-07-19 19:00:00'), state: 'Approved', image: '/uploads/event-1759702021862-561109661.jpg',
       featured: false, idEventType: 5, idOrganiser: 3, idPlace: 2
     }
@@ -263,7 +263,7 @@ async function main() {
 
   const ev10 = await prisma.event.upsert({
     where: { idEvent: 10 }, update: {}, create: {
-      idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año.',
+      idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año lectivo.',
       date: new Date('2025-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
       featured: false, idEventType: 6, idOrganiser: 3, idPlace: 4
     }
