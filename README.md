@@ -496,6 +496,37 @@
 
 <hr/>
 
+<h2>💳 Stripe – Tarjetas de prueba</h2>
+
+<p>
+  Para probar el flujo de pago con Stripe en entorno de desarrollo se utilizan tarjetas de prueba
+  (no generan cargos reales). La documentacion completa de tarjetas de prueba esta en:
+</p>
+
+<ul>
+  <li>
+    <a href="https://docs.stripe.com/testing#international-cards" target="_blank">
+      https://docs.stripe.com/testing#international-cards
+    </a>
+  </li>
+</ul>
+
+<p>
+  En el proyecto utilizamos principalmente la tarjeta de prueba de <strong>Argentina</strong>:
+</p>
+
+<pre><code>Numero: 4000 0003 2000 0021
+Vencimiento: cualquier fecha futura
+CVC: cualquier valor de 3 digitos
+</code></pre>
+
+<p>
+  Importante: estas tarjetas <strong>solo funcionan en modo test</strong> y deben usarse unicamente
+  en el entorno de desarrollo del proyecto.
+</p>
+
+<hr/>
+
 <h2>🧰 Configuracion y variables de entorno</h2>
 
 <p>Variables principales requeridas:</p>
@@ -558,6 +589,7 @@
 </table>
 
 <hr/>
+
 
 <h2>🚀 Puesta en marcha</h2>
 
