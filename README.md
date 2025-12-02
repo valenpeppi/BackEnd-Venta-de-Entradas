@@ -1,4 +1,4 @@
-<h1>🧩 TicketApp – Backend (Venta de Entradas)</h1>
+<h1>🧩 TicketApp – Backend</h1>
 
 <p align="center">
   <a href="https://github.com/valenpeppi/BackEnd-Venta-de-Entradas" target="_blank" style="text-decoration: none;">
