@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { preferences } from './mp.client';
 import { prisma } from '../db/mysql';
 import SalesController from '../sales/sales.controller';
+import { reserveTickets } from '../services/reservation.service';
 
 const router = express.Router();
 
@@ -26,89 +27,8 @@ function assertEnv() {
 }
 
 
-async function normalizeAndReserve(ticketGroups: any[]) {
-  for (const g of ticketGroups) {
-    const idEvent = Number(g.idEvent);
-    const idPlace = Number(g.idPlace);
-    const idSector = Number(g.idSector);
+// Función normalizeAndReserve eliminada a favor de reservation.service
 
-    if (!idEvent || !idPlace || !idSector) {
-      throw new Error('ticketGroup inválido: faltan idEvent/idPlace/idSector');
-    }
-
-    const sector = await prisma.sector.findUnique({
-      where: { idSector_idPlace: { idSector, idPlace } },
-      select: { sectorType: true, name: true },
-    });
-
-    if (!sector) throw new Error(`Sector ${idSector} en lugar ${idPlace} no existe`);
-
-    const sectorType = sector.sectorType; // 'enumerated' | 'nonEnumerated'
-    const incomingIds: number[] = Array.isArray(g.ids)
-      ? g.ids.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)
-      : [];
-    const qtyFromBody = Number(g.quantity);
-    const quantity = Number.isFinite(qtyFromBody) ? qtyFromBody : (incomingIds.length > 0 ? incomingIds.length : 0);
-
-    if (sectorType === 'nonEnumerated') {
-      if (!quantity || quantity <= 0) {
-        throw new Error(`Para sector no enumerado se requiere quantity > 0`);
-      }
-
-      const totalAvailable = await prisma.seatEvent.count({
-        where: { idEvent, idPlace, idSector, state: 'available' },
-      });
-      if (totalAvailable < quantity) {
-        throw new Error(`No hay suficientes entradas disponibles`);
-      }
-
-      const seatsToReserve = await prisma.seatEvent.findMany({
-        where: { idEvent, idPlace, idSector, state: 'available' },
-        take: quantity,
-        orderBy: { idSeat: 'asc' },
-      });
-
-      const seatIds = seatsToReserve.map((s) => s.idSeat);
-      await prisma.seatEvent.updateMany({
-        where: { idEvent, idPlace, idSector, idSeat: { in: seatIds }, state: 'available' },
-        data: { state: 'reserved' },
-      });
-
-      g.ids = seatIds;
-    } else {
-      if (incomingIds.length > 0) {
-        const availableCount = await prisma.seatEvent.count({
-          where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
-        });
-        if (availableCount !== incomingIds.length) {
-          throw new Error(`Algunos asientos ya no están disponibles`);
-        }
-        await prisma.seatEvent.updateMany({
-          where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
-          data: { state: 'reserved' },
-        });
-        g.ids = incomingIds;
-      } else if (quantity && quantity > 0) {
-        const seatsToReserve = await prisma.seatEvent.findMany({
-          where: { idEvent, idPlace, idSector, state: 'available' },
-          take: quantity,
-          orderBy: { idSeat: 'asc' },
-        });
-        if (seatsToReserve.length < quantity) {
-          throw new Error(`No hay suficientes asientos disponibles`);
-        }
-        const seatIds = seatsToReserve.map((s) => s.idSeat);
-        await prisma.seatEvent.updateMany({
-          where: { idEvent, idPlace, idSector, idSeat: { in: seatIds }, state: 'available' },
-          data: { state: 'reserved' },
-        });
-        g.ids = seatIds;
-      } else {
-        throw new Error('Para sectores enumerados se requieren ids[] o quantity > 0');
-      }
-    }
-  }
-}
 
 router.post('/checkout', async (req, res) => {
   try {
@@ -131,14 +51,14 @@ router.post('/checkout', async (req, res) => {
     }
 
     console.log('🎫 Procesando ticketGroups:', ticketGroups);
-    await normalizeAndReserve(ticketGroups);
+    await reserveTickets(ticketGroups);
 
     const external_reference = crypto
       .createHash('sha256')
       .update(`${dniClient}:${customerEmail}:${JSON.stringify(ticketGroups)}`)
       .digest('hex');
 
-    const successUrl = `${FRONTEND_URL}/pay/processing`; 
+    const successUrl = `${FRONTEND_URL}/pay/processing`;
     const failureUrl = `${FRONTEND_URL}/pay/failure`;
     const pendingUrl = `${FRONTEND_URL}/pay/failure`;
     const notificationUrl = `${BACKEND_URL}/api/mp/webhook`;
@@ -149,7 +69,7 @@ router.post('/checkout', async (req, res) => {
     const pref = await preferences.create({
       body: {
         items: items.map((item: any, index: number) => {
-          const unit_price = Math.round(Number(item.amount)) / 100; 
+          const unit_price = Math.round(Number(item.amount)) / 100;
           if (!Number.isFinite(unit_price) || unit_price <= 0) {
             throw new Error('Monto inválido en ítems');
           }
@@ -161,7 +81,7 @@ router.post('/checkout', async (req, res) => {
             currency_id: 'ARS',
           };
         }),
-        payer: { email: customerEmail }, 
+        payer: { email: customerEmail },
         back_urls: {
           success: successUrl,
           failure: failureUrl,
