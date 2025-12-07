@@ -21,7 +21,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       res.status(400).json({ ok: false, message: 'Faltan campos obligatorios' });
       return;
     }
-    
+
     const parsedSectors = JSON.parse(sectors);
     if (!Array.isArray(parsedSectors) || parsedSectors.length === 0) {
       res.status(400).json({ ok: false, message: 'Debe especificar precios para los sectores.' });
@@ -49,7 +49,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       res.status(400).json({ ok: false, message: 'El organizador no existe' });
       return;
     }
-    
+
     const etype = await prisma.eventType.findUnique({ where: { idType: Number(idEventType) } });
     if (!etype) {
       res.status(400).json({ ok: false, message: 'El tipo de evento no existe' });
@@ -81,7 +81,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
           idEventType: Number(idEventType),
           idOrganiser,
           image: imagePath,
-          idPlace: Number(idPlace), 
+          idPlace: Number(idPlace),
           featured,
         }
       });
@@ -124,7 +124,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
   } catch (error: any) {
     console.error('Error al crear evento:', error);
     if (req.file?.path) {
-      try { fs.unlinkSync(req.file.path); } catch {}
+      try { fs.unlinkSync(req.file.path); } catch { }
     }
     res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
   }
@@ -277,7 +277,7 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
 export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
   try {
     const events = await prisma.event.findMany({
-      where: { 
+      where: {
         featured: true,
         state: 'Approved'
       },
@@ -309,9 +309,9 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
         placeName: ev.place.name,
         availableSeats,
         minPrice,
-        imageUrl: ev.image 
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}` 
-        : "/ticket.png",
+        imageUrl: ev.image
+          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+          : "/ticket.png",
         agotado: availableSeats === 0,
       };
     }));
@@ -354,9 +354,9 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
         ...ev,
         placeName: ev.place.name,
         availableSeats,
-        imageUrl: ev.image 
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}` 
-        : "/ticket.png",
+        imageUrl: ev.image
+          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+          : "/ticket.png",
         minPrice,
         agotado: availableSeats === 0,
       };
@@ -373,7 +373,7 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
 export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    
+
     const currentEvent = await prisma.event.findUnique({
       where: { idEvent: id },
       select: { featured: true }
@@ -386,7 +386,7 @@ export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
     const updatedEvent = await prisma.event.update({
       where: { idEvent: id },
       data: { featured: !currentEvent.featured },
-      select: { idEvent: true, featured: true }, 
+      select: { idEvent: true, featured: true },
     });
 
     res.status(200).json({ ok: true, data: updatedEvent });
@@ -587,16 +587,17 @@ export const getSeatsForEventSector: RequestHandler = async (req, res) => {
 export const searchEvents: RequestHandler = async (req, res, next) => {
   try {
     const rawQuery = String(req.query.query || '').trim();
-    if (!rawQuery || rawQuery.length < 1) {
+    if (!rawQuery) {
       return res.status(400).json({ ok: false, message: 'Consulta demasiado corta' });
     }
-
-    const query = rawQuery; 
-    const qLower = query.toLowerCase();
 
     const events = await prisma.event.findMany({
       where: {
         state: { in: ['Approved', 'Featured'] },
+        OR: [
+          { name: { contains: rawQuery } },
+          { eventType: { name: { contains: rawQuery } } },
+        ],
       },
       include: {
         eventType: true,
@@ -608,22 +609,8 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
       },
     });
 
-    const matched = events.filter((ev) => {
-      const name = String(ev.name || '');
-      const typeName = String(ev.eventType?.name || '');
-
-      const nameLower = name.toLowerCase();
-      const typeLower = typeName.toLowerCase();
-
-      return (
-        nameLower.startsWith(qLower) ||
-        nameLower.includes(' ' + qLower) ||
-        typeLower === qLower
-      );
-    });
-
     const enrichedEvents = await Promise.all(
-      matched.map(async (event) => {
+      events.map(async (event) => {
         const seatCounts = await prisma.seatEvent.groupBy({
           by: ['state'],
           where: { idEvent: event.idEvent },
@@ -682,7 +669,7 @@ export const getTicketMap: RequestHandler = async (req, res) => {
     }
 
     const seatEvents = await prisma.seatEvent.findMany({
-      where: { 
+      where: {
         idEvent,
         idPlace: event.idPlace,
         state: 'available'
@@ -697,7 +684,7 @@ export const getTicketMap: RequestHandler = async (req, res) => {
     const ticketMap: Record<string, number> = {};
     seatEvents.forEach(seatEvent => {
       const key = `${seatEvent.idPlace}-${seatEvent.idSector}-${seatEvent.idSeat}`;
-      ticketMap[key] = seatEvent.idSeat; 
+      ticketMap[key] = seatEvent.idSeat;
     });
 
     res.status(200).json({ ok: true, data: ticketMap });
