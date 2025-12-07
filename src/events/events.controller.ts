@@ -713,15 +713,28 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
     let idOrganiser = req.auth?.idOrganiser;
     const isAdmin = req.auth?.role === 'admin';
 
-    if (!idOrganiser && !isAdmin) {
+    // If Admin, try to find their linked organiser account to show ONLY their events
+    if (isAdmin && !idOrganiser) {
+      const adminOrg = await prisma.organiser.findUnique({
+        where: { contactEmail: req.auth?.mail } // Admin token usually has .mail
+      });
+      if (adminOrg) {
+        idOrganiser = adminOrg.idOrganiser;
+      }
+    }
+
+    if (!idOrganiser) {
+      if (isAdmin) {
+        // Admin without organiser account -> Has no "My Events"
+        res.status(200).json({ ok: true, data: [] });
+        return;
+      }
       res.status(403).json({ ok: false, message: 'No autorizado: token inválido o no es organizador.' });
       return;
     }
 
-    const whereClause = isAdmin ? {} : { idOrganiser };
-
     const events = await prisma.event.findMany({
-      where: whereClause,
+      where: { idOrganiser }, // Always filter by organiser!
       include: {
         eventType: true,
         place: true,

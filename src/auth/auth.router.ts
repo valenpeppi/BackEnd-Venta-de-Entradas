@@ -1,8 +1,11 @@
 import { Router } from 'express';
-import { loginUnified, register, registerCompany, loginCompany } from './auth.controller';
+import { loginUnified, register, registerCompany, loginCompany, updateUser, removeUser } from './auth.controller';
 import { verifyToken, AuthRequest } from './auth.middleware';
 
 const router: Router = Router();
+
+router.put('/profile', verifyToken, updateUser);
+router.delete('/profile', verifyToken, removeUser);
 
 router.post('/login', loginUnified); // Route unificada
 // router.post('/login-legacy', login); // Opcional: mantener si es muy necesario

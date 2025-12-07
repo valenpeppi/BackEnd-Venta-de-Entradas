@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import axios from 'axios';
 import { prisma } from '../db/mysql';
 import { BOOT_ID } from '../system/boot';
+import { AuthRequest } from './auth.middleware';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
@@ -28,6 +29,15 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
   let { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
+
+  // Auto-fill surname from name if missing
+  if (!surname && name && name.trim().includes(' ')) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length > 1) {
+      surname = parts.pop(); // Last part is surname
+      name = parts.join(' '); // Rest is name
+    }
+  }
 
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
   if (!isCaptchaValid) {
@@ -75,8 +85,11 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
+// ... (existing helper functions or other exports if any, keeping file structure integrity) ...
+
 // Registro de empresa
 export const registerCompany = async (req: Request, res: Response) => {
+  // ... existing registerCompany implementation ...
   const { companyName, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
 
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
@@ -135,6 +148,16 @@ export const registerCompany = async (req: Request, res: Response) => {
 };
 
 // Login Unificado
+// ... existing loginUnified ...
+
+// ... (We skip loginUnified/login/loginCompany lines for brevity of replacement if possible, but replace_file_content needs contiguous block. 
+// However, the prompt asked for "register" modification which is at the top, and "removeUser" which is at the bottom.
+// I should split this into TWO replace calls for safety and precision.)
+
+
+
+
+// Login Unificado
 export const loginUnified = async (req: Request, res: Response) => {
   const { email, password } = req.body; // Usamos 'email' genérico
 
@@ -160,6 +183,7 @@ export const loginUnified = async (req: Request, res: Response) => {
             dni: user.dni,
             mail: user.mail,
             name: user.name,
+            surname: user.surname, // Included surname
             role: user.role,
             type: 'user'
           }
@@ -217,4 +241,78 @@ export const login = async (req: Request, res: Response) => {
 export const loginCompany = async (req: Request, res: Response) => {
   req.body.email = req.body.contactEmail;
   return loginUnified(req, res);
+};
+
+// Actualizar usuario
+export const updateUser = async (req: AuthRequest, res: Response) => {
+  const { name, surname } = req.body;
+  const userType = req.auth?.type;
+  const userMail = req.auth?.mail; // For users
+  const companyId = req.auth?.idOrganiser; // For companies
+
+  try {
+    if (userType === 'user' && userMail) {
+      // Validation could be added here
+      await prisma.user.update({
+        where: { mail: userMail },
+        data: { name, surname }
+      });
+      return res.json({ ok: true, message: 'Perfil de usuario actualizado', user: { name, surname } });
+
+    } else if (userType === 'company' && companyId) {
+      await prisma.organiser.update({
+        where: { idOrganiser: companyId },
+        data: { companyName: name }
+      });
+      return res.json({ ok: true, message: 'Perfil de empresa actualizado', user: { name } });
+    }
+
+    res.status(400).json({ message: 'No se pudo identificar el tipo de usuario o faltan permisos' });
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    res.status(500).json({ message: 'Error interno al actualizar perfil' });
+  }
+};
+
+// Eliminar usuario
+export const removeUser = async (req: AuthRequest, res: Response) => {
+  const userType = req.auth?.type;
+  const userMail = req.auth?.mail;
+  const companyId = req.auth?.idOrganiser;
+
+  try {
+    if (userType === 'user' && userMail) {
+      await prisma.user.delete({ where: { mail: userMail } });
+      return res.json({ ok: true, message: 'Cuenta de usuario eliminada' });
+
+    } else if (userType === 'company' && companyId) {
+
+      const activeEvents = await prisma.event.findFirst({
+        where: {
+          idOrganiser: companyId,
+          state: {
+            notIn: ['Rejected', 'Cancelled', 'Finalized']
+          }
+        }
+      });
+
+      if (activeEvents) {
+        return res.status(400).json({
+          message: 'No puedes eliminar la cuenta mientras tengas eventos activos (Pendientes o Aprobados).'
+        });
+      }
+
+      await prisma.organiser.delete({ where: { idOrganiser: companyId } });
+      return res.json({ ok: true, message: 'Cuenta de empresa eliminada' });
+    }
+
+    res.status(400).json({ message: 'No se pudo identificar el tipo de usuario' });
+  } catch (error: any) {
+    console.error('Error al eliminar usuario:', error);
+    // Handle specific Prisma errors (e.g., Foreign Key Constraint)
+    if (error.code === 'P2003') {
+      return res.status(400).json({ message: 'No se puede eliminar la cuenta porque tiene registros asociados (entradas o eventos).' });
+    }
+    res.status(500).json({ message: 'Error interno al eliminar cuenta' });
+  }
 };
