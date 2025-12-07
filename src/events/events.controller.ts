@@ -10,8 +10,17 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
   try {
     const { name, description, date, idEventType, idPlace, sectors } = req.body;
     const state = 'Pending';
-    const idOrganiser = req.auth?.idOrganiser;
+    let idOrganiser = req.auth?.idOrganiser;
     const featured = false;
+
+    // Logic for Admin to create events
+    if (req.auth?.role === 'admin') {
+      // Try to find an organiser associated with the admin's email or default to ID 1
+      const adminOrganiser = await prisma.organiser.findUnique({
+        where: { contactEmail: req.auth.mail } // Assuming admin token has .mail
+      });
+      idOrganiser = adminOrganiser?.idOrganiser ?? 1;
+    }
 
     if (!idOrganiser) {
       res.status(403).json({ ok: false, message: 'No autorizado: el token no pertenece a un organizador válido.' });
@@ -465,6 +474,8 @@ export const getEventSummary: RequestHandler = async (req, res) => {
         ? `${env.BACKEND_URL}${event.image}`
         : "/ticket.png",
       type: event.eventType.name,
+      displayType: event.eventType.name, // Keep existing if used, but add ID
+      idEventType: event.idEventType,
       date: event.date,
       idPlace: event.idPlace,
       placeType,
@@ -699,15 +710,18 @@ export const getTicketMap: RequestHandler = async (req, res) => {
 
 export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const idOrganiser = req.auth?.idOrganiser;
+    let idOrganiser = req.auth?.idOrganiser;
+    const isAdmin = req.auth?.role === 'admin';
 
-    if (!idOrganiser) {
+    if (!idOrganiser && !isAdmin) {
       res.status(403).json({ ok: false, message: 'No autorizado: token inválido o no es organizador.' });
       return;
     }
 
+    const whereClause = isAdmin ? {} : { idOrganiser };
+
     const events = await prisma.event.findMany({
-      where: { idOrganiser },
+      where: whereClause,
       include: {
         eventType: true,
         place: true,
@@ -756,5 +770,121 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
   } catch (err: any) {
     console.error('Error al obtener eventos de la empresa:', err);
     res.status(500).json({ ok: false, error: 'Error interno del servidor', details: err.message });
+  }
+};
+
+export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const idEvent = Number(req.params.id);
+    const idOrganiser = req.auth?.idOrganiser;
+    const isAdmin = req.auth?.role === 'admin';
+
+    if (isNaN(idEvent)) {
+      res.status(400).json({ ok: false, message: 'ID inválido' });
+      return;
+    }
+
+    const event = await prisma.event.findUnique({ where: { idEvent } });
+    if (!event) {
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
+      return;
+    }
+
+    // Check ownership
+    if (!isAdmin && event.idOrganiser !== idOrganiser) {
+      res.status(403).json({ ok: false, message: 'No autorizado para eliminar este evento' });
+      return;
+    }
+
+    // Check for sold tickets (tickets linked to seated events)
+    // Adjust logic depending on if your Ticket is linked directly to Event or SeatEvent
+    // Schema implies Ticket -> SeatEvent -> Event
+    const soldTickets = await prisma.ticket.count({
+      where: {
+        idEvent: idEvent
+      }
+    });
+
+    if (soldTickets > 0) {
+      res.status(400).json({ ok: false, message: 'No se puede eliminar el evento porque ya tiene entradas vendidas.' });
+      return;
+    }
+
+    // Transaction to delete related data
+    await prisma.$transaction(async (tx) => {
+      // Delete SeatEvents
+      await tx.seatEvent.deleteMany({ where: { idEvent } });
+      // Delete EventSectors
+      await tx.eventSector.deleteMany({ where: { idEvent } });
+      // Delete Event
+      await tx.event.delete({ where: { idEvent } });
+    });
+
+    res.status(200).json({ ok: true, message: 'Evento eliminado correctamente' });
+
+  } catch (error: any) {
+    console.error('Error al eliminar evento:', error);
+    res.status(500).json({ ok: false, message: 'Error interno del servidor', details: error.message });
+  }
+};
+
+export const updateEvent: RequestHandler = async (req: AuthRequest, res: Response) => {
+  try {
+    const idEvent = Number(req.params.id);
+    const idOrganiser = req.auth?.idOrganiser;
+    const isAdmin = req.auth?.role === 'admin';
+    const { name, description, date, idEventType, idPlace } = req.body;
+
+    if (isNaN(idEvent)) {
+      res.status(400).json({ ok: false, message: 'ID inválido' });
+      return;
+    }
+
+    const event = await prisma.event.findUnique({ where: { idEvent } });
+    if (!event) {
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
+      return;
+    }
+
+    if (!isAdmin && event.idOrganiser !== idOrganiser) {
+      res.status(403).json({ ok: false, message: 'No autorizado para editar este evento' });
+      return;
+    }
+
+    let imagePath = event.image;
+    if (req.file) {
+      const valid = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!valid.includes(req.file.mimetype)) {
+        fs.unlinkSync(req.file.path);
+        res.status(400).json({ ok: false, message: 'Solo imágenes válidas' });
+        return;
+      }
+      imagePath = `/uploads/${req.file.filename}`;
+    }
+
+    const updated = await prisma.event.update({
+      where: { idEvent },
+      data: {
+        name: name || event.name,
+        description: description || event.description,
+        date: date ? new Date(date) : event.date,
+        idEventType: idEventType ? Number(idEventType) : event.idEventType,
+        idPlace: idPlace ? Number(idPlace) : event.idPlace,
+        image: imagePath
+      }
+    });
+
+    res.status(200).json({
+      ok: true,
+      message: 'Evento actualizado',
+      data: {
+        ...updated,
+        imageUrl: updated.image ? `${env.BACKEND_URL}${updated.image}` : "/ticket.png"
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Error al actualizar evento:', error);
+    res.status(500).json({ ok: false, message: 'Error interno del servidor', details: error.message });
   }
 };

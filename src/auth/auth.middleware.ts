@@ -12,7 +12,7 @@ export interface AuthRequest extends Request {
     contactEmail?: string;
     role?: string;
     type?: 'user' | 'company';
-    bootId?: string; 
+    bootId?: string;
   };
 }
 
@@ -35,7 +35,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       contactEmail?: string;
       role?: string;
       type?: 'user' | 'company';
-      bootId?: string; 
+      bootId?: string;
     };
 
     //  Verificación de reinicio: el token debe traer bootId y coincidir
@@ -59,7 +59,10 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
 };
 
 export const isCompany = (req: AuthRequest, res: Response, next: NextFunction) => {
-  if (!req.auth?.idOrganiser || req.auth?.type !== 'company') {
+  const isCompanyUser = req.auth?.idOrganiser && req.auth?.type === 'company';
+  const isAdmin = req.auth?.role === 'admin';
+
+  if (!isCompanyUser && !isAdmin) {
     return res.status(403).json({
       code: 'COMPANY_ACCESS_REQUIRED',
       message: 'Acceso restringido a empresas registradas'

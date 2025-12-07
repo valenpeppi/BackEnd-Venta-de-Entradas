@@ -20,7 +20,9 @@ import {
   searchEvents,
   getTicketMap,
   getEventTypes,
-  getEventsByOrganiser
+  getEventsByOrganiser,
+  deleteEvent,
+  updateEvent
 } from './events.controller';
 
 
@@ -67,6 +69,21 @@ router.get(
   verifyToken,
   isCompany,
   getEventsByOrganiser
+);
+
+router.delete(
+  '/:id',
+  verifyToken,
+  isCompany,
+  deleteEvent
+);
+
+router.put(
+  '/:id',
+  verifyToken,
+  isCompany,
+  upload.single('image'),
+  updateEvent
 );
 
 // Rutas de Admin 
