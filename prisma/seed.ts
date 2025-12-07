@@ -89,7 +89,7 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
     });
 
   }
-  
+
   console.log(`Tickets generados para evento ${idEvent}`);
 }
 
@@ -176,9 +176,9 @@ async function main() {
   console.log('Sectores cargados');
 
   const allSectors = await prisma.sector.findMany();
-    for (const s of allSectors) {
-      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
-    }
+  for (const s of allSectors) {
+    await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
+  }
   console.log('Asientos cargados');
 
   const now = new Date();
@@ -212,11 +212,11 @@ async function main() {
       featured: true, idEventType: 1, idOrganiser: 1, idPlace: 3,
     },
   });
-  
+
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
       idEvent: 4, name: 'Lucho Mellera', description: '¡Preparate para una noche espectacular llena de risas de la mano de Lucho Mellera!',
-      date: new Date('2026-12-13 00:00:00'), state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
+      date: in30d, state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
       featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
     }
   });
@@ -248,7 +248,7 @@ async function main() {
   const ev8 = await prisma.event.upsert({
     where: { idEvent: 8 }, update: {}, create: {
       idEvent: 8, name: 'Festival de Danzas Clásicas', description: 'Un encuentro de las compañías de ballet más prestigiosas del mundo, conocido por su excelencia técnica y espectáculos innovadores.',
-      date: new Date('2025-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
+      date: new Date('2026-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
       featured: false, idEventType: 3, idOrganiser: 3, idPlace: 3
     }
   });
@@ -264,7 +264,7 @@ async function main() {
   const ev10 = await prisma.event.upsert({
     where: { idEvent: 10 }, update: {}, create: {
       idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año lectivo.',
-      date: new Date('2025-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
+      date: new Date('2026-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
       featured: false, idEventType: 6, idOrganiser: 3, idPlace: 4
     }
   });
