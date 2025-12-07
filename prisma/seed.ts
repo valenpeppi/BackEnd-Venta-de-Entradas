@@ -109,38 +109,43 @@ async function main() {
   });
   console.log('Tipos de evento cargados');
 
-  await prisma.organiser.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        idOrganiser: 1,
-        companyName: 'Agus SRL',
-        cuil: '3090090999',
-        contactEmail: 'agus@gmail.com',
-        password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
-        phone: '5493212567375',
-        address: 'Viamonte 2847',
-      },
-      {
-        idOrganiser: 2,
-        companyName: 'peppi SRL',
-        cuil: '2046497046',
-        contactEmail: 'sbrolla@gmail.com',
-        password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
-        phone: '03465654471',
-        address: 'GODINO 887',
-      },
-      {
-        idOrganiser: 3,
-        companyName: 'gian SRL',
-        cuil: '20-46187000-1',
-        contactEmail: 'gian@hotmail.com',
-        password: '$2b$10$nGs0vxZ66jyQE4bMELcTBOKorrT62lQfuZsbPTRT7aC8fQZhOkNFm',
-        phone: '3465656777',
-        address: 'zeballos 14453',
-      },
-    ],
-  });
+  const organisers = [
+    {
+      idOrganiser: 1,
+      companyName: 'Agus SRL',
+      cuil: '3090090999',
+      contactEmail: 'agus@gmail.com',
+      password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
+      phone: '5493212567375',
+      address: 'Viamonte 2847',
+    },
+    {
+      idOrganiser: 2,
+      companyName: 'peppi SRL',
+      cuil: '2046497046',
+      contactEmail: 'sbrolla@gmail.com',
+      password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
+      phone: '03465654471',
+      address: 'GODINO 887',
+    },
+    {
+      idOrganiser: 3,
+      companyName: 'martin SRL',
+      cuil: '20-46187000-1',
+      contactEmail: 'martin@gmail.com',
+      password: '$2b$10$h5FLr6S5SYfgXqSeUvmvk.flx3VVmSi8icbr8dFaooKQ0fFP.08Bq',
+      phone: '3465656777',
+      address: 'zeballos 14453',
+    },
+  ];
+
+  for (const org of organisers) {
+    await prisma.organiser.upsert({
+      where: { idOrganiser: org.idOrganiser },
+      update: org,
+      create: org,
+    });
+  }
   console.log('Organizadores cargados');
 
   await prisma.place.createMany({
