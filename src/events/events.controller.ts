@@ -4,6 +4,7 @@ import fs from 'fs';
 import { AuthRequest } from '../auth/auth.middleware';
 import { RequestHandler } from 'express';
 import { createSeatEventGridForEvent } from '../seats/seats.controller'
+import { env } from '../config/env';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -116,7 +117,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       data: {
         ...result,
         imageUrl: result.image
-          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${result.image}`
+          ? `${env.BACKEND_URL}${result.image}`
           : "/ticket.png"
       },
       availableSeats,
@@ -143,7 +144,7 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
     const enriched = rows.map(ev => ({
       ...ev,
       imageUrl: ev.image
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        ? `${env.BACKEND_URL}${ev.image}`
         : "/ticket.png"
     }));
 
@@ -193,7 +194,7 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
     const enriched = events.map(ev => ({
       ...ev,
       imageUrl: ev.image
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        ? `${env.BACKEND_URL}${ev.image}`
         : "/ticket.png"
     }));
 
@@ -219,7 +220,7 @@ export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
     const enriched = events.map(ev => ({
       ...ev,
       imageUrl: ev.image
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+        ? `${env.BACKEND_URL}${ev.image}`
         : "/ticket.png"
     }));
 
@@ -243,7 +244,7 @@ export const approveEvent: RequestHandler = async (req, res, next) => {
       data: {
         ...updated,
         imageUrl: updated.image
-          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${updated.image}`
+          ? `${env.BACKEND_URL}${updated.image}`
           : "/ticket.png"
       }
     });
@@ -266,7 +267,7 @@ export const rejectEvent: RequestHandler = async (req, res, next) => {
       data: {
         ...updated,
         imageUrl: updated.image
-          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${updated.image}`
+          ? `${env.BACKEND_URL}${updated.image}`
           : "/ticket.png"
       }
     });
@@ -311,7 +312,7 @@ export const getFeaturedEvents: RequestHandler = async (_req, res, next) => {
         availableSeats,
         minPrice,
         imageUrl: ev.image
-          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+          ? `${env.BACKEND_URL}${ev.image}`
           : "/ticket.png",
         agotado: availableSeats === 0,
       };
@@ -356,7 +357,7 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
         placeName: ev.place.name,
         availableSeats,
         imageUrl: ev.image
-          ? `${process.env.BACKEND_URL || "http://localhost:3000"}${ev.image}`
+          ? `${env.BACKEND_URL}${ev.image}`
           : "/ticket.png",
         minPrice,
         agotado: availableSeats === 0,
@@ -461,7 +462,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
       description: event.description,
       eventName: event.name,
       imageUrl: event.image
-        ? `${process.env.BACKEND_URL || "http://localhost:3000"}${event.image}`
+        ? `${env.BACKEND_URL}${event.image}`
         : "/ticket.png",
       type: event.eventType.name,
       date: event.date,
@@ -633,7 +634,7 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
           date: event.date,
           location: event.place?.name ?? 'Lugar no especificado',
           imageUrl: event.image
-            ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${event.image}`
+            ? `${env.BACKEND_URL}${event.image}`
             : '/ticket.png',
           price: minPrice,
           type: event.eventType?.name ?? 'General',

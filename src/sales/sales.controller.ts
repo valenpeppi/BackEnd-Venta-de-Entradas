@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import type { AuthRequest } from '../auth/auth.middleware';
+import { env } from '../config/env';
 
 class SalesController {
   public async confirmSale(req: AuthRequest, res: Response): Promise<void> {
@@ -208,7 +209,7 @@ class SalesController {
         },
         include: {
           event: { include: { place: true } },
-          eventSector: { include: { sector: true } }, 
+          eventSector: { include: { sector: true } },
         },
         orderBy: { event: { date: 'asc' } },
       });
@@ -228,7 +229,7 @@ class SalesController {
         sectorType: ticket.eventSector.sector.sectorType as 'enumerated' | 'nonEnumerated' | string,
         seatNumber: ticket.idSeat,
         imageUrl: ticket.event.image
-          ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}`
+          ? `${env.BACKEND_URL}${ticket.event.image}`
           : '/ticket.png',
         idTicket: ticket.idTicket,
         idSale: ticket.idSale,

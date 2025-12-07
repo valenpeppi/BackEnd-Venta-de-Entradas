@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import { testDbConnection } from './src/db/mysql';
+import { env } from './src/config/env';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ import { validateToken } from './src/security/jwtValidator';
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: env.FRONTEND_URL,
   credentials: true
 }));
 
@@ -53,8 +54,8 @@ app.use("/api/ai", aiRoutes);
 import { errorHandler } from './src/middlewares/error.middleware';
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
-  const PORT: number = Number(process.env.PORT) || 3000;
+if (env.NODE_ENV !== 'test') {
+  const PORT: number = env.PORT_NUM;
 
   testDbConnection().then(() => {
     app.listen(PORT, () => {
