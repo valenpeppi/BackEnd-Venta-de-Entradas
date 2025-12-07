@@ -141,7 +141,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { mail: user.mail, role: user.role, dni: user.dni, bootId: BOOT_ID }, // 👈 bootId agregado
+      { mail: user.mail, role: user.role, dni: user.dni, type: 'user', bootId: BOOT_ID }, // 👈 bootId agregado
       JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -187,7 +187,7 @@ export const loginCompany = async (req: Request, res: Response) => {
         contactEmail: company.contactEmail,
         role: 'company',
         type: 'company',
-        bootId: BOOT_ID, 
+        bootId: BOOT_ID,
       },
       JWT_SECRET,
       { expiresIn: '8h' }

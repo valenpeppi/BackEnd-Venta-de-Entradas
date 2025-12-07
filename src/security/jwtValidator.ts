@@ -25,13 +25,12 @@ export const validateToken = (req: Request, res: Response, next: NextFunction) =
     }
 
     try {
-        const secret = process.env.JWT_SECRET || 'secret'; // Fallback secret, ideally from env
+        const secret = process.env.JWT_SECRET || 'secreto_super_seguro';
         const user = jwt.verify(token, secret);
-        (req as any).user = user; // Attach user to request
+        (req as any).user = user;
         next();
     } catch (err) {
-        // Token present but invalid -> 403 or 401
-        // "SIEMPRE se valide" implies we shouldn't let invalid tokens pass as 'guest'.
-        res.status(403).json({ message: 'Invalid or expired token' });
+        console.warn('Invalid JWT token received, proceeding as guest:', (err as Error).message);
+        next();
     }
 };
