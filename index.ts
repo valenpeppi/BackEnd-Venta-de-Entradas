@@ -21,6 +21,7 @@ import mpWebhookRouter from './src/payments/mp.webhook';
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
 import systemRoutes from './src/system/system.router';
+import { validateToken } from './src/security/jwtValidator';
 
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
@@ -36,6 +37,8 @@ app.use('/api/mp/webhook', mpWebhookRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(validateToken);
 
 app.use('/api/system', systemRoutes);
 app.use('/api/events', eventRoutes);
