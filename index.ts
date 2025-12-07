@@ -50,10 +50,8 @@ app.use('/api/mp', mpRoutes);
 app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+import { errorHandler } from './src/middlewares/error.middleware';
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   const PORT: number = Number(process.env.PORT) || 3000;

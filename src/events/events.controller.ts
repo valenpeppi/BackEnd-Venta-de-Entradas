@@ -155,6 +155,7 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
 };
 
 export const getEventTypes: RequestHandler = async (_req, res) => {
+
   try {
     const rows = await prisma.eventType.findMany();
     res.status(200).json(rows);
