@@ -696,3 +696,65 @@ export const getTicketMap: RequestHandler = async (req, res) => {
   }
 };
 
+
+export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const idOrganiser = req.auth?.idOrganiser;
+
+    if (!idOrganiser) {
+      res.status(403).json({ ok: false, message: 'No autorizado: token inválido o no es organizador.' });
+      return;
+    }
+
+    const events = await prisma.event.findMany({
+      where: { idOrganiser },
+      include: {
+        eventType: true,
+        place: true,
+        eventSectors: { include: { sector: true } },
+      },
+      orderBy: { date: 'desc' },
+    });
+
+    const enriched = await Promise.all(events.map(async (ev) => {
+      const seatCounts = await prisma.seatEvent.groupBy({
+        by: ['state'],
+        where: { idEvent: ev.idEvent },
+        _count: { idSeat: true },
+      });
+
+      const totalSeats = seatCounts.reduce((acc, curr) => acc + curr._count.idSeat, 0);
+      const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
+      const soldSeats = totalSeats - availableSeats;
+
+      // Calculate percentage sold
+      const soldPercentage = totalSeats > 0 ? (soldSeats / totalSeats) * 100 : 0;
+
+      let minPrice = 0;
+      if (ev.eventSectors.length > 0) {
+        const prices = ev.eventSectors.map(es => Number(es.price));
+        minPrice = prices.length ? Math.min(...prices) : 0;
+      }
+
+      return {
+        ...ev,
+        placeName: ev.place.name,
+        availableSeats,
+        totalSeats,
+        soldSeats,
+        soldPercentage: parseFloat(soldPercentage.toFixed(2)),
+        imageUrl: ev.image
+          ? `${env.BACKEND_URL}${ev.image}`
+          : "/ticket.png",
+        minPrice,
+        agotado: availableSeats === 0,
+      };
+    }));
+
+    res.status(200).json({ ok: true, data: enriched });
+
+  } catch (err: any) {
+    console.error('Error al obtener eventos de la empresa:', err);
+    res.status(500).json({ ok: false, error: 'Error interno del servidor', details: err.message });
+  }
+};

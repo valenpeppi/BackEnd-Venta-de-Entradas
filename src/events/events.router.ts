@@ -3,23 +3,24 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { verifyToken, isCompany, isAdmin } from '../auth/auth.middleware';
-import { 
-  createEvent, 
-  getAllEventTypes, 
+import {
+  createEvent,
+  getAllEventTypes,
   getPendingEvents,
   getAdminAllEvents,
-  approveEvent, 
-  rejectEvent, 
-  getFeaturedEvents, 
-  getAvailableDatesByPlace, 
-  toggleFeatureStatus, 
+  approveEvent,
+  rejectEvent,
+  getFeaturedEvents,
+  getAvailableDatesByPlace,
+  toggleFeatureStatus,
   getApprovedEvents,
   getEventSectors,
   getEventSummary,
   getSeatsForEventSector,
   searchEvents,
   getTicketMap,
-  getEventTypes
+  getEventTypes,
+  getEventsByOrganiser
 } from './events.controller';
 
 
@@ -41,24 +42,31 @@ const storage = multer.diskStorage({
   },
 });
 
-const upload = multer({ 
+const upload = multer({
   storage,
   fileFilter: (_req, file, cb) => {
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    allowedTypes.includes(file.mimetype) 
+    allowedTypes.includes(file.mimetype)
       ? cb(null, true)
       : cb(new Error('Tipo de archivo no permitido'));
   },
-  limits: { fileSize: 5 * 1024 * 1024 } 
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 // Rutas Protegidas para Empresas 
 router.post(
   '/createEvent',
-  verifyToken, 
-  isCompany,    
+  verifyToken,
+  isCompany,
   upload.single('image'),
   createEvent
+);
+
+router.get(
+  '/company',
+  verifyToken,
+  isCompany,
+  getEventsByOrganiser
 );
 
 // Rutas de Admin 
@@ -79,7 +87,7 @@ router.get('/search', searchEvents);
 router.get('/events/:id', getEventSummary);
 router.get('/events/:id/sectors', getEventSectors);
 router.get('/events/:id/sectors/:idSector/seats', getSeatsForEventSector);
-router.get('/events/:id/tickets/map', getTicketMap); 
+router.get('/events/:id/tickets/map', getTicketMap);
 
 
 export default router;
