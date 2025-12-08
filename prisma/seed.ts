@@ -154,7 +154,8 @@ async function main() {
       { idPlace: 1, name: 'Anfiteatro', totalCap: 40, address: 'Av. Belgrano 100 bis', placeType: 'nonEnumerated' },
       { idPlace: 2, name: 'Estadio Gigante de Arroyito', totalCap: 260, address: 'Av. Génova 640', placeType: 'hybrid' },
       { idPlace: 3, name: 'Bioceres Arena', totalCap: 50, address: 'Cafferata 729', placeType: 'hybrid' },
-      { idPlace: 4, name: 'El Circulo', totalCap: 60, address: 'Laprida 1223', placeType: 'enumerated' },
+      { idPlace: 4, name: 'El Ateneo', totalCap: 25, address: 'Cordoba 1473', placeType: 'nonEnumerated' },
+      { idPlace: 5, name: 'El Circulo', totalCap: 60, address: 'Laprida 1223', placeType: 'enumerated' },
     ],
   });
   console.log('Lugares cargados');
@@ -167,8 +168,9 @@ async function main() {
     { idSector: 4, idPlace: 2, name: 'Popular', sectorType: 'nonEnumerated', capacity: 60 },
     { idSector: 1, idPlace: 3, name: 'VIP', sectorType: 'enumerated', capacity: 20 },
     { idSector: 2, idPlace: 3, name: 'General', sectorType: 'nonEnumerated', capacity: 30 },
-    { idSector: 1, idPlace: 4, name: 'Sala Principal', sectorType: 'enumerated', capacity: 40 },
-    { idSector: 2, idPlace: 4, name: 'Tribuna Superior', sectorType: 'enumerated', capacity: 20 },
+    { idSector: 1, idPlace: 4, name: 'Sala Principal', sectorType: 'nonEnumerated', capacity: 25 },
+    { idSector: 1, idPlace: 5, name: 'Sala Principal', sectorType: 'enumerated', capacity: 40 },
+    { idSector: 2, idPlace: 5, name: 'Tribuna Superior', sectorType: 'enumerated', capacity: 20 },
   ];
 
   for (const s of sectores) {
@@ -221,8 +223,8 @@ async function main() {
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
       idEvent: 4, name: 'Lucho Mellera', description: '¡Preparate para una noche espectacular llena de risas de la mano de Lucho Mellera!',
-      date: in30d, state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
-      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
+      date: in30d, state: 'Pending', image: '/uploads/event-1759701239921-814065860.webp',
+      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 5
     }
   });
 
@@ -262,7 +264,7 @@ async function main() {
     where: { idEvent: 9 }, update: {}, create: {
       idEvent: 9, name: 'La previa de 9 de Julio contra Belgrano', description: 'El mejor clasico de la liga se jugará pronto, compra tus entradas con 1 año de anticipacion!',
       date: new Date('2026-07-19 19:00:00'), state: 'Approved', image: '/uploads/event-1759702021862-561109661.jpg',
-      featured: false, idEventType: 5, idOrganiser: 3, idPlace: 2
+      featured: false, idEventType: 5, idOrganiser: 2, idPlace: 2
     }
   });
 
@@ -270,7 +272,15 @@ async function main() {
     where: { idEvent: 10 }, update: {}, create: {
       idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año lectivo.',
       date: new Date('2026-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
-      featured: false, idEventType: 6, idOrganiser: 3, idPlace: 4
+      featured: false, idEventType: 6, idOrganiser: 3, idPlace: 5
+    }
+  });
+
+  const ev11 = await prisma.event.upsert({
+    where: { idEvent: 11 }, update: {}, create: {
+      idEvent: 11, name: 'Bingo', description: 'Se armo el bingo en el Ateneo, no te lo pierdas.',
+      date: new Date('2026-03-01 14:10:00'), state: 'Approved', image: '/uploads/event-1765227214870-640653029.png',
+      featured: false, idEventType: 6, idOrganiser: 2, idPlace: 4
     }
   });
   console.log('Todos los eventos han sido cargados.');
@@ -286,10 +296,9 @@ async function main() {
     { idEvent: ev2.idEvent, idPlace: 2, idSector: 4, price: '80000.00' },
     { idEvent: ev3.idEvent, idPlace: 3, idSector: 1, price: '100000.00' },
     { idEvent: ev3.idEvent, idPlace: 3, idSector: 2, price: '150000.00' },
-    { idEvent: ev4.idEvent, idPlace: 4, idSector: 1, price: '25000.00' },
-    { idEvent: ev4.idEvent, idPlace: 4, idSector: 2, price: '30000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 1, price: '25000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 2, price: '30000.00' },
     { idEvent: ev5.idEvent, idPlace: 4, idSector: 1, price: '50000.00' },
-    { idEvent: ev5.idEvent, idPlace: 4, idSector: 2, price: '80000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 1, price: '20000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 2, price: '25000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 3, price: '25000.00' },
@@ -304,8 +313,9 @@ async function main() {
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 2, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 3, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 4, price: '10000.00' },
-    { idEvent: ev10.idEvent, idPlace: 4, idSector: 1, price: '10000.00' },
-    { idEvent: ev10.idEvent, idPlace: 4, idSector: 2, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 1, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 2, price: '10000.00' },
+    { idEvent: ev11.idEvent, idPlace: 4, idSector: 1, price: '5000.00' },
   ];
 
   for (const data of eventSectorsData) {
