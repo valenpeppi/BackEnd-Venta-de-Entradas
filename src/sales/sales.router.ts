@@ -22,7 +22,7 @@ router.get('/check', async (req, res) => {
   try {
     const since = new Date(Date.now() - 5 * 60 * 1000);
     const recentSale = await prisma.sale.findFirst({
-      where: { dniClient, date: { gte: since } },
+      where: { client: { dni: dniClient }, date: { gte: since } },
       orderBy: { date: 'desc' },
       take: 1,
     });

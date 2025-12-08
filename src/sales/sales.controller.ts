@@ -40,7 +40,7 @@ class SalesController {
       }
 
       const userSales = await prisma.sale.findMany({
-        where: { dniClient },
+        where: { client: { dni: dniClient } },
         select: { idSale: true },
       });
       const saleIds = userSales.map(s => s.idSale);
@@ -96,7 +96,10 @@ class SalesController {
 
       const result = await prisma.$transaction(async (tx) => {
         const sale = await tx.sale.create({
-          data: { date: new Date(), dniClient },
+          data: {
+            date: new Date(),
+            client: { connect: { dni: dniClient } },
+          },
         });
 
         console.log(`🧾 Venta creada: #${sale.idSale} para DNI ${dniClient}`);
@@ -191,7 +194,7 @@ class SalesController {
 
     try {
       const userSales = await prisma.sale.findMany({
-        where: { dniClient },
+        where: { client: { dni: dniClient } },
         select: { idSale: true },
       });
 
