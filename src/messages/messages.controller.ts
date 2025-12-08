@@ -28,10 +28,13 @@ export const createMessage = async (req: Request, res: Response) => {
     }
 };
 
-// Get all messages (Admin only)
+// Get all messages (Admin only) - Exclude 'discarded'
 export const getMessages = async (req: AuthRequest, res: Response) => {
     try {
         const messages = await prisma.message.findMany({
+            where: {
+                state: { not: 'discarded' }
+            },
             orderBy: { date: 'desc' }
         });
         res.json(messages);
@@ -62,7 +65,7 @@ export const replyMessage = async (req: AuthRequest, res: Response) => {
     }
 };
 
-// Reject a message (Set state to 'rejected')
+// Reject a message (Set state to 'rejected') - Keeps it in list
 export const rejectMessage = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
@@ -76,5 +79,22 @@ export const rejectMessage = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error rejecting message:', error);
         res.status(500).json({ message: 'Error al rechazar el mensaje.' });
+    }
+};
+
+// Discard a message (Set state to 'discarded') - Hides it from list
+export const discardMessage = async (req: AuthRequest, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const message = await prisma.message.update({
+            where: { idMessage: Number(id) },
+            data: { state: 'discarded' }
+        });
+
+        res.json({ message: 'Mensaje descartado.', data: message });
+    } catch (error) {
+        console.error('Error discarding message:', error);
+        res.status(500).json({ message: 'Error al descartar el mensaje.' });
     }
 };
