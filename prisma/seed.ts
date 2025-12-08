@@ -297,7 +297,7 @@ async function main() {
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 1, price: '60000.00' },
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 2, price: '70000.00' },
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 3, price: '70000.00' },
-    { idEvent: ev7.idEvent, idPlace: 2, idSector: 4, price: '64999.99' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 4, price: '65000.00' },
     { idEvent: ev8.idEvent, idPlace: 3, idSector: 1, price: '40000.00' },
     { idEvent: ev8.idEvent, idPlace: 3, idSector: 2, price: '40000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 1, price: '7000.00' },

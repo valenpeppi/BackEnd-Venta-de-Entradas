@@ -242,6 +242,61 @@ class SalesController {
     }
   }
 
+  public async getAdminStats(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      // 1. Sales made today
+      const salesToday = await prisma.sale.count({
+        where: { date: { gte: todayStart } },
+      });
+
+      // 2. Tickets sold today
+      const ticketsToday = await prisma.ticket.count({
+        where: {
+          saleItem: {
+            sale: { date: { gte: todayStart } }
+          },
+          state: 'sold'
+        }
+      });
+
+      // 3. Total Revenue Today
+      const soldTicketsToday = await prisma.ticket.findMany({
+        where: {
+          saleItem: {
+            sale: { date: { gte: todayStart } }
+          },
+          state: 'sold'
+        },
+        include: {
+          eventSector: {
+            select: { price: true }
+          }
+        }
+      });
+
+      const revenueToday = soldTicketsToday.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
+
+      // 4. Pending Events Count
+      const pendingEvents = await prisma.event.count({
+        where: { state: 'Pending' }
+      });
+
+      res.status(200).json({
+        salesToday,
+        ticketsToday,
+        revenueToday,
+        pendingEvents
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Error obteniendo estadísticas', details: error.message });
+    }
+  }
+
 }
 
 export default new SalesController();
