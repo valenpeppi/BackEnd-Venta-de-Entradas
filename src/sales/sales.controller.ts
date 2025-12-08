@@ -300,6 +300,62 @@ class SalesController {
     }
   }
 
+  public async getCompanyStats(req: AuthRequest, res: Response): Promise<void> {
+    const idOrganiser = req.auth?.idOrganiser;
+
+    if (!idOrganiser) {
+      res.status(403).json({ error: 'Acceso denegado: Se requiere ser una empresa registrada.' });
+      return;
+    }
+
+    try {
+      // 1. Get all events for this organiser (excluding deleted/cancelled if logical delete exists, here we just filter active states for "Active Events")
+      // Actually dashboard usually shows total impact.
+
+      // Active Events (Approved or Pending)
+      const activeEventsCount = await prisma.event.count({
+        where: {
+          idOrganiser,
+          state: { in: ['Approved', 'Pending'] }
+        }
+      });
+
+      // 2. Total Tickets Sold (across all events of this organiser)
+      const soldTickets = await prisma.ticket.count({
+        where: {
+          event: { idOrganiser },
+          state: 'sold'
+        }
+      });
+
+      // 3. Total Revenue
+      // We need to sum price of all sold tickets for events of this organiser
+      const soldTicketsData = await prisma.ticket.findMany({
+        where: {
+          event: { idOrganiser },
+          state: 'sold'
+        },
+        include: {
+          eventSector: { select: { price: true } }
+        }
+      });
+
+      const totalRevenue = soldTicketsData.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
+
+      // 4. Recent Sales (Optional, maybe just these 3 KPIs are enough for now as requested)
+
+      res.json({
+        activeEvents: activeEventsCount,
+        ticketsSold: soldTickets,
+        totalRevenue
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching company stats:', error);
+      res.status(500).json({ error: 'Error obteniendo estadísticas de empresa', details: error.message });
+    }
+  }
+
 }
 
 export default new SalesController();
