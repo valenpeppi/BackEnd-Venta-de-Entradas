@@ -196,7 +196,6 @@ model User {
   password  String   @db.VarChar(255)
   googleId  String?  @unique @map("google_id")
   role      Role     @default(user)
-  
 
   sales     Sale[]
 
