@@ -363,6 +363,49 @@ async function main() {
   }
 
   console.log('Usuarios cargados');
+
+  const messages = [
+    {
+      title: 'Consulta sobre entradas',
+      description: 'Hola, quería saber si queda stock para el evento de Bad Bunny.',
+      date: new Date('2025-12-05 10:00:00'),
+      senderEmail: 'maria@gmail.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Problema con el pago',
+      description: 'Intenté pagar con tarjeta pero me dio error.',
+      date: new Date('2025-12-06 15:30:00'),
+      senderEmail: 'juan@hotmail.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Cambio de fecha',
+      description: '¿Es posible cambiar la fecha de mi entrada?',
+      date: new Date('2025-12-07 09:15:00'),
+      senderEmail: 'pedro@yahoo.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Entradas discapacitados',
+      description: 'Hola, quería saber si hay cupo para personas con discapacidad.',
+      date: new Date('2025-12-08 11:20:00'),
+      senderEmail: 'ana@gmail.com',
+      state: 'unread',
+      response: '',
+    }
+  ];
+
+  for (const m of messages) {
+    await prisma.message.create({
+      data: m
+    });
+  }
+  console.log('Mensajes cargados');
+
   console.log('Seed finalizado con éxito.');
 }
 
