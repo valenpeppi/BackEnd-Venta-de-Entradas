@@ -233,6 +233,78 @@ export const loginUnified = async (req: Request, res: Response) => {
   }
 };
 
+// Login con Google
+import { verifyGoogleToken } from './google.helper';
+
+export const googleLogin = async (req: Request, res: Response) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ message: 'Credencial de Google requerida' });
+  }
+
+  try {
+    const payload = await verifyGoogleToken(credential);
+
+    if (!payload || !payload.email) {
+      return res.status(401).json({ message: 'Token de Google inválido' });
+    }
+
+    const { email, sub: googleId } = payload;
+
+    // Buscar si ya existe un usuario con este googleId
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId: googleId },
+          { mail: email }
+        ]
+      }
+    });
+
+    if (user) {
+      // Si existe pero no tiene googleId, lo actualizamos (linking)
+      if (!user.googleId) {
+        await prisma.user.update({
+          where: { dni: user.dni },
+          data: { googleId: googleId }
+        });
+      }
+
+      const token = jwt.sign(
+        { mail: user.mail, role: user.role, dni: user.dni, type: 'user', bootId: BOOT_ID },
+        JWT_SECRET,
+        { expiresIn: '2h' }
+      );
+
+      return res.json({
+        token,
+        user: {
+          dni: user.dni,
+          mail: user.mail,
+          name: user.name,
+          surname: user.surname,
+          role: user.role,
+          type: 'user'
+        }
+      });
+    }
+
+    // Si NO existe el usuario, devolvemos error (no creamos cuentas automáticamente por falta de DNI/Fecha)
+    return res.status(404).json({
+      message: 'Usuario no encontrado',
+      code: 'USER_NOT_FOUND',
+      email: email,
+      googleId: googleId
+      // El frontend usará esto para redirigir al registro pre-llenado
+    });
+
+  } catch (error) {
+    console.error('[Auth] Error en Google Login:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 // Mantenemos los logins legacy por compatibilidad
 export const login = async (req: Request, res: Response) => {
   return loginUnified(req, res);
