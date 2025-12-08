@@ -1,6 +1,23 @@
 import { Router } from 'express';
-import { loginUnified, register, registerCompany, loginCompany, updateUser, removeUser } from './auth.controller';
-import { verifyToken, AuthRequest } from './auth.middleware';
+import * as authController from './auth.controller';
+import * as authMiddleware from './auth.middleware';
 
 const router: Router = Router();
+
+router.post('/register', authController.register);
+router.post('/register-company', authController.registerCompany);
+router.post('/login', authController.loginUnified);
+router.post('/login-company', authController.loginCompany);
+router.post('/google', authController.googleLogin);
+
+router.put('/profile', authMiddleware.verifyToken, authController.updateUser);
+router.delete('/profile', authMiddleware.verifyToken, authController.removeUser);
+
+router.get('/validate', authMiddleware.verifyToken, (req: authMiddleware.AuthRequest, res) => {
+  return res.json({
+    valid: true,
+    user: req.auth,
+  });
+});
+
 export default router;
