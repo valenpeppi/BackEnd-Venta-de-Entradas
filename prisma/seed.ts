@@ -121,21 +121,21 @@ async function main() {
     },
     {
       idOrganiser: 2,
-      companyName: 'peppi SRL',
+      companyName: 'Peppi SRL',
       cuil: '2046497046',
       contactEmail: 'sbrolla@gmail.com',
       password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
       phone: '03465654471',
-      address: 'GODINO 887',
+      address: 'Godino 887',
     },
     {
       idOrganiser: 3,
-      companyName: 'martin SRL',
+      companyName: 'Martin SRL',
       cuil: '20-46187000-1',
       contactEmail: 'martin@gmail.com',
       password: '$2b$10$h5FLr6S5SYfgXqSeUvmvk.flx3VVmSi8icbr8dFaooKQ0fFP.08Bq',
       phone: '3465656777',
-      address: 'zeballos 14453',
+      address: 'Zeballos 753',
     },
   ];
 
@@ -224,7 +224,7 @@ async function main() {
     where: { idEvent: 4 }, update: {}, create: {
       idEvent: 4, name: 'Lucho Mellera', description: '¡Preparate para una noche espectacular llena de risas de la mano de Lucho Mellera!',
       date: in30d, state: 'Pending', image: '/uploads/event-1759701239921-814065860.webp',
-      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 5
+      featured: false, idEventType: 2, idOrganiser: 2, idPlace: 5
     }
   });
 
@@ -336,18 +336,18 @@ async function main() {
 
   const users = [
     {
-      dni: 45500050, name: 'peppi', surname: '', mail: 'peppi@gmail.com',
+      dni: 45500050, name: 'Valentin', surname: 'Peppino', mail: 'peppi@gmail.com',
       birthDate: new Date('2005-04-14'),
       password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG', role: 'admin' as const,
       idUser: 1
     },
     {
-      dni: 46187000, name: 'gian', surname: '', mail: 'gian@hotmail.com',
+      dni: 46187000, name: 'Gianlucas', surname: 'Zabaleta', mail: 'gian@hotmail.com',
       birthDate: new Date('2005-01-02'),
       password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a', role: 'user' as const, idUser: 2
     },
     {
-      dni: 46497046, name: 'Valen', surname: '', mail: 'maiusbrolla@gmail.com',
+      dni: 46497046, name: 'Valentina', surname: 'Pepper', mail: 'maiusbrolla@gmail.com',
       birthDate: new Date('2005-03-31'),
       password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user' as const, idUser: 3
     },

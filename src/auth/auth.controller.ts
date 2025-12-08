@@ -398,3 +398,51 @@ export const removeUser = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Error interno al eliminar cuenta' });
   }
 };
+// Validar sesión y obtener datos actualizados
+export const validateSession = async (req: AuthRequest, res: Response) => {
+  const userType = req.auth?.type;
+  const userMail = req.auth?.mail;
+  const companyId = req.auth?.idOrganiser;
+
+  try {
+    if (userType === 'user' && userMail) {
+      const user = await prisma.user.findUnique({ where: { mail: userMail } });
+      if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+      return res.json({
+        valid: true,
+        user: {
+          dni: user.dni,
+          mail: user.mail,
+          name: user.name,
+          surname: user.surname,
+          birthDate: user.birthDate,
+          role: user.role,
+          type: 'user'
+        }
+      });
+    } else if (userType === 'company' && companyId) {
+      const company = await prisma.organiser.findUnique({ where: { idOrganiser: companyId } });
+      if (!company) return res.status(404).json({ message: 'Empresa no encontrada' });
+
+      return res.json({
+        valid: true,
+        user: {
+          idOrganiser: company.idOrganiser,
+          name: company.companyName,
+          email: company.contactEmail,
+          phone: company.phone,
+          address: company.address,
+          cuil: company.cuil,
+          role: 'company',
+          type: 'company'
+        }
+      });
+    }
+
+    return res.status(400).json({ valid: false, message: 'Token inválido o tipo de usuario desconocido' });
+  } catch (error) {
+    console.error('Error en validación de sesión:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};

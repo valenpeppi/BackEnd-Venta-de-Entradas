@@ -13,11 +13,6 @@ router.post('/google', authController.googleLogin);
 router.put('/profile', authMiddleware.verifyToken, authController.updateUser);
 router.delete('/profile', authMiddleware.verifyToken, authController.removeUser);
 
-router.get('/validate', authMiddleware.verifyToken, (req: authMiddleware.AuthRequest, res) => {
-  return res.json({
-    valid: true,
-    user: req.auth,
-  });
-});
+router.get('/validate', authMiddleware.verifyToken, authController.validateSession);
 
 export default router;
