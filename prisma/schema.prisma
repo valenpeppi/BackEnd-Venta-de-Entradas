@@ -102,12 +102,12 @@ model SaleItem {
 model Sale {
   idSale    Int        @id @default(autoincrement()) @map("idSale")
   date      DateTime   @db.DateTime
-  dniClient Int        @map("dniClient")
-
-  client    User       @relation(fields: [dniClient], references: [dni])
+  idUserClient Int        @map("idUserClient")
+ 
+  client    User       @relation(fields: [idUserClient], references: [idUser])
   saleItems SaleItem[]
 
-  @@index([dniClient])
+  @@index([idUserClient])
   @@map("sales")
 }
 
