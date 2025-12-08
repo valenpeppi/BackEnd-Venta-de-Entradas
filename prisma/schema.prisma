@@ -206,3 +206,14 @@ enum Role {
   user
   admin
 }
+
+model Message {
+  idMessage   Int      @id @default(autoincrement()) @map("idMessage")
+  title       String   @db.VarChar(100)
+  state       String   @default("unread") @db.VarChar(20)
+  date        DateTime @default(now())
+  description String   @db.Text
+  senderEmail String   @map("sender_email") @db.VarChar(100)
+
+  @@map("messages")
+}
