@@ -187,13 +187,16 @@ model Ticket {
 }
 
 model User {
-  dni       Int      @id @map("dni")
+  idUser    Int      @id @default(autoincrement()) @map("id_user")
+  dni       Int      @unique @map("dni")
   name      String   @db.VarChar(25)
   surname   String   @db.VarChar(25)
   mail      String   @unique @db.VarChar(60)
   birthDate DateTime @db.Date
   password  String   @db.VarChar(255)
+  googleId  String?  @unique @map("google_id")
   role      Role     @default(user)
+  
 
   sales     Sale[]
 
