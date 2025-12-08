@@ -184,6 +184,7 @@ export const loginUnified = async (req: Request, res: Response) => {
             mail: user.mail,
             name: user.name,
             surname: user.surname, // Included surname
+            birthDate: user.birthDate,
             role: user.role,
             type: 'user'
           }
@@ -216,6 +217,9 @@ export const loginUnified = async (req: Request, res: Response) => {
             idOrganiser: company.idOrganiser,
             name: company.companyName, // Mapeamos companyName a name
             email: company.contactEmail,
+            phone: company.phone,
+            address: company.address,
+            cuil: company.cuil,
             role: 'company',
             type: 'company'
           }
@@ -317,26 +321,32 @@ export const loginCompany = async (req: Request, res: Response) => {
 
 // Actualizar usuario
 export const updateUser = async (req: AuthRequest, res: Response) => {
-  const { name, surname } = req.body;
+  const { name, surname, phone, address, birthDate } = req.body;
   const userType = req.auth?.type;
   const userMail = req.auth?.mail; // For users
   const companyId = req.auth?.idOrganiser; // For companies
 
   try {
     if (userType === 'user' && userMail) {
-      // Validation could be added here
+      const updateData: any = { name, surname };
+      if (birthDate) updateData.birthDate = new Date(birthDate);
+
       await prisma.user.update({
         where: { mail: userMail },
-        data: { name, surname }
+        data: updateData
       });
-      return res.json({ ok: true, message: 'Perfil de usuario actualizado', user: { name, surname } });
+      return res.json({ ok: true, message: 'Perfil de usuario actualizado', user: { name, surname, birthDate } });
 
     } else if (userType === 'company' && companyId) {
       await prisma.organiser.update({
         where: { idOrganiser: companyId },
-        data: { companyName: name }
+        data: {
+          companyName: name,
+          phone,
+          address
+        }
       });
-      return res.json({ ok: true, message: 'Perfil de empresa actualizado', user: { name } });
+      return res.json({ ok: true, message: 'Perfil de empresa actualizado', user: { name, phone, address } });
     }
 
     res.status(400).json({ message: 'No se pudo identificar el tipo de usuario o faltan permisos' });
