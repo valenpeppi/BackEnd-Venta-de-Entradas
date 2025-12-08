@@ -210,6 +210,7 @@ enum Role {
 model Message {
   idMessage   Int      @id @default(autoincrement()) @map("idMessage")
   title       String   @db.VarChar(100)
+  response    String   @db.VarChar(255)
   state       String   @default("unread") @db.VarChar(20)
   date        DateTime @default(now())
   description String   @db.Text
