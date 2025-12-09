@@ -5,6 +5,7 @@ import axios from 'axios';
 import { prisma } from '../db/mysql';
 import { BOOT_ID } from '../system/boot';
 import { AuthRequest } from './auth.middleware';
+import { verifyGoogleToken } from './google.helper';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
@@ -237,8 +238,6 @@ export const loginUnified = async (req: Request, res: Response) => {
   }
 };
 
-// Login con Google
-import { verifyGoogleToken } from './google.helper';
 
 export const googleLogin = async (req: Request, res: Response) => {
   const { credential } = req.body;
