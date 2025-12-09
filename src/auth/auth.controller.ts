@@ -27,6 +27,15 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
   }
 };
 
+// Helper para validar contraseña segura
+const isPasswordStrong = (pwd: string): boolean => {
+  const length = pwd.length >= 8;
+  const hasUpper = /[A-Z]/.test(pwd);
+  const hasLower = /[a-z]/.test(pwd);
+  const hasNumber = /\d/.test(pwd);
+  return length && hasUpper && hasLower && hasNumber;
+};
+
 // Registro de usuario
 export const register = async (req: Request, res: Response) => {
   let { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
@@ -47,6 +56,10 @@ export const register = async (req: Request, res: Response) => {
 
   if (!dni || !mail || !password || !name || !birthDate) {
     return res.status(400).json({ message: 'Todos los campos son requeridos.' });
+  }
+
+  if (!isPasswordStrong(password)) {
+    return res.status(400).json({ message: 'La contraseña es débil. Debe tener 8 caracteres, mayúscula, minúscula y número.' });
   }
 
   dni = parseInt(dni, 10);
@@ -100,6 +113,10 @@ export const registerCompany = async (req: Request, res: Response) => {
 
   if (!companyName || !contactEmail || !password || !phone || !address || !cuil) {
     return res.status(400).json({ message: 'Todos los campos obligatorios son requeridos.' });
+  }
+
+  if (!isPasswordStrong(password)) {
+    return res.status(400).json({ message: 'La contraseña es débil. Debe tener 8 caracteres, mayúscula, minúscula y número.' });
   }
 
   try {
