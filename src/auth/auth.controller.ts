@@ -36,7 +36,71 @@ const isPasswordStrong = (pwd: string): boolean => {
   return length && hasUpper && hasLower && hasNumber;
 };
 
-// Registro de usuario
+// Helper para evaluar la fortaleza de la contraseña
+const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 'strong', score: number, feedback: string[] } => {
+  let score = 0;
+  const feedback: string[] = [];
+
+  if (!pwd) {
+    return { strength: 'weak', score: 0, feedback: ['La contraseña no puede estar vacía'] };
+  }
+
+  // Check length
+  if (pwd.length >= 8) {
+    score += 30;
+  } else {
+    feedback.push('Mínimo 8 caracteres');
+  }
+
+  // Check lowercase
+  if (/[a-z]/.test(pwd)) {
+    score += 20;
+  } else {
+    feedback.push('Incluye minúsculas (a-z)');
+  }
+
+  // Check uppercase
+  if (/[A-Z]/.test(pwd)) {
+    score += 20;
+  } else {
+    feedback.push('Incluye mayúsculas (A-Z)');
+  }
+
+  // Check numbers
+  if (/\d/.test(pwd)) {
+    score += 15;
+  } else {
+    feedback.push('Incluye números (0-9)');
+  }
+
+  // Check special characters
+  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) {
+    score += 15;
+  }
+
+  // Determine strength level
+  let strength: 'weak' | 'medium' | 'strong' = 'weak';
+  if (score >= 70) {
+    strength = 'strong';
+  } else if (score >= 50) {
+    strength = 'medium';
+  }
+
+  return { strength, score, feedback };
+};
+
+// Endpoint para evaluar la fortaleza de la contraseña (para el frontend)
+export const checkPasswordStrength = async (req: Request, res: Response) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ message: 'La contraseña es requerida.' });
+  }
+
+  const evaluation = evaluatePasswordStrength(password);
+  res.json(evaluation);
+};
+
 export const register = async (req: Request, res: Response) => {
   let { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
 
@@ -165,17 +229,12 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 };
 
-// Login Unificado
-// ... existing loginUnified ...
-
-// ... (We skip loginUnified/login/loginCompany lines for brevity of replacement if possible, but replace_file_content needs contiguous block. 
-// However, the prompt asked for "register" modification which is at the top, and "removeUser" which is at the bottom.
-// I should split this into TWO replace calls for safety and precision.)
 
 
 
 
-// Login Unificado
+
+
 export const loginUnified = async (req: Request, res: Response) => {
   const { email, password } = req.body; // Usamos 'email' genérico
 
@@ -184,7 +243,7 @@ export const loginUnified = async (req: Request, res: Response) => {
   }
 
   try {
-    // 1. Buscar en Usuarios
+    
     const user = await prisma.user.findUnique({ where: { mail: email } });
 
     if (user) {
@@ -201,18 +260,16 @@ export const loginUnified = async (req: Request, res: Response) => {
             dni: user.dni,
             mail: user.mail,
             name: user.name,
-            surname: user.surname, // Included surname
             birthDate: user.birthDate,
             role: user.role,
             type: 'user'
           }
         });
       }
-      // Si encuentra usuario pero pass incorrecto, retornamos error de credenciales aquí para no filtrar existencia
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // 2. Buscar en Empresas (Organizadores)
+    
     const company = await prisma.organiser.findUnique({ where: { contactEmail: email } });
 
     if (company) {
@@ -231,9 +288,9 @@ export const loginUnified = async (req: Request, res: Response) => {
         );
         return res.json({
           token,
-          user: { // Normalizamos la respuesta como "user" para el frontend
+          user: { 
             idOrganiser: company.idOrganiser,
-            name: company.companyName, // Mapeamos companyName a name
+            name: company.companyName, 
             email: company.contactEmail,
             phone: company.phone,
             address: company.address,
@@ -246,7 +303,7 @@ export const loginUnified = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    // 3. No encontrado en ninguno
+    
     return res.status(401).json({ message: 'Credenciales inválidas' });
 
   } catch (error) {
@@ -316,7 +373,6 @@ export const googleLogin = async (req: Request, res: Response) => {
       code: 'USER_NOT_FOUND',
       email: email,
       googleId: googleId
-      // El frontend usará esto para redirigir al registro pre-llenado
     });
 
   } catch (error) {
@@ -325,7 +381,7 @@ export const googleLogin = async (req: Request, res: Response) => {
   }
 };
 
-// Mantenemos los logins legacy por compatibilidad
+
 export const login = async (req: Request, res: Response) => {
   return loginUnified(req, res);
 };
@@ -335,12 +391,12 @@ export const loginCompany = async (req: Request, res: Response) => {
   return loginUnified(req, res);
 };
 
-// Actualizar usuario
+
 export const updateUser = async (req: AuthRequest, res: Response) => {
   const { name, surname, phone, address, birthDate } = req.body;
   const userType = req.auth?.type;
-  const userMail = req.auth?.mail; // For users
-  const companyId = req.auth?.idOrganiser; // For companies
+  const userMail = req.auth?.mail; 
+  const companyId = req.auth?.idOrganiser; 
 
   try {
     if (userType === 'user' && userMail) {
@@ -372,7 +428,6 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// Eliminar usuario
 export const removeUser = async (req: AuthRequest, res: Response) => {
   const userType = req.auth?.type;
   const userMail = req.auth?.mail;
@@ -414,7 +469,8 @@ export const removeUser = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ message: 'Error interno al eliminar cuenta' });
   }
 };
-// Validar sesión y obtener datos actualizados
+
+
 export const validateSession = async (req: AuthRequest, res: Response) => {
   const userType = req.auth?.type;
   const userMail = req.auth?.mail;

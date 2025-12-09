@@ -83,7 +83,7 @@ async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number
             idPlace,
             idSector,
             idSeat: { in: ids },
-            state: 'available' // Condición clave: Solo si está disponible
+            state: 'available' 
         },
         data: { state: 'reserved' }
     });

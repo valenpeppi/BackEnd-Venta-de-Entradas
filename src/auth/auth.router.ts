@@ -9,6 +9,7 @@ router.post('/register-company', authController.registerCompany);
 router.post('/login', authController.loginUnified);
 router.post('/login-company', authController.loginCompany);
 router.post('/google', authController.googleLogin);
+router.post('/check-password-strength', authController.checkPasswordStrength);
 
 router.put('/profile', authMiddleware.verifyToken, authController.updateUser);
 router.delete('/profile', authMiddleware.verifyToken, authController.removeUser);
