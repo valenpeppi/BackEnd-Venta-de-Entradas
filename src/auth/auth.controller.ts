@@ -15,7 +15,7 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
     console.error('La clave secreta de reCAPTCHA no está configurada en .env');
     return false;
   }
-  // if (token === 'TEST_BYPASS') return true; // Descomentar para testing local sin recaptcha válido
+
   try {
     const response = await axios.post(
       `https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`
@@ -27,8 +27,8 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
   }
 };
 
-// Helper para validar contraseña segura
-const isPasswordStrong = (pwd: string): boolean => {
+// Validar contraseña segura
+  const isPasswordStrong = (pwd: string): boolean => {
   const length = pwd.length >= 8;
   const hasUpper = /[A-Z]/.test(pwd);
   const hasLower = /[a-z]/.test(pwd);
@@ -36,7 +36,7 @@ const isPasswordStrong = (pwd: string): boolean => {
   return length && hasUpper && hasLower && hasNumber;
 };
 
-// Helper para evaluar la fortaleza de la contraseña
+// Password Strength Meter
 const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 'strong', score: number, feedback: string[] } => {
   let score = 0;
   const feedback: string[] = [];
@@ -89,7 +89,7 @@ const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 
   return { strength, score, feedback };
 };
 
-// Endpoint para evaluar la fortaleza de la contraseña (para el frontend)
+// Endpoint para evaluar la fortaleza de la contraseña
 export const checkPasswordStrength = async (req: Request, res: Response) => {
   const { password } = req.body;
 
