@@ -6,6 +6,8 @@ import { prisma } from '../db/mysql';
 import { BOOT_ID } from '../system/boot';
 import { AuthRequest } from './auth.middleware';
 import { verifyGoogleToken } from './google.helper';
+import { sendMail } from '../services/mailer.service';
+import { getRecoveryTemplate, getWelcomeTemplate } from '../services/email.templates';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
@@ -28,7 +30,7 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
 };
 
 // Validar contraseña segura
-  const isPasswordStrong = (pwd: string): boolean => {
+const isPasswordStrong = (pwd: string): boolean => {
   const length = pwd.length >= 8;
   const hasUpper = /[A-Z]/.test(pwd);
   const hasLower = /[a-z]/.test(pwd);
@@ -151,6 +153,18 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
+    // Send Welcome Email
+    try {
+      await sendMail({
+        to: mail,
+        subject: '¡Bienvenido a TicketApp!',
+        html: getWelcomeTemplate(name, false)
+      });
+    } catch (emailError) {
+      console.error('Error sending welcome email to user:', emailError);
+      // Non-blocking: continue even if email fails
+    }
+
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error: any) {
     console.error('[Auth] Error en registro:', error);
@@ -219,6 +233,18 @@ export const registerCompany = async (req: Request, res: Response) => {
         address
       }
     });
+
+    // Send Welcome Email to Company
+    try {
+      await sendMail({
+        to: contactEmail,
+        subject: '¡Bienvenida a TicketApp Empresas!',
+        html: getWelcomeTemplate(companyName, true)
+      });
+    } catch (emailError) {
+      console.error('Error sending welcome email to company:', emailError);
+    }
+
     res.status(201).json({ message: 'Empresa registrada exitosamente' });
   } catch (error: any) {
     console.error('[Auth] Error en registro de empresa:', error);
@@ -243,7 +269,7 @@ export const loginUnified = async (req: Request, res: Response) => {
   }
 
   try {
-    
+
     const user = await prisma.user.findUnique({ where: { mail: email } });
 
     if (user) {
@@ -269,7 +295,7 @@ export const loginUnified = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    
+
     const company = await prisma.organiser.findUnique({ where: { contactEmail: email } });
 
     if (company) {
@@ -288,9 +314,9 @@ export const loginUnified = async (req: Request, res: Response) => {
         );
         return res.json({
           token,
-          user: { 
+          user: {
             idOrganiser: company.idOrganiser,
-            name: company.companyName, 
+            name: company.companyName,
             email: company.contactEmail,
             phone: company.phone,
             address: company.address,
@@ -303,7 +329,7 @@ export const loginUnified = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Credenciales inválidas' });
     }
 
-    
+
     return res.status(401).json({ message: 'Credenciales inválidas' });
 
   } catch (error) {
@@ -395,8 +421,8 @@ export const loginCompany = async (req: Request, res: Response) => {
 export const updateUser = async (req: AuthRequest, res: Response) => {
   const { name, surname, phone, address, birthDate } = req.body;
   const userType = req.auth?.type;
-  const userMail = req.auth?.mail; 
-  const companyId = req.auth?.idOrganiser; 
+  const userMail = req.auth?.mail;
+  const companyId = req.auth?.idOrganiser;
 
   try {
     if (userType === 'user' && userMail) {
@@ -516,5 +542,72 @@ export const validateSession = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error('Error en validación de sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: 'El email es requerido.' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { mail: email } });
+    if (!user) {
+      // Security: Do not reveal user existence
+      return res.status(200).json({ message: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
+    }
+
+    const token = jwt.sign(
+      { id: user.dni, email: user.mail, type: 'recovery' },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    const resetLink = `${process.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+
+    await sendMail({
+      to: email,
+      subject: 'Recuperar Contraseña - TicketApp',
+      html: getRecoveryTemplate(resetLink)
+    });
+
+    res.status(200).json({ message: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
+  } catch (error) {
+    console.error('Error in forgotPassword:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: 'Token y nueva contraseña requeridos.' });
+  }
+
+  if (!isPasswordStrong(newPassword)) {
+    return res.status(400).json({ message: 'La contraseña es débil. Requiere 8 caracteres, mayúscula, minúscula y número.' });
+  }
+
+  try {
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+
+    if (decoded.type !== 'recovery') {
+      return res.status(400).json({ message: 'Token inválido para recuperación.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { mail: decoded.email },
+      data: { password: hashedPassword }
+    });
+
+    res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    return res.status(400).json({ message: 'El enlace ha expirado o es inválido.' });
   }
 };

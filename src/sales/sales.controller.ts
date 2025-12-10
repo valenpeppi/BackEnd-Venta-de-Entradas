@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import type { AuthRequest } from '../auth/auth.middleware';
 import { env } from '../config/env';
+import { sendMail } from '../services/mailer.service';
+import { getPurchaseConfirmationTemplate } from '../services/email.templates';
 
 class SalesController {
   public async confirmSale(req: AuthRequest, res: Response): Promise<void> {
@@ -176,6 +178,29 @@ class SalesController {
 
         return sale.idSale;
       });
+
+      // Send Purchase Confirmation Email
+      try {
+        // Fetch tickets with details for email
+        const boughtTickets = await prisma.ticket.findMany({
+          where: { idSale: result, state: 'sold' },
+          include: {
+            event: { include: { place: true } },
+            eventSector: { include: { sector: true } }
+          }
+        });
+
+        if (user.mail) {
+          await sendMail({
+            to: user.mail,
+            subject: '¡Confirmación de Compra - TicketApp!',
+            html: getPurchaseConfirmationTemplate(user.name, boughtTickets)
+          });
+        }
+
+      } catch (emailError) {
+        console.error('Error sending purchase email:', emailError);
+      }
 
       res.status(201).json({ message: 'Venta confirmada', idSale: result });
     } catch (error: any) {

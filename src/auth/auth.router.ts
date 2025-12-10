@@ -1,19 +1,35 @@
 import { Router } from 'express';
-import * as authController from './auth.controller';
+import {
+    register,
+    loginUnified,
+    registerCompany,
+    loginCompany,
+    googleLogin,
+    updateUser,
+    removeUser,
+    validateSession,
+    checkPasswordStrength,
+    forgotPassword,
+    resetPassword
+} from './auth.controller';
 import * as authMiddleware from './auth.middleware';
 
 const router: Router = Router();
 
-router.post('/register', authController.register);
-router.post('/register-company', authController.registerCompany);
-router.post('/login', authController.loginUnified);
-router.post('/login-company', authController.loginCompany);
-router.post('/google', authController.googleLogin);
-router.post('/check-password-strength', authController.checkPasswordStrength);
+router.post('/register', register);
+router.post('/register-company', registerCompany);
+router.post('/login', loginUnified);
+router.post('/login-company', loginCompany);
+router.post('/google', googleLogin);
+router.post('/check-password-strength', checkPasswordStrength);
 
-router.put('/profile', authMiddleware.verifyToken, authController.updateUser);
-router.delete('/profile', authMiddleware.verifyToken, authController.removeUser);
+// Password Recovery
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
-router.get('/validate', authMiddleware.verifyToken, authController.validateSession);
+router.put('/profile', authMiddleware.verifyToken, updateUser);
+router.delete('/profile', authMiddleware.verifyToken, removeUser);
+
+router.get('/validate', authMiddleware.verifyToken, validateSession);
 
 export default router;
