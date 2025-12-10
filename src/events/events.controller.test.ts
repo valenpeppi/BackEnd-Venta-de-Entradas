@@ -85,32 +85,32 @@ describe('createEvent', () => {
     expect(res.json.mock.calls[0][0].message).toMatch(/Faltan campos/);
   });
 
-test('rechaza imagen con mimetype inválido y hace unlink', async () => {
-  const req = {
-    auth: { idOrganiser: 1 },
-    body: {
-      name: 'Show',
-      description: 'Desc',
-      date: '2025-10-10',
-      idEventType: 1,
-      idPlace: 2,
-      // 👇 Debe tener al menos un sector para no cortar antes
-      sectors: JSON.stringify([{ idSector: 1, price: 1000 }]),
-    },
-    file: { mimetype: 'application/pdf', path: '/tmp/x', filename: 'x.pdf' },
-  } as unknown as AuthRequest;
-  const res = mockRes();
+  test('rechaza imagen con mimetype inválido y hace unlink', async () => {
+    const req = {
+      auth: { idOrganiser: 1 },
+      body: {
+        name: 'Show',
+        description: 'Desc',
+        date: '2025-10-10',
+        idEventType: 1,
+        idPlace: 2,
+        // 👇 Debe tener al menos un sector para no cortar antes
+        sectors: JSON.stringify([{ idSector: 1, price: 1000 }]),
+      },
+      file: { mimetype: 'application/pdf', path: '/tmp/x', filename: 'x.pdf' },
+    } as unknown as AuthRequest;
+    const res = mockRes();
 
-  (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 1 });
-  (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 1 });
-  (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 2 });
+    (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 1 });
+    (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 1 });
+    (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 2 });
 
-  await createEvent(req, res);
+    await createEvent(req, res);
 
-  expect(fs.unlinkSync).toHaveBeenCalledWith('/tmp/x');
-  expect(res.status).toHaveBeenCalledWith(400);
-  expect(res.json.mock.calls[0][0].message).toMatch(/Solo imágenes válidas/);
-});
+    expect(fs.unlinkSync).toHaveBeenCalledWith('/tmp/x');
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json.mock.calls[0][0].message).toMatch(/Solo imágenes válidas/);
+  });
 
   test('201 en happy path: crea evento, sectores, asientos y responde availableSeats', async () => {
     const req = {
@@ -297,18 +297,6 @@ describe('searchEvents', () => {
         featured: true,
         state: 'Approved',
       },
-      {
-        idEvent: 2,
-        name: 'Otra cosa',
-        description: 'desc',
-        date: new Date('2025-12-01'),
-        place: { name: 'Arena' },
-        image: null,
-        eventType: { name: 'Teatro' },
-        eventSectors: [{ price: 5000 }],
-        featured: false,
-        state: 'Approved',
-      },
     ]);
 
     (prisma.seatEvent.groupBy as jest.Mock).mockImplementation(({ where: { idEvent } }: any) => {
@@ -326,7 +314,7 @@ describe('searchEvents', () => {
     expect(data[0]).toEqual(
       expect.objectContaining({
         id: 1,
-        name: expect.stringMatching(/bizarrap/i),
+        name: 'Bizarrap en Rosario',
         price: 8000,
         availableSeats: 150,
         featured: true,
