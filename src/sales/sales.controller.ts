@@ -1,6 +1,9 @@
 import { Response } from 'express';
 import { prisma } from '../db/mysql';
 import type { AuthRequest } from '../auth/auth.middleware';
+import { env } from '../config/env';
+import { sendMail } from '../services/mailer.service';
+import { getPurchaseConfirmationTemplate } from '../services/email.templates';
 
 class SalesController {
   public async confirmSale(req: AuthRequest, res: Response): Promise<void> {
@@ -39,7 +42,7 @@ class SalesController {
       }
 
       const userSales = await prisma.sale.findMany({
-        where: { dniClient },
+        where: { client: { dni: dniClient } },
         select: { idSale: true },
       });
       const saleIds = userSales.map(s => s.idSale);
@@ -95,7 +98,10 @@ class SalesController {
 
       const result = await prisma.$transaction(async (tx) => {
         const sale = await tx.sale.create({
-          data: { date: new Date(), dniClient },
+          data: {
+            date: new Date(),
+            client: { connect: { dni: dniClient } },
+          },
         });
 
         console.log(`🧾 Venta creada: #${sale.idSale} para DNI ${dniClient}`);
@@ -173,6 +179,29 @@ class SalesController {
         return sale.idSale;
       });
 
+      // Send Purchase Confirmation Email
+      try {
+        // Fetch tickets with details for email
+        const boughtTickets = await prisma.ticket.findMany({
+          where: { idSale: result, state: 'sold' },
+          include: {
+            event: { include: { place: true } },
+            eventSector: { include: { sector: true } }
+          }
+        });
+
+        if (user.mail) {
+          await sendMail({
+            to: user.mail,
+            subject: '¡Confirmación de Compra - TicketApp!',
+            html: getPurchaseConfirmationTemplate(user.name, boughtTickets)
+          });
+        }
+
+      } catch (emailError) {
+        console.error('Error sending purchase email:', emailError);
+      }
+
       res.status(201).json({ message: 'Venta confirmada', idSale: result });
     } catch (error: any) {
       console.error('❌ Error al confirmar venta:', error);
@@ -190,7 +219,7 @@ class SalesController {
 
     try {
       const userSales = await prisma.sale.findMany({
-        where: { dniClient },
+        where: { client: { dni: dniClient } },
         select: { idSale: true },
       });
 
@@ -208,7 +237,7 @@ class SalesController {
         },
         include: {
           event: { include: { place: true } },
-          eventSector: { include: { sector: true } }, 
+          eventSector: { include: { sector: true } },
         },
         orderBy: { event: { date: 'asc' } },
       });
@@ -228,7 +257,7 @@ class SalesController {
         sectorType: ticket.eventSector.sector.sectorType as 'enumerated' | 'nonEnumerated' | string,
         seatNumber: ticket.idSeat,
         imageUrl: ticket.event.image
-          ? `${process.env.BACKEND_URL || 'http://localhost:3000'}${ticket.event.image}`
+          ? `${env.BACKEND_URL}${ticket.event.image}`
           : '/ticket.png',
         idTicket: ticket.idTicket,
         idSale: ticket.idSale,
@@ -238,6 +267,117 @@ class SalesController {
     } catch (error: any) {
       console.error('Error fetching user tickets:', error);
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
+    }
+  }
+
+  public async getAdminStats(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      // 1. Sales made today
+      const salesToday = await prisma.sale.count({
+        where: { date: { gte: todayStart } },
+      });
+
+      // 2. Tickets sold today
+      const ticketsToday = await prisma.ticket.count({
+        where: {
+          saleItem: {
+            sale: { date: { gte: todayStart } }
+          },
+          state: 'sold'
+        }
+      });
+
+      // 3. Total Revenue Today
+      const soldTicketsToday = await prisma.ticket.findMany({
+        where: {
+          saleItem: {
+            sale: { date: { gte: todayStart } }
+          },
+          state: 'sold'
+        },
+        include: {
+          eventSector: {
+            select: { price: true }
+          }
+        }
+      });
+
+      const revenueToday = soldTicketsToday.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
+
+      // 4. Pending Events Count
+      const pendingEvents = await prisma.event.count({
+        where: { state: 'Pending' }
+      });
+
+      res.status(200).json({
+        salesToday,
+        ticketsToday,
+        revenueToday,
+        pendingEvents
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching admin stats:', error);
+      res.status(500).json({ error: 'Error obteniendo estadísticas', details: error.message });
+    }
+  }
+
+  public async getCompanyStats(req: AuthRequest, res: Response): Promise<void> {
+    const idOrganiser = req.auth?.idOrganiser;
+
+    if (!idOrganiser) {
+      res.status(403).json({ error: 'Acceso denegado: Se requiere ser una empresa registrada.' });
+      return;
+    }
+
+    try {
+      // 1. Get all events for this organiser (excluding deleted/cancelled if logical delete exists, here we just filter active states for "Active Events")
+      // Actually dashboard usually shows total impact.
+
+      // Active Events (Approved or Pending)
+      const activeEventsCount = await prisma.event.count({
+        where: {
+          idOrganiser,
+          state: { in: ['Approved', 'Pending'] }
+        }
+      });
+
+      // 2. Total Tickets Sold (across all events of this organiser)
+      const soldTickets = await prisma.ticket.count({
+        where: {
+          event: { idOrganiser },
+          state: 'sold'
+        }
+      });
+
+      // 3. Total Revenue
+      // We need to sum price of all sold tickets for events of this organiser
+      const soldTicketsData = await prisma.ticket.findMany({
+        where: {
+          event: { idOrganiser },
+          state: 'sold'
+        },
+        include: {
+          eventSector: { select: { price: true } }
+        }
+      });
+
+      const totalRevenue = soldTicketsData.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
+
+      // 4. Recent Sales (Optional, maybe just these 3 KPIs are enough for now as requested)
+
+      res.json({
+        activeEvents: activeEventsCount,
+        ticketsSold: soldTickets,
+        totalRevenue
+      });
+
+    } catch (error: any) {
+      console.error('Error fetching company stats:', error);
+      res.status(500).json({ error: 'Error obteniendo estadísticas de empresa', details: error.message });
     }
   }
 

@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import { env } from "../config/env";
 
 dotenv.config();
 const router = express.Router();
@@ -8,7 +9,7 @@ const router = express.Router();
 const openRouterHeaders = {
   "Content-Type": "application/json",
   Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-  "HTTP-Referer": process.env.FRONTEND_URL || "http://localhost:5173",
+  "HTTP-Referer": env.FRONTEND_URL,
   "X-Title": "TicketApp Assistant",
 };
 

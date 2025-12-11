@@ -4,6 +4,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import { testDbConnection } from './src/db/mysql';
+import { env } from './src/config/env';
 
 dotenv.config();
 
@@ -21,11 +22,13 @@ import mpWebhookRouter from './src/payments/mp.webhook';
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
 import systemRoutes from './src/system/system.router';
+import messagesRoutes from './src/messages/messages.router';
+import { validateToken } from './src/security/jwtValidator';
 
 app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: env.FRONTEND_URL,
   credentials: true
 }));
 
@@ -37,6 +40,8 @@ app.use('/api/mp/webhook', mpWebhookRouter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use(validateToken);
+
 app.use('/api/system', systemRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/sales', salesRoutes);
@@ -46,14 +51,13 @@ app.use('/api/stripe', stripeRoutes);
 app.use('/api/mp', mpRoutes);
 app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
+app.use('/api/messages', messagesRoutes);
 
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
+import { errorHandler } from './src/middlewares/error.middleware';
+app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test') {
-  const PORT: number = Number(process.env.PORT) || 3000;
+if (env.NODE_ENV !== 'test') {
+  const PORT: number = env.PORT_NUM;
 
   testDbConnection().then(() => {
     app.listen(PORT, () => {

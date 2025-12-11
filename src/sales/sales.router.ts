@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import SalesController from './sales.controller';
-import { verifyToken } from '../auth/auth.middleware';
+import { verifyToken, isAdmin, isCompany } from '../auth/auth.middleware';
 import { prisma } from '../db/mysql';
 
 const router: Router = Router();
@@ -11,6 +11,8 @@ router.post('/confirm', (req, res, next) => {
 }, SalesController.confirmSale);
 
 router.get('/my-tickets', verifyToken, SalesController.getUserTickets);
+router.get('/stats', verifyToken, isAdmin, SalesController.getAdminStats);
+router.get('/company-stats', verifyToken, isCompany, SalesController.getCompanyStats);
 
 router.get('/check', async (req, res) => {
   const dniClient = Number(req.query.dniClient);
@@ -21,7 +23,7 @@ router.get('/check', async (req, res) => {
   try {
     const since = new Date(Date.now() - 5 * 60 * 1000);
     const recentSale = await prisma.sale.findFirst({
-      where: { dniClient, date: { gte: since } },
+      where: { client: { dni: dniClient }, date: { gte: since } },
       orderBy: { date: 'desc' },
       take: 1,
     });

@@ -89,7 +89,7 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
     });
 
   }
-  
+
   console.log(`Tickets generados para evento ${idEvent}`);
 }
 
@@ -109,38 +109,43 @@ async function main() {
   });
   console.log('Tipos de evento cargados');
 
-  await prisma.organiser.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        idOrganiser: 1,
-        companyName: 'Agus SRL',
-        cuil: '3090090999',
-        contactEmail: 'agus@gmail.com',
-        password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
-        phone: '5493212567375',
-        address: 'Viamonte 2847',
-      },
-      {
-        idOrganiser: 2,
-        companyName: 'peppi SRL',
-        cuil: '2046497046',
-        contactEmail: 'sbrolla@gmail.com',
-        password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
-        phone: '03465654471',
-        address: 'GODINO 887',
-      },
-      {
-        idOrganiser: 3,
-        companyName: 'gian SRL',
-        cuil: '20-46187000-1',
-        contactEmail: 'gian@hotmail.com',
-        password: '$2b$10$nGs0vxZ66jyQE4bMELcTBOKorrT62lQfuZsbPTRT7aC8fQZhOkNFm',
-        phone: '3465656777',
-        address: 'zeballos 14453',
-      },
-    ],
-  });
+  const organisers = [
+    {
+      idOrganiser: 1,
+      companyName: 'Agus SRL',
+      cuil: '3090090999',
+      contactEmail: 'agus@gmail.com',
+      password: '$2b$10$KFeJhHRJJikyjqUX.KSiU.oBXr7FLASKDKtq15m517BI2b6WaIkd6',
+      phone: '5493212567375',
+      address: 'Viamonte 2847',
+    },
+    {
+      idOrganiser: 2,
+      companyName: 'Peppi SRL',
+      cuil: '2046497046',
+      contactEmail: 'sbrolla@gmail.com',
+      password: '$2b$10$z31P7gTLFV6fuwbaOeVKP.kYGuhP.nreAoklSnVo3z.s3gtp55CIG',
+      phone: '03465654471',
+      address: 'Godino 887',
+    },
+    {
+      idOrganiser: 3,
+      companyName: 'Martin SRL',
+      cuil: '20-46187000-1',
+      contactEmail: 'martin@gmail.com',
+      password: '$2b$10$h5FLr6S5SYfgXqSeUvmvk.flx3VVmSi8icbr8dFaooKQ0fFP.08Bq',
+      phone: '3465656777',
+      address: 'Zeballos 753',
+    },
+  ];
+
+  for (const org of organisers) {
+    await prisma.organiser.upsert({
+      where: { idOrganiser: org.idOrganiser },
+      update: org,
+      create: org,
+    });
+  }
   console.log('Organizadores cargados');
 
   await prisma.place.createMany({
@@ -149,7 +154,8 @@ async function main() {
       { idPlace: 1, name: 'Anfiteatro', totalCap: 40, address: 'Av. Belgrano 100 bis', placeType: 'nonEnumerated' },
       { idPlace: 2, name: 'Estadio Gigante de Arroyito', totalCap: 260, address: 'Av. Génova 640', placeType: 'hybrid' },
       { idPlace: 3, name: 'Bioceres Arena', totalCap: 50, address: 'Cafferata 729', placeType: 'hybrid' },
-      { idPlace: 4, name: 'El Circulo', totalCap: 60, address: 'Laprida 1223', placeType: 'enumerated' },
+      { idPlace: 4, name: 'El Ateneo', totalCap: 25, address: 'Cordoba 1473', placeType: 'nonEnumerated' },
+      { idPlace: 5, name: 'El Circulo', totalCap: 60, address: 'Laprida 1223', placeType: 'enumerated' },
     ],
   });
   console.log('Lugares cargados');
@@ -162,8 +168,9 @@ async function main() {
     { idSector: 4, idPlace: 2, name: 'Popular', sectorType: 'nonEnumerated', capacity: 60 },
     { idSector: 1, idPlace: 3, name: 'VIP', sectorType: 'enumerated', capacity: 20 },
     { idSector: 2, idPlace: 3, name: 'General', sectorType: 'nonEnumerated', capacity: 30 },
-    { idSector: 1, idPlace: 4, name: 'Sala Principal', sectorType: 'enumerated', capacity: 40 },
-    { idSector: 2, idPlace: 4, name: 'Tribuna Superior', sectorType: 'enumerated', capacity: 20 },
+    { idSector: 1, idPlace: 4, name: 'Sala Principal', sectorType: 'nonEnumerated', capacity: 25 },
+    { idSector: 1, idPlace: 5, name: 'Sala Principal', sectorType: 'enumerated', capacity: 40 },
+    { idSector: 2, idPlace: 5, name: 'Tribuna Superior', sectorType: 'enumerated', capacity: 20 },
   ];
 
   for (const s of sectores) {
@@ -176,9 +183,9 @@ async function main() {
   console.log('Sectores cargados');
 
   const allSectors = await prisma.sector.findMany();
-    for (const s of allSectors) {
-      await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
-    }
+  for (const s of allSectors) {
+    await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
+  }
   console.log('Asientos cargados');
 
   const now = new Date();
@@ -212,12 +219,12 @@ async function main() {
       featured: true, idEventType: 1, idOrganiser: 1, idPlace: 3,
     },
   });
-  
+
   const ev4 = await prisma.event.upsert({
     where: { idEvent: 4 }, update: {}, create: {
       idEvent: 4, name: 'Lucho Mellera', description: '¡Preparate para una noche espectacular llena de risas de la mano de Lucho Mellera!',
-      date: new Date('2026-12-13 00:00:00'), state: 'Approved', image: '/uploads/event-1759701239921-814065860.webp',
-      featured: false, idEventType: 2, idOrganiser: 3, idPlace: 4
+      date: in30d, state: 'Pending', image: '/uploads/event-1759701239921-814065860.webp',
+      featured: false, idEventType: 2, idOrganiser: 2, idPlace: 5
     }
   });
 
@@ -248,7 +255,7 @@ async function main() {
   const ev8 = await prisma.event.upsert({
     where: { idEvent: 8 }, update: {}, create: {
       idEvent: 8, name: 'Festival de Danzas Clásicas', description: 'Un encuentro de las compañías de ballet más prestigiosas del mundo, conocido por su excelencia técnica y espectáculos innovadores.',
-      date: new Date('2025-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
+      date: new Date('2026-12-12 19:00:00'), state: 'Approved', image: '/uploads/event-1759701884936-793533149.JPG',
       featured: false, idEventType: 3, idOrganiser: 3, idPlace: 3
     }
   });
@@ -257,15 +264,23 @@ async function main() {
     where: { idEvent: 9 }, update: {}, create: {
       idEvent: 9, name: 'La previa de 9 de Julio contra Belgrano', description: 'El mejor clasico de la liga se jugará pronto, compra tus entradas con 1 año de anticipacion!',
       date: new Date('2026-07-19 19:00:00'), state: 'Approved', image: '/uploads/event-1759702021862-561109661.jpg',
-      featured: false, idEventType: 5, idOrganiser: 3, idPlace: 2
+      featured: false, idEventType: 5, idOrganiser: 2, idPlace: 2
     }
   });
 
   const ev10 = await prisma.event.upsert({
     where: { idEvent: 10 }, update: {}, create: {
       idEvent: 10, name: 'Demostración de Arte de La Siberia', description: 'Hacemos una gran demostración de arte de nuestros alumnos para despedir el año lectivo.',
-      date: new Date('2025-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
-      featured: false, idEventType: 6, idOrganiser: 3, idPlace: 4
+      date: new Date('2026-12-01 16:00:00'), state: 'Approved', image: '/uploads/event-1759702283861-940723684.jpg',
+      featured: false, idEventType: 6, idOrganiser: 3, idPlace: 5
+    }
+  });
+
+  const ev11 = await prisma.event.upsert({
+    where: { idEvent: 11 }, update: {}, create: {
+      idEvent: 11, name: 'Bingo', description: 'Se armo el bingo en el Ateneo, no te lo pierdas.',
+      date: new Date('2026-03-01 14:10:00'), state: 'Approved', image: '/uploads/event-1765227214870-640653029.png',
+      featured: false, idEventType: 6, idOrganiser: 2, idPlace: 4
     }
   });
   console.log('Todos los eventos han sido cargados.');
@@ -281,10 +296,9 @@ async function main() {
     { idEvent: ev2.idEvent, idPlace: 2, idSector: 4, price: '80000.00' },
     { idEvent: ev3.idEvent, idPlace: 3, idSector: 1, price: '100000.00' },
     { idEvent: ev3.idEvent, idPlace: 3, idSector: 2, price: '150000.00' },
-    { idEvent: ev4.idEvent, idPlace: 4, idSector: 1, price: '25000.00' },
-    { idEvent: ev4.idEvent, idPlace: 4, idSector: 2, price: '30000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 1, price: '25000.00' },
+    { idEvent: ev4.idEvent, idPlace: 5, idSector: 2, price: '30000.00' },
     { idEvent: ev5.idEvent, idPlace: 4, idSector: 1, price: '50000.00' },
-    { idEvent: ev5.idEvent, idPlace: 4, idSector: 2, price: '80000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 1, price: '20000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 2, price: '25000.00' },
     { idEvent: ev6.idEvent, idPlace: 2, idSector: 3, price: '25000.00' },
@@ -292,15 +306,16 @@ async function main() {
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 1, price: '60000.00' },
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 2, price: '70000.00' },
     { idEvent: ev7.idEvent, idPlace: 2, idSector: 3, price: '70000.00' },
-    { idEvent: ev7.idEvent, idPlace: 2, idSector: 4, price: '64999.99' },
+    { idEvent: ev7.idEvent, idPlace: 2, idSector: 4, price: '65000.00' },
     { idEvent: ev8.idEvent, idPlace: 3, idSector: 1, price: '40000.00' },
     { idEvent: ev8.idEvent, idPlace: 3, idSector: 2, price: '40000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 1, price: '7000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 2, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 3, price: '10000.00' },
     { idEvent: ev9.idEvent, idPlace: 2, idSector: 4, price: '10000.00' },
-    { idEvent: ev10.idEvent, idPlace: 4, idSector: 1, price: '10000.00' },
-    { idEvent: ev10.idEvent, idPlace: 4, idSector: 2, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 1, price: '10000.00' },
+    { idEvent: ev10.idEvent, idPlace: 5, idSector: 2, price: '10000.00' },
+    { idEvent: ev11.idEvent, idPlace: 4, idSector: 1, price: '5000.00' },
   ];
 
   for (const data of eventSectorsData) {
@@ -319,28 +334,78 @@ async function main() {
   }
   console.log('SeatEvents y Tickets generados para todos los eventos');
 
-  await prisma.user.createMany({
-    skipDuplicates: true,
-    data: [
-      {
-        dni: 45500050, name: 'peppi', surname: '', mail: 'peppi@gmail.com',
-        birthDate: new Date('2005-04-14'),
-        password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG', role: 'admin',
-      },
-      {
-        dni: 46187000, name: 'gian', surname: '', mail: 'gian@hotmail.com',
-        birthDate: new Date('2005-01-02'),
-        password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a', role: 'user',
-      },
-      {
-        dni: 46497046, name: 'Valen', surname: '', mail: 'maiusbrolla@gmail.com',
-        birthDate: new Date('2005-03-31'),
-        password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user',
-      },
-    ],
-  });
+  const users = [
+    {
+      dni: 45500050, name: 'Valentin', surname: 'Peppino', mail: 'peppi@gmail.com',
+      birthDate: new Date('2005-04-14'),
+      password: '$2b$10$Z7PACw9ViPwDBQigQCYY8ODKtGCr/KgCv5A8x9I5VgT1u9UJ.4wBG', role: 'admin' as const,
+      idUser: 1
+    },
+    {
+      dni: 46187000, name: 'Gianlucas', surname: 'Zabaleta', mail: 'gian@hotmail.com',
+      birthDate: new Date('2005-01-02'),
+      password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a', role: 'user' as const, idUser: 2
+    },
+    {
+      dni: 46497046, name: 'Valentina', surname: 'Pepper', mail: 'maiusbrolla@gmail.com',
+      birthDate: new Date('2005-03-31'),
+      password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user' as const, idUser: 3
+    },
+  ];
+
+  for (const u of users) {
+    const { idUser, ...userData } = u;
+    await prisma.user.upsert({
+      where: { dni: u.dni },
+      update: userData,
+      create: u,
+    });
+  }
 
   console.log('Usuarios cargados');
+
+  const messages = [
+    {
+      title: 'Consulta sobre entradas',
+      description: 'Hola, quería saber si queda stock para el evento de Bad Bunny.',
+      date: new Date('2025-12-05 10:00:00'),
+      senderEmail: 'maria@gmail.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Problema con el pago',
+      description: 'Intenté pagar con tarjeta pero me dio error.',
+      date: new Date('2025-12-06 15:30:00'),
+      senderEmail: 'juan@hotmail.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Cambio de fecha',
+      description: '¿Es posible cambiar la fecha de mi entrada?',
+      date: new Date('2025-12-07 09:15:00'),
+      senderEmail: 'pedro@yahoo.com',
+      state: 'unread',
+      response: '',
+    },
+    {
+      title: 'Entradas discapacitados',
+      description: 'Hola, quería saber si hay cupo para personas con discapacidad.',
+      date: new Date('2025-12-08 11:20:00'),
+      senderEmail: 'ana@gmail.com',
+      state: 'unread',
+      response: '',
+    }
+  ];
+
+  for (const m of messages) {
+    await prisma.message.create({
+      data: m
+    });
+  }
+  console.log('Mensajes cargados');
+
   console.log('Seed finalizado con éxito.');
 }
 

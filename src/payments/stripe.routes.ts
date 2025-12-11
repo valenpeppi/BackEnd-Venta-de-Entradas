@@ -1,7 +1,8 @@
 import express from 'express';
 import { stripe } from './stripe.client';
 import { prisma } from '../db/mysql';
-import SalesController from '../sales/sales.controller'; 
+import SalesController from '../sales/sales.controller';
+import { reserveTickets } from '../services/reservation.service';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -31,110 +32,7 @@ router.post('/checkout', async (req, res) => {
 
     console.log('🎫 Procesando ticketGroups:', ticketGroups);
 
-    for (const g of ticketGroups) {
-      const idEvent = Number(g.idEvent);
-      const idPlace = Number(g.idPlace);
-      const idSector = Number(g.idSector);
-
-      if (!idEvent || !idPlace || !idSector) {
-        return res.status(400).json({ error: 'ticketGroup inválido: faltan idEvent/idPlace/idSector' });
-      }
-
-      const sector = await prisma.sector.findUnique({
-        where: { idSector_idPlace: { idSector, idPlace } },
-        select: { sectorType: true, name: true },
-      });
-
-      if (!sector) {
-        return res.status(400).json({ error: `Sector ${idSector} en lugar ${idPlace} no existe` });
-      }
-
-      const sectorType = sector.sectorType; 
-      const incomingIds: number[] = Array.isArray(g.ids)
-        ? (g.ids as (number | string)[]).map(Number).filter((n) => Number.isFinite(n) && n > 0)
-        : [];
-      const qtyFromBody = Number(g.quantity);
-      const quantity = Number.isFinite(qtyFromBody) ? qtyFromBody : (incomingIds.length > 0 ? incomingIds.length : 0);
-
-      console.log('🔍 Grupo normalizado:', {
-        idEvent, idPlace, idSector, sectorType, quantity, ids: incomingIds,
-      });
-
-      if (sectorType === 'nonEnumerated') {
-        if (!quantity || quantity <= 0) {
-          return res.status(400).json({ error: `Para sector no enumerado se requiere quantity > 0` });
-        }
-
-        const totalAvailable = await prisma.seatEvent.count({
-          where: { idEvent, idPlace, idSector, state: 'available' },
-        });
-
-        console.log(`📊 (No enumerado) disponibles: ${totalAvailable}, solicitadas: ${quantity}`);
-        if (totalAvailable < quantity) {
-          return res.status(400).json({ error: `No hay suficientes entradas disponibles para el evento ${idEvent}` });
-        }
-
-        const seatsToReserve = await prisma.seatEvent.findMany({
-          where: { idEvent, idPlace, idSector, state: 'available' },
-          take: quantity,
-          orderBy: { idSeat: 'asc' },
-        });
-
-        const seatIds = seatsToReserve.map((s) => s.idSeat);
-        if (seatIds.length !== quantity) {
-          return res.status(500).json({ error: 'No se pudo completar la reserva (no enumerado)' });
-        }
-
-        await prisma.seatEvent.updateMany({
-          where: { idEvent, idPlace, idSector, idSeat: { in: seatIds }, state: 'available' },
-          data: { state: 'reserved' },
-        });
-
-        g.ids = seatIds;
-        console.log('✅ No enumerado: asientos (abstractos) reservados:', seatIds);
-      } else {
-        if (incomingIds.length > 0) {
-          const availableCount = await prisma.seatEvent.count({
-            where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
-          });
-          if (availableCount !== incomingIds.length) {
-            return res.status(400).json({
-              error: `Algunos asientos ya no están disponibles para el evento ${idEvent}, sector ${idSector}`,
-            });
-          }
-
-          await prisma.seatEvent.updateMany({
-            where: { idEvent, idPlace, idSector, idSeat: { in: incomingIds }, state: 'available' },
-            data: { state: 'reserved' },
-          });
-
-          g.ids = incomingIds;
-          console.log('✅ Enumerado: asientos reservados (por IDs):', incomingIds);
-        } else if (quantity && quantity > 0) {
-          const seatsToReserve = await prisma.seatEvent.findMany({
-            where: { idEvent, idPlace, idSector, state: 'available' },
-            take: quantity,
-            orderBy: { idSeat: 'asc' },
-          });
-          if (seatsToReserve.length < quantity) {
-            return res.status(400).json({
-              error: `No hay suficientes asientos disponibles para el evento ${idEvent}, sector ${idSector}`,
-            });
-          }
-
-          const seatIds = seatsToReserve.map((s) => s.idSeat);
-          await prisma.seatEvent.updateMany({
-            where: { idEvent, idPlace, idSector, idSeat: { in: seatIds }, state: 'available' },
-            data: { state: 'reserved' },
-          });
-
-          g.ids = seatIds;
-          console.log('✅ Enumerado: asientos reservados (por cantidad):', seatIds);
-        } else {
-          return res.status(400).json({ error: 'Para sectores enumerados se requieren ids[] o quantity > 0' });
-        }
-      }
-    }
+    await reserveTickets(ticketGroups);
 
     console.log('💳 Creando sesión de Stripe...');
 
@@ -142,7 +40,7 @@ router.post('/checkout', async (req, res) => {
       price_data: {
         currency: 'ars',
         product_data: { name: String(item.name).slice(0, 120) },
-        unit_amount: toMinorUnits(Number(item.amount)), 
+        unit_amount: toMinorUnits(Number(item.amount)),
       },
       quantity: Number(item.quantity) || 1,
     }));
@@ -251,7 +149,7 @@ router.get('/confirm-session', async (req, res) => {
     try {
       dniClient = session?.metadata?.dniClient ? Number(session.metadata.dniClient) : null;
       ticketGroups = session?.metadata?.ticketGroups ? JSON.parse(session.metadata.ticketGroups) : [];
-    } catch (e) {}
+    } catch (e) { }
 
     if (!dniClient || !Array.isArray(ticketGroups) || ticketGroups.length === 0) {
       return res.status(400).json({ error: 'Metadata incompleta para confirmar la venta' });
