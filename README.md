@@ -55,31 +55,31 @@
 <ul>
   <li>Usuarios finales y empresas organizadoras.</li>
   <li>Lugares, sectores y asientos.</li>
-  <li>Eventos con flujo de aprobacion (Pending → Approved / Rejected).</li>
+  <li>Eventos con flujo de aprobación (Pending → Approved / Rejected).</li>
   <li>Reservas y ventas de tickets (hasta 6 tickets por evento por usuario).</li>
-  <li>Procesamiento de pagos con <strong>Stripe</strong> y <strong>MercadoPago</strong>.</li>
-  <li>Confirmacion de ventas via webhooks y polling.</li>
-  <li>Asistente de IA mediante integracion con OpenRouter.</li>
+  <li>Procesamiento de pagos con <strong>Stripe</strong> y <strong>Mercado Pago</strong>.</li>
+  <li>Confirmación de ventas vía webhooks y polling.</li>
+  <li>Asistente de IA mediante integración con OpenRouter.</li>
 </ul>
 
 <p>
-  La API esta pensada para ser consumida por el <strong>FrontEnd React</strong> del proyecto 
+  La API está pensada para ser consumida por el <strong>FrontEnd React</strong> del proyecto 
   <code>FrontEnd-Venta-de-Entradas</code>.
 </p>
 
 <hr/>
 
-<h2>🌐 Base URL, autenticacion y formato de errores</h2>
+<h2>🌐 Base URL, autenticación y formato de errores</h2>
 
 <h3>Base URL</h3>
 
 <ul>
   <li>Servidor HTTP (desarrollo): <code>http://localhost:3000</code> (configurable con <code>PORT</code>).</li>
-  <li>Prefijo comun de la API: <code>/api</code>.</li>
-  <li>Archivos estaticos (imagenes de eventos): <code>GET /uploads/&lt;nombre_archivo&gt;</code>.</li>
+  <li>Prefijo común de la API: <code>/api</code>.</li>
+  <li>Archivos estáticos (imágenes de eventos): <code>GET /uploads/&lt;nombre_archivo&gt;</code>.</li>
 </ul>
 
-<h3>Autenticacion</h3>
+<h3>Autenticación</h3>
 
 <ul>
   <li>Esquema: <strong>JWT Bearer</strong>.</li>
@@ -94,7 +94,7 @@
   </li>
   <li>Middlewares de acceso:
     <ul>
-      <li><code>verifyToken</code> – token valido.</li>
+      <li><code>verifyToken</code> – token válido.</li>
       <li><code>isCompany</code> – rol empresa.</li>
       <li><code>isAdmin</code> – rol administrador.</li>
     </ul>
@@ -109,7 +109,7 @@
   <li>Si el servidor se reinicia, cambia el <code>bootId</code> actual y todos los tokens previos quedan invalidados.</li>
   <li>Respuesta en ese caso:
     <ul>
-      <li><code>401</code> con codigo interno <code>RESTART_INVALIDATED_TOKEN</code>.</li>
+      <li><code>401</code> con código interno <code>RESTART_INVALIDATED_TOKEN</code>.</li>
     </ul>
   </li>
   <li>Endpoint de chequeo: <code>GET /api/system/boot</code> → <code>{ "bootId": "..." }</code>.</li>
@@ -118,7 +118,7 @@
 <h3>Formato de respuestas y errores</h3>
 
 <ul>
-  <li>Exito:
+  <li>Éxito:
     <ul>
       <li>Respuestas simples: datos crudos (arrays/objetos).</li>
       <li>Respuestas estructuradas: <code>{ "ok": true, "data": ... }</code>.</li>
@@ -126,11 +126,11 @@
   </li>
   <li>Errores:
     <ul>
-      <li><code>400</code> – validacion / datos faltantes.</li>
-      <li><code>401</code> – falta de autenticacion.</li>
+      <li><code>400</code> – validación / datos faltantes.</li>
+      <li><code>401</code> – falta de autenticación.</li>
       <li><code>403</code> – permisos insuficientes.</li>
       <li><code>404</code> – recurso no encontrado.</li>
-      <li><code>409</code> – conflictos (ej. duplicados, limites excedidos).</li>
+      <li><code>409</code> – conflictos (ej. duplicados, límites excedidos).</li>
       <li><code>500</code> – error interno.</li>
     </ul>
   </li>
@@ -138,14 +138,14 @@
 
 <hr/>
 
-<h2>🧱 Stack tecnologico</h2>
+<h2>🧱 Stack tecnológico</h2>
 
 <table>
   <thead>
     <tr>
       <th>Componente</th>
-      <th>Tecnologia</th>
-      <th>Version</th>
+      <th>Tecnología</th>
+      <th>Versión</th>
       <th>Uso</th>
     </tr>
   </thead>
@@ -154,7 +154,7 @@
       <td>Runtime</td>
       <td>Node.js</td>
       <td>18+</td>
-      <td>Entorno de ejecucion</td>
+      <td>Entorno de ejecución</td>
     </tr>
     <tr>
       <td>Framework</td>
@@ -166,7 +166,7 @@
       <td>Lenguaje</td>
       <td>TypeScript</td>
       <td>5.9.2</td>
-      <td>Tipado estatico</td>
+      <td>Tipado estático</td>
     </tr>
     <tr>
       <td>ORM</td>
@@ -200,7 +200,7 @@
     </tr>
     <tr>
       <td>Pagos LATAM</td>
-      <td>MercadoPago</td>
+      <td>Mercado Pago</td>
       <td>2.8.0</td>
       <td>Medios locales</td>
     </tr>
@@ -208,13 +208,13 @@
       <td>Uploads</td>
       <td>Multer</td>
       <td>2.0.2</td>
-      <td>Imagenes de eventos</td>
+      <td>Imágenes de eventos</td>
     </tr>
     <tr>
-      <td>Validacion</td>
+      <td>Validación</td>
       <td>Zod</td>
       <td>4.1.12</td>
-      <td>Validacion de inputs</td>
+      <td>Validación de inputs</td>
     </tr>
     <tr>
       <td>Testing</td>
@@ -234,22 +234,22 @@
 </p>
 
 <ul>
-  <li><strong>index.ts</strong> – punto de entrada de la aplicacion:
+  <li><strong>index.ts</strong> – punto de entrada de la aplicación:
     <ul>
       <li>Carga variables de entorno (<code>dotenv</code>).</li>
       <li>Configura CORS en base a <code>FRONTEND_URL</code>.</li>
       <li>Configura logging (<code>morgan</code>).</li>
-      <li>Registra primero las rutas de webhooks Stripe/MercadoPago usando <code>express.raw</code> para preservar el body.</li>
+      <li>Registra primero las rutas de webhooks Stripe/Mercado Pago usando <code>express.raw</code> para preservar el body.</li>
       <li>Aplica <code>express.json()</code> y <code>express.urlencoded()</code> luego de los webhooks.</li>
       <li>Expone rutas de dominio (<code>/api/auth</code>, <code>/api/events</code>, <code>/api/sales</code>, etc.).</li>
-      <li>Sirve archivos estaticos desde <code>/uploads</code>.</li>
+      <li>Sirve archivos estáticos desde <code>/uploads</code>.</li>
       <li>Tiene un manejador de errores global para capturar excepciones no controladas.</li>
     </ul>
   </li>
-  <li><strong>Capas por modulo</strong> (en <code>src/</code>):
+  <li><strong>Capas por módulo</strong> (en <code>src/</code>):
     <ul>
       <li><code>*.router.ts</code> – define rutas y middlewares.</li>
-      <li><code>*.controller.ts</code> – logica de negocio y acceso a datos via Prisma.</li>
+      <li><code>*.controller.ts</code> – lógica de negocio y acceso a datos vía Prisma.</li>
       <li><code>*.controller.test.ts</code> – tests unitarios de controladores.</li>
     </ul>
   </li>
@@ -265,7 +265,7 @@
   <thead>
     <tr>
       <th>Entidad</th>
-      <th>Descripcion</th>
+      <th>Descripción</th>
       <th>Relaciones clave</th>
     </tr>
   </thead>
@@ -273,7 +273,7 @@
     <tr>
       <td>User</td>
       <td>Usuarios finales, pueden tener rol <code>admin</code>.</td>
-      <td>Relacion con <code>Sale</code>.</td>
+      <td>Relación con <code>Sale</code>.</td>
     </tr>
     <tr>
       <td>Organiser</td>
@@ -287,7 +287,7 @@
     </tr>
     <tr>
       <td>Place</td>
-      <td>Lugar fisico (teatro, estadio, etc.).</td>
+      <td>Lugar físico (teatro, estadio, etc.).</td>
       <td>Contiene <code>Sector</code>s, tipo <code>enumerated</code> / <code>nonEnumerated</code> / <code>hybrid</code>.</td>
     </tr>
     <tr>
@@ -313,7 +313,7 @@
     <tr>
       <td>Ticket</td>
       <td>Unidad de ticket vendible.</td>
-      <td>Relacion con <code>Event</code>, <code>SeatEvent</code>.</td>
+      <td>Relación con <code>Event</code>, <code>SeatEvent</code>.</td>
     </tr>
     <tr>
       <td>Sale</td>
@@ -322,42 +322,56 @@
     </tr>
     <tr>
       <td>SaleItem</td>
-      <td>Linea individual de la venta.</td>
+      <td>Línea individual de la venta.</td>
       <td>Apunta a <code>Ticket</code> y <code>SeatEvent</code>.</td>
     </tr>
   </tbody>
 </table>
 
 <p>
-  Al crear un evento se genera automaticamente la grilla <code>SeatEvent</code> y los <code>Ticket</code>s correspondientes
-  (via script de seeding y helpers de creacion).
+  Al crear un evento se genera automáticamente la grilla <code>SeatEvent</code> y los <code>Ticket</code>s correspondientes
+  (vía script de seeding y helpers de creación).
 </p>
 
 <hr/>
 
 <h2>📦 Estructura del proyecto</h2>
 
-<pre><code>backend-venta-de-entradas/
-├── index.ts                 # Punto de entrada Express
+<pre><code>BackEnd-Venta-de-Entradas/
+├── docs/                        # Documentación adicional
+├── node_modules/                # Dependencias
 ├── prisma/
-│   ├── schema.prisma        # Esquema de base de datos
-│   ├── seed.ts              # Script de seeding
-│   └── migrations/          # Migraciones Prisma
+│   ├── migrations/              # Historial de migraciones
+│   ├── schema.prisma            # Esquema de la base de datos
+│   └── seed.ts                  # Script de población de datos (seeds)
 ├── src/
-│   ├── auth/                # Login, registro, middlewares JWT
-│   ├── events/              # Alta, aprobacion, busqueda de eventos
-│   ├── sales/               # Ventas y confirmacion de tickets
-│   ├── payments/            # Stripe y MercadoPago (checkout, webhooks)
-│   ├── places/              # Lugares y sectores
-│   ├── seats/               # Grilla de asientos y disponibilidad
-│   ├── ai/                  # Proxy de asistente IA (OpenRouter)
-│   ├── system/              # BOOT_ID y health checks
-│   ├── db/                  # Cliente Prisma
-│   └── integration/         # Tests de integracion
-├── uploads/                 # Imagenes de eventos
-├── package.json
-├── tsconfig.json
-└── jest.config.js
+│   ├── ai/                      # Integración con IA
+│   ├── auth/                    # Autenticación y gestión de usuarios
+│   ├── config/                  # Configuraciones globales y variables
+│   ├── db/                      # Cliente de base de datos (Prisma)
+│   ├── events/                  # Gestión de eventos
+│   ├── integration/             # Tests de integración
+│   ├── messages/                # Gestión de respuestas y mensajes
+│   ├── middlewares/             # Middlewares (auth, errores, validaciones)
+│   ├── payments/                # Integraciones de pago (Stripe, MP)
+│   ├── places/                  # Gestión de lugares y sectores
+│   ├── sales/                   # Lógica de ventas
+│   ├── seats/                   # Gestión de butacas
+│   ├── security/                # Lógica de seguridad
+│   ├── services/                # Servicios externos y utilidades
+│   └── system/                  # Endpoints de sistema (health, bootId)
+├── uploads/                     # Almacenamiento de imágenes subidas
+├── .env                         # Variables de entorno
+├── .env.test                    # Variables para testing
+├── .gitignore                   # Archivos ignorados por Git
+├── debug_sectors.ts             # Script de utilidad para debug
+├── index.ts                     # Punto de entrada de la aplicación
+├── jest.config.ts               # Configuración de tests (Jest)
+├── package-lock.json            # Árbol de dependencias exacto
+├── package.json                 # Dependencias y scripts
+├── README.md                    # Documentación
+├── simulate_purchase.ts         # Script de simulación de compras
+└── tsconfig.json                # Configuración de TypeScript
 </code></pre>
 
 <hr/>
@@ -375,7 +389,7 @@
 <ul>
   <li><code>POST /api/auth/register</code> – registro de usuario con reCAPTCHA.</li>
   <li><code>POST /api/auth/register-company</code> – registro de empresa organizadora.</li>
-  <li><code>POST /api/auth/login</code> – login usuario final, devuelve <code>token</code> y payload basico.</li>
+  <li><code>POST /api/auth/login</code> – login usuario final, devuelve <code>token</code> y payload básico.</li>
   <li><code>POST /api/auth/login-company</code> – login de empresa organizadora.</li>
   <li><code>GET /api/auth/validate</code> – valida token y retorna el payload.</li>
   <li><code>GET /api/users/</code> – listado de usuarios (uso interno/tests).</li>
@@ -385,7 +399,7 @@
 <h3>📍 Lugares y sectores</h3>
 
 <ul>
-  <li><code>GET /api/places/getPlaces</code> – lista de lugares ordenados alfabeticamente.</li>
+  <li><code>GET /api/places/getPlaces</code> – lista de lugares ordenados alfabéticamente.</li>
   <li><code>GET /api/places/:idPlace/sectors</code> – sectores definidos para un lugar.</li>
 </ul>
 
@@ -401,7 +415,7 @@
   </li>
   <li><code>GET /api/events/event-types</code> – lista simple de tipos de evento.</li>
   <li><code>GET /api/events/types</code> – igual que anterior pero envuelto en <code>{ ok, data }</code>.</li>
-  <li><code>GET /api/events/pending</code> – eventos pendientes de aprobacion (solo admin).</li>
+  <li><code>GET /api/events/pending</code> – eventos pendientes de aprobación (solo admin).</li>
   <li><code>GET /api/events/all</code> – todos los eventos (admin).</li>
   <li><code>PATCH /api/events/:id/approve</code> – pasa a <code>Approved</code> (admin).</li>
   <li><code>PATCH /api/events/:id/reject</code> – pasa a <code>Rejected</code> (admin).</li>
@@ -412,7 +426,7 @@
   <li><code>GET /api/events/events/:id</code> – ficha del evento (minPrice, availableTickets, agotado, imageUrl, etc.).</li>
   <li><code>GET /api/events/events/:id/sectors</code> – sectores del evento con precio y disponibilidad.</li>
   <li><code>GET /api/events/events/:id/sectors/:idSector/seats</code> – estado de asientos del sector.</li>
-  <li><code>GET /api/events/events/:id/tickets/map</code> – mapa rapido de disponibilidad (<code>"idPlace-idSector-idSeat": numero</code>).</li>
+  <li><code>GET /api/events/events/:id/tickets/map</code> – mapa rápido de disponibilidad (<code>"idPlace-idSector-idSeat": numero</code>).</li>
   <li><code>GET /api/events/search?query=texto</code> – buscador (prefijo en nombre / tipo exacto).</li>
 </ul>
 
@@ -429,10 +443,10 @@
     <ul>
       <li>Confirma una venta y pasa asientos de <code>reserved</code> a <code>sold</code>.</li>
       <li>Body incluye <code>dniClient</code> y lista de tickets/seatEvents.</li>
-      <li>Verifica usuario existente, limite de 6 tickets por evento y estado de los asientos.</li>
+      <li>Verifica usuario existente, límite de 6 tickets por evento y estado de los asientos.</li>
     </ul>
   </li>
-  <li><code>GET /api/sales/my-tickets</code> – tickets del usuario autenticado (para seccion “Mis Entradas”).</li>
+  <li><code>GET /api/sales/my-tickets</code> – tickets del usuario autenticado (para sección “Mis Entradas”).</li>
   <li><code>GET /api/sales/check?dniClient=...</code> – verifica si existe una venta confirmada reciente (usado en <code>/pay/processing</code>).</li>
 </ul>
 
@@ -441,32 +455,32 @@
 <ul>
   <li><code>POST /api/stripe/checkout</code>
     <ul>
-      <li>Crea una sesion de Checkout, reserva asientos y devuelve la URL de Stripe.</li>
+      <li>Crea una sesión de Checkout, reserva asientos y devuelve la URL de Stripe.</li>
       <li>Recibe <code>items</code>, <code>dniClient</code>, <code>customerEmail</code> y grupos de tickets.</li>
     </ul>
   </li>
-  <li><code>POST /api/stripe/release</code> – libera reservas manualmente (cancelacion, errores).</li>
-  <li><code>GET /api/stripe/confirm-session?session_id=...</code> – fuerza confirmacion cuando el webhook no llego.</li>
+  <li><code>POST /api/stripe/release</code> – libera reservas manualmente (cancelación, errores).</li>
+  <li><code>GET /api/stripe/confirm-session?session_id=...</code> – fuerza confirmación cuando el webhook no llegó.</li>
   <li><code>POST /api/stripe/webhook</code>
     <ul>
       <li>Procesa <code>checkout.session.completed</code>, expirados y fallos.</li>
-      <li>Confirma o libera asientos segun estado del pago.</li>
+      <li>Confirma o libera asientos según estado del pago.</li>
     </ul>
   </li>
 </ul>
 
-<h3>💳 Pagos – MercadoPago</h3>
+<h3>💳 Pagos – Mercado Pago</h3>
 
 <ul>
   <li><code>POST /api/mp/checkout</code> – crea preferencia de pago, reserva asientos y devuelve <code>preferenceId</code> e <code>init_point</code>.</li>
-  <li><code>GET /api/mp/confirm-payment?payment_id=...</code> – consulta el pago en MP y confirma venta si esta aprobado.</li>
+  <li><code>GET /api/mp/confirm-payment?payment_id=...</code> – consulta el pago en MP y confirma venta si está aprobado.</li>
   <li><code>POST /api/mp/webhook</code> – notificaciones de MP, consulta estado y confirma/libera tickets.</li>
 </ul>
 
 <h3>🤖 IA</h3>
 
 <ul>
-  <li><code>POST /api/ai/</code> – proxy que reenvia prompts a OpenRouter (Deepseek/Gemma) y devuelve <code>{ reply }</code>.</li>
+  <li><code>POST /api/ai/</code> – proxy que reenvía prompts a OpenRouter (Deepseek/Gemma) y devuelve <code>{ reply }</code>.</li>
 </ul>
 
 <hr/>
@@ -477,7 +491,7 @@
   <li><strong>Unit tests</strong>
     <ul>
       <li>Prueban controladores de eventos, lugares, etc.</li>
-      <li>Prisma client se mockea a nivel de modulo.</li>
+      <li>Prisma client se mockea a nivel de módulo.</li>
       <li>Se corren con:
         <pre><code>npm run test:unit</code></pre>
       </li>
@@ -486,7 +500,7 @@
   <li><strong>Integration tests</strong>
     <ul>
       <li>Ejecutan requests reales sobre la app con Supertest.</li>
-      <li>Verifican respuestas HTTP, flujos basicos y errores.</li>
+      <li>Verifican respuestas HTTP, flujos básicos y errores.</li>
       <li>Se corren con:
         <pre><code>npm run test:integration</code></pre>
       </li>
@@ -500,7 +514,7 @@
 
 <p>
   Para probar el flujo de pago con Stripe en entorno de desarrollo se utilizan tarjetas de prueba
-  (no generan cargos reales). La documentacion completa de tarjetas de prueba esta en:
+  (no generan cargos reales). La documentación completa de tarjetas de prueba está en:
 </p>
 
 <ul>
@@ -515,19 +529,19 @@
   En el proyecto utilizamos principalmente la tarjeta de prueba de <strong>Argentina</strong>:
 </p>
 
-<pre><code>Numero: 4000 0003 2000 0021
+<pre><code>Número: 4000 0003 2000 0021
 Vencimiento: cualquier fecha futura
-CVC: cualquier valor de 3 digitos
+CVC: cualquier valor de 3 dígitos
 </code></pre>
 
 <p>
-  Importante: estas tarjetas <strong>solo funcionan en modo test</strong> y deben usarse unicamente
+  Importante: estas tarjetas <strong>solo funcionan en modo test</strong> y deben usarse únicamente
   en el entorno de desarrollo del proyecto.
 </p>
 
 <hr/>
 
-<h2>🧰 Configuracion y variables de entorno</h2>
+<h2>🧰 Configuración y variables de entorno</h2>
 
 <p>Variables principales requeridas:</p>
 
@@ -535,14 +549,14 @@ CVC: cualquier valor de 3 digitos
   <thead>
     <tr>
       <th>Variable</th>
-      <th>Proposito</th>
+      <th>Propósito</th>
       <th>Ejemplo</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td><code>DATABASE_URL</code></td>
-      <td>Cadena de conexion MySQL</td>
+      <td>Cadena de conexión MySQL</td>
       <td><code>mysql://user:pass@localhost:3306/ticketapp</code></td>
     </tr>
     <tr>
@@ -572,7 +586,7 @@ CVC: cualquier valor de 3 digitos
     </tr>
     <tr>
       <td><code>MERCADOPAGO_ACCESS_TOKEN</code></td>
-      <td>Token de API de MercadoPago</td>
+      <td>Token de API de Mercado Pago</td>
       <td><code>APP_USR-...</code></td>
     </tr>
     <tr>
@@ -582,7 +596,7 @@ CVC: cualquier valor de 3 digitos
     </tr>
     <tr>
       <td><code>NODE_ENV</code></td>
-      <td>Modo de ejecucion</td>
+      <td>Modo de ejecución</td>
       <td><code>development</code> / <code>production</code> / <code>test</code></td>
     </tr>
   </tbody>
@@ -635,13 +649,13 @@ npx prisma db seed
 <pre><code># Desarrollo (hot reload)
 npm run dev
 
-# Produccion
+# Producción
 npm run build
 npm start
 </code></pre>
 
 <p>
-  La API quedara disponible en <strong>http://localhost:3000/api</strong>.
+  La API quedará disponible en <strong>http://localhost:3000/api</strong>.
 </p>
 
 <hr/>
@@ -674,7 +688,7 @@ npm start
 </ul>
 
 <p>
-  Proyecto academico desarrollado para <strong>UTN FRRO – catedra Desarrollo de Software (DSW) 2025</strong>.
+  Proyecto académico desarrollado para <strong>UTN FRRO – cátedra Desarrollo de Software (DSW) 2025</strong>.
 </p>
 
 <hr/>
@@ -684,8 +698,8 @@ npm start
 <ol>
   <li>Hacer <strong>fork</strong> del repositorio.</li>
   <li>Crear una rama <code>feature/...</code> o <code>fix/...</code>.</li>
-  <li>Aplicar cambios siguiendo la estructura de modulos (auth, events, sales, etc.).</li>
-  <li>Agregar tests unitarios / de integracion cuando corresponda.</li>
+  <li>Aplicar cambios siguiendo la estructura de módulos (auth, events, sales, etc.).</li>
+  <li>Agregar tests unitarios / de integración cuando corresponda.</li>
   <li>Abrir un <strong>Pull Request</strong> describiendo el alcance de los cambios.</li>
 </ol>
 
