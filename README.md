@@ -281,6 +281,11 @@
       <td>Crea <code>Event</code>s.</td>
     </tr>
     <tr>
+      <td>EventType</td>
+      <td>Categoría o tipo de evento (ej: Concierto, Teatro).</td>
+      <td>Relación 1:N con <code>Event</code>.</td>
+    </tr>
+    <tr>
       <td>Event</td>
       <td>Evento particular en un lugar y fecha.</td>
       <td>Belongs to <code>Place</code>, <code>EventType</code>, <code>Organiser</code>.</td>
@@ -313,7 +318,7 @@
     <tr>
       <td>Ticket</td>
       <td>Unidad de ticket vendible.</td>
-      <td>Relación con <code>Event</code>, <code>SeatEvent</code>.</td>
+      <td>Relación con <code>Event</code>, <code>Seat</code>, <code>SaleItem</code>.</td>
     </tr>
     <tr>
       <td>Sale</td>
@@ -324,6 +329,11 @@
       <td>SaleItem</td>
       <td>Línea individual de la venta.</td>
       <td>Apunta a <code>Ticket</code> y <code>SeatEvent</code>.</td>
+    </tr>
+    <tr>
+      <td>Message</td>
+      <td>Mensajes de contacto y soporte.</td>
+      <td>Guarda <code>senderEmail</code> (sin relación FK estricta).</td>
     </tr>
   </tbody>
 </table>
