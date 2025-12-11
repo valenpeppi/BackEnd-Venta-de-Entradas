@@ -55,14 +55,12 @@ export async function validateEventContent(name: string, description: string): P
 `;
 
   try {
-    // Principal: DeepSeek.
     const response = await withTimeout(
       getAIResponse("deepseek/deepseek-chat-v3.1:free", prompt),
       10000
     );
 
     const cleanResponse = response.trim().toLowerCase();
-    /* console.log(`AI Validation Response: ${cleanResponse}`); */
 
     if (cleanResponse.includes("no apropiado")) {
       return false;
@@ -70,22 +68,20 @@ export async function validateEventContent(name: string, description: string): P
     return true;
 
   } catch (err) {
-    console.warn("AI validation failed with primary model, trying backup...");
+
     try {
-      // Backup model: Gemma.
       const responseBackup = await withTimeout(
         getAIResponse("google/gemma-3-12b-it:free", prompt),
         10000
       );
       const cleanResponseBackup = responseBackup.trim().toLowerCase();
-      /* console.log(`AI Validation Backup Response: ${cleanResponseBackup}`); */
 
       if (cleanResponseBackup.includes("no apropiado")) {
         return false;
       }
       return true;
     } catch (err2) {
-      console.error("AI validation failed completely. Allowing event by default to avoid blocking.");
+
       return true; // Fail open
     }
   }
@@ -98,17 +94,14 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    console.log("Mensaje recibido desde frontend IA:", message.slice(0, 120) + "...");
-    // Principal: DeepSeek.
     const replyDeepSeek = await withTimeout(
       getAIResponse("deepseek/deepseek-chat-v3.1:free", message),
       15000
     );
-    console.log("DeepSeek respondió OK");
     return res.json({ reply: replyDeepSeek });
 
   } catch (err1: any) {
-    console.warn("DeepSeek falló o tardó demasiado:", err1?.message);
+
 
     try {
       // Modelo de Backup: Gemma.
@@ -116,11 +109,11 @@ router.post("/", async (req: Request, res: Response) => {
         getAIResponse("google/gemma-3-12b-it:free", message),
         20000
       );
-      console.log("Backup Gemma respondió OK");
+
       return res.json({ reply: replyGemma });
 
     } catch (err2: any) {
-      console.error("❌ Ambos modelos fallaron:", err2?.message);
+
       return res.status(504).json({
         reply: "El asistente no pudo responder en este momento. Intentalo nuevamente más tarde.",
       });

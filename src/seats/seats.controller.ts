@@ -59,7 +59,7 @@ export const getSeatsForSector = async (req: Request<SeatParams>, res: Response)
       })),
     });
   } catch (error) {
-    console.error("❌ Error al obtener asientos", error);
+
     res.status(500).json({ message: "Error al obtener asientos" });
   }
 };

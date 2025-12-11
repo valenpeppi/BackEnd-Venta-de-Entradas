@@ -14,7 +14,7 @@ const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET_KEY;
 
 const verifyRecaptcha = async (token: string): Promise<boolean> => {
   if (!RECAPTCHA_SECRET) {
-    console.error('La clave secreta de reCAPTCHA no está configurada en .env');
+
     return false;
   }
 
@@ -24,7 +24,7 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
     );
     return response.data.success;
   } catch (error) {
-    console.error('Error al verificar reCAPTCHA:', error);
+
     return false;
   }
 };
@@ -61,26 +61,22 @@ const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 
     feedback.push('Incluye minúsculas (a-z)');
   }
 
-  // Check uppercase
   if (/[A-Z]/.test(pwd)) {
     score += 20;
   } else {
     feedback.push('Incluye mayúsculas (A-Z)');
   }
 
-  // Check numbers
   if (/\d/.test(pwd)) {
     score += 15;
   } else {
     feedback.push('Incluye números (0-9)');
   }
 
-  // Check special characters
   if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd)) {
     score += 15;
   }
 
-  // Determine strength level
   let strength: 'weak' | 'medium' | 'strong' = 'weak';
   if (score >= 70) {
     strength = 'strong';
@@ -91,7 +87,6 @@ const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 
   return { strength, score, feedback };
 };
 
-// Endpoint para evaluar la fortaleza de la contraseña
 export const checkPasswordStrength = async (req: Request, res: Response) => {
   const { password } = req.body;
 
@@ -161,13 +156,13 @@ export const register = async (req: Request, res: Response) => {
         html: getWelcomeTemplate(name, false)
       });
     } catch (emailError) {
-      console.error('Error sending welcome email to user:', emailError);
+      // console.error('Error sending welcome email to user:', emailError);
       // Non-blocking: continue even if email fails
     }
 
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error: any) {
-    console.error('[Auth] Error en registro:', error);
+    /* deleted console error */
 
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
@@ -242,12 +237,12 @@ export const registerCompany = async (req: Request, res: Response) => {
         html: getWelcomeTemplate(companyName, true)
       });
     } catch (emailError) {
-      console.error('Error sending welcome email to company:', emailError);
+      // console.error('Error sending welcome email to company:', emailError);
     }
 
     res.status(201).json({ message: 'Empresa registrada exitosamente' });
   } catch (error: any) {
-    console.error('[Auth] Error en registro de empresa:', error);
+    // console.error('[Auth] Error en registro de empresa:', error);
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'Ya existe una empresa con ese CUIL o Email de contacto.' });
     }
@@ -333,7 +328,7 @@ export const loginUnified = async (req: Request, res: Response) => {
     return res.status(401).json({ message: 'Credenciales inválidas' });
 
   } catch (error) {
-    console.error('[Auth] Error en login unificado:', error);
+    // console.error('[Auth] Error en login unificado:', error);
     res.status(500).json({ message: 'Error en el servidor', error });
   }
 };
@@ -402,7 +397,7 @@ export const googleLogin = async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('[Auth] Error en Google Login:', error);
+    // console.error('[Auth] Error en Google Login:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -449,7 +444,7 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     res.status(400).json({ message: 'No se pudo identificar el tipo de usuario o faltan permisos' });
   } catch (error) {
-    console.error('Error al actualizar usuario:', error);
+    // console.error('Error al actualizar usuario:', error);
     res.status(500).json({ message: 'Error interno al actualizar perfil' });
   }
 };
@@ -487,7 +482,7 @@ export const removeUser = async (req: AuthRequest, res: Response) => {
 
     res.status(400).json({ message: 'No se pudo identificar el tipo de usuario' });
   } catch (error: any) {
-    console.error('Error al eliminar usuario:', error);
+    // console.error('Error al eliminar usuario:', error);
     // Handle specific Prisma errors (e.g., Foreign Key Constraint)
     if (error.code === 'P2003') {
       return res.status(400).json({ message: 'No se puede eliminar la cuenta porque tiene registros asociados (entradas o eventos).' });
@@ -540,7 +535,7 @@ export const validateSession = async (req: AuthRequest, res: Response) => {
 
     return res.status(400).json({ valid: false, message: 'Token inválido o tipo de usuario desconocido' });
   } catch (error) {
-    console.error('Error en validación de sesión:', error);
+    // console.error('Error en validación de sesión:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -575,7 +570,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
   } catch (error) {
-    console.error('Error in forgotPassword:', error);
+    // console.error('Error in forgotPassword:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
@@ -607,7 +602,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
   } catch (error) {
-    console.error('Error in resetPassword:', error);
+    // console.error('Error in resetPassword:', error);
     return res.status(400).json({ message: 'El enlace ha expirado o es inválido.' });
   }
 };

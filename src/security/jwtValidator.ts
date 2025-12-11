@@ -30,7 +30,7 @@ export const validateToken = (req: Request, res: Response, next: NextFunction) =
         (req as any).user = user;
         next();
     } catch (err) {
-        console.warn('Invalid JWT token received, proceeding as guest:', (err as Error).message);
+
         next();
     }
 };

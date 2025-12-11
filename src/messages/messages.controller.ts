@@ -23,7 +23,7 @@ export const createMessage = async (req: Request, res: Response) => {
 
         res.status(201).json(message);
     } catch (error) {
-        console.error('Error creating message:', error);
+
         res.status(500).json({ message: 'Error interno al crear el mensaje.' });
     }
 };
@@ -39,7 +39,6 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
         });
         res.json(messages);
     } catch (error) {
-        console.error('Error fetching messages:', error);
         res.status(500).json({ message: 'Error al obtener mensajes.' });
     }
 };
@@ -60,7 +59,7 @@ export const replyMessage = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Mensaje respondido.', data: message });
     } catch (error) {
-        console.error('Error replying message:', error);
+        // console.error('Error replying message:', error);
         res.status(500).json({ message: 'Error al responder el mensaje.' });
     }
 };
@@ -77,7 +76,7 @@ export const rejectMessage = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Mensaje rechazado.', data: message });
     } catch (error) {
-        console.error('Error rejecting message:', error);
+        // console.error('Error rejecting message:', error);
         res.status(500).json({ message: 'Error al rechazar el mensaje.' });
     }
 };
@@ -94,7 +93,7 @@ export const discardMessage = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Mensaje descartado.', data: message });
     } catch (error) {
-        console.error('Error discarding message:', error);
+        // console.error('Error discarding message:', error);
         res.status(500).json({ message: 'Error al descartar el mensaje.' });
     }
 };
