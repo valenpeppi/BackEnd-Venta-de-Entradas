@@ -5,6 +5,7 @@ import { AuthRequest } from '../auth/auth.middleware';
 import { RequestHandler } from 'express';
 import { createSeatEventGridForEvent } from '../seats/seats.controller'
 import { env } from '../config/env';
+import { validateEventContent } from '../ai/ai.controller';
 
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -79,6 +80,16 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
         return;
       }
       imagePath = `/uploads/${req.file.filename}`;
+    }
+
+    // AI Validation
+    const isAppropriate = await validateEventContent(name, description);
+    if (!isAppropriate) {
+      if (imagePath && req.file) {
+        try { fs.unlinkSync(req.file.path); } catch { }
+      }
+      res.status(400).json({ ok: false, message: 'El contenido del evento (nombre o descripción) ha sido marcado como inapropiado por nuestro sistema de moderación automática.' });
+      return;
     }
 
     const result = await prisma.$transaction(async (tx) => {
