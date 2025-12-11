@@ -158,6 +158,9 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
         eventType: true,
         organiser: true,
       },
+      where: {
+        state: { not: 'Deleted' }
+      },
       orderBy: { date: 'asc' }
     });
 
@@ -227,6 +230,9 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
 export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
   try {
     const events = await prisma.event.findMany({
+      where: {
+        state: { not: 'Deleted' }
+      },
       select: {
         idEvent: true, name: true, description: true, date: true,
         image: true, idEventType: true, state: true, idOrganiser: true,
@@ -520,7 +526,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       where: { idEvent },
       include: { place: true },
     });
-    if (!ev) {
+    if (!ev || ev.state === 'Deleted') {
       res.status(404).json({ ok: false, message: 'Event not found' });
       return;
     }
@@ -745,7 +751,10 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
     }
 
     const events = await prisma.event.findMany({
-      where: { idOrganiser }, // Always filter by organiser!
+      where: {
+        idOrganiser,
+        state: { not: 'Deleted' }
+      }, // Always filter by organiser!
       include: {
         eventType: true,
         place: true,
@@ -910,5 +919,40 @@ export const updateEvent: RequestHandler = async (req: AuthRequest, res: Respons
   } catch (error: any) {
     console.error('Error al actualizar evento:', error);
     res.status(500).json({ ok: false, message: 'Error interno del servidor', details: error.message });
+  }
+};
+
+export const markEventAsDeleted: RequestHandler = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (isNaN(id)) {
+      res.status(400).json({ ok: false, message: 'ID invalido' });
+      return;
+    }
+
+    const exists = await prisma.event.findUnique({ where: { idEvent: id } });
+    if (!exists) {
+      console.log(`[BACKEND] Event ${id} not found`);
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
+      return;
+    }
+
+    const updated = await prisma.event.update({
+      where: { idEvent: id },
+      data: { state: "Deleted" },
+      select: { idEvent: true, state: true },
+    });
+
+    console.log(`[BACKEND] Event ${id} deleted successfully`);
+
+    res.status(200).json({
+      ok: true,
+      message: 'Evento marcado como eliminado',
+      data: updated
+    });
+  } catch (err: any) {
+    console.error(`[BACKEND] Error deleting event:`, err);
+    next(err);
   }
 };

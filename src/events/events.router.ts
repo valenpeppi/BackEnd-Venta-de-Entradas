@@ -22,7 +22,8 @@ import {
   getEventTypes,
   getEventsByOrganiser,
   deleteEvent,
-  updateEvent
+  updateEvent,
+  markEventAsDeleted
 } from './events.controller';
 
 
@@ -91,6 +92,7 @@ router.get('/pending', verifyToken, isAdmin, getPendingEvents);
 router.get('/all', verifyToken, isAdmin, getAdminAllEvents);
 router.patch("/:id/approve", verifyToken, isAdmin, approveEvent);
 router.patch("/:id/reject", verifyToken, isAdmin, rejectEvent);
+router.patch("/:id/state-delete", verifyToken, isAdmin, markEventAsDeleted);
 router.patch('/:id/feature', verifyToken, isAdmin, toggleFeatureStatus);
 
 
