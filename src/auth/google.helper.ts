@@ -19,7 +19,7 @@ export const verifyGoogleToken = async (token: string) => {
             });
             return response.data; // Returns { sub, email, name, picture, ... } similar to payload
         } catch (innerError) {
-            console.error('Error verifying Google token (both ID and Access):', innerError);
+
             return null;
         }
     }

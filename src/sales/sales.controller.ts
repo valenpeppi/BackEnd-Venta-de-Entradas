@@ -91,7 +91,7 @@ class SalesController {
       });
 
       if (duplicates.length > 0) {
-        console.warn('⚠️ Venta duplicada detectada, se cancela registro.');
+        console.log('ℹ️ Tickets duplicados encontrados');
         res.status(200).json({ message: 'Venta ya registrada previamente.' });
         return;
       }
@@ -104,7 +104,7 @@ class SalesController {
           },
         });
 
-        console.log(`🧾 Venta creada: #${sale.idSale} para DNI ${dniClient}`);
+
 
         let lineNumber = 1;
 
@@ -115,7 +115,7 @@ class SalesController {
           const ids: number[] = Array.isArray(group.ids) ? group.ids.map(Number) : [];
           if (!ids.length) continue;
 
-          console.log(`🎟️ Procesando grupo: evento ${idEvent}, sector ${idSector}, asientos:`, ids);
+
 
           await tx.saleItem.create({
             data: {
@@ -151,7 +151,7 @@ class SalesController {
                 },
                 data: { state: 'sold', idSale: sale.idSale, lineNumber },
               });
-              console.log(`🟢 Ticket actualizado: asiento ${idSeat}`);
+
             } else {
               const newTicketId = (await tx.ticket.count({
                 where: { idEvent, idPlace, idSector },
@@ -169,7 +169,7 @@ class SalesController {
                   lineNumber,
                 },
               });
-              console.log(`🆕 Ticket creado para asiento ${idSeat}`);
+
             }
           }
 
@@ -199,12 +199,10 @@ class SalesController {
         }
 
       } catch (emailError) {
-        console.error('Error sending purchase email:', emailError);
       }
 
       res.status(201).json({ message: 'Venta confirmada', idSale: result });
     } catch (error: any) {
-      console.error('❌ Error al confirmar venta:', error);
       res.status(500).json({ error: 'Error al registrar venta', details: error.message });
     }
   }
@@ -265,7 +263,7 @@ class SalesController {
 
       res.status(200).json({ data: formattedTickets });
     } catch (error: any) {
-      console.error('Error fetching user tickets:', error);
+      // console.error('Error fetching user tickets:', error);
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
   }
@@ -320,7 +318,7 @@ class SalesController {
       });
 
     } catch (error: any) {
-      console.error('Error fetching admin stats:', error);
+      // console.error('Error fetching admin stats:', error);
       res.status(500).json({ error: 'Error obteniendo estadísticas', details: error.message });
     }
   }
@@ -376,7 +374,6 @@ class SalesController {
       });
 
     } catch (error: any) {
-      console.error('Error fetching company stats:', error);
       res.status(500).json({ error: 'Error obteniendo estadísticas de empresa', details: error.message });
     }
   }

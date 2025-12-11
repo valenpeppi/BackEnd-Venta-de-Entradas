@@ -23,7 +23,7 @@ const result = EnvSchema.safeParse(process.env);
 let envData: z.infer<typeof EnvSchema>;
 
 if (!result.success) {
-  console.log('❌ Invalid env, using default MOCKS for test compatibility');
+
   envData = {
     NODE_ENV: 'test',
     PORT: '3000',

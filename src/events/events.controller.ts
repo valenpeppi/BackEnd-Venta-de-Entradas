@@ -143,7 +143,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       availableSeats,
     });
   } catch (error: any) {
-    console.error('Error al crear evento:', error);
+
     if (req.file?.path) {
       try { fs.unlinkSync(req.file.path); } catch { }
     }
@@ -170,7 +170,7 @@ export const getAllEvents = async (_req: AuthRequest, res: Response): Promise<vo
 
     res.status(200).json({ ok: true, data: enriched });
   } catch (error: any) {
-    console.error('Error al obtener eventos:', error);
+
     res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
   }
 };
@@ -181,7 +181,7 @@ export const getEventTypes: RequestHandler = async (_req, res) => {
     const rows = await prisma.eventType.findMany();
     res.status(200).json(rows);
   } catch (error: any) {
-    console.error('Error al obtener tipos de eventos:', error);
+
     res.status(500).json({ error: 'Error interno del servidor', details: error.message });
   }
 };
@@ -192,7 +192,7 @@ export const getAllEventTypes = async (_req: AuthRequest, res: Response): Promis
     const rows = await prisma.eventType.findMany({ orderBy: { name: 'asc' } });
     res.status(200).json({ ok: true, data: rows });
   } catch (error: any) {
-    console.error('Error al obtener tipos de evento:', error);
+
     res.status(500).json({ ok: false, error: 'Error interno del servidor', details: error.message });
   }
 };
@@ -503,7 +503,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
 
     res.status(200).json({ ok: true, data: payload });
   } catch (err) {
-    console.error(err);
+
     res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
@@ -564,7 +564,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
 
     res.status(200).json({ ok: true, data: response });
   } catch (err) {
-    console.error(err);
+
     res.status(500).json({ ok: false, message: 'Internal error' });
   }
 };
@@ -603,7 +603,7 @@ export const getSeatsForEventSector: RequestHandler = async (req, res) => {
 
     res.status(200).json({ ok: true, data: responseData });
   } catch (err) {
-    console.error('Error al obtener asientos para el sector:', err);
+
     res.status(500).json({ ok: false, message: 'Error interno del servidor' });
   }
 };
@@ -669,7 +669,7 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
 
     return res.status(200).json({ ok: true, data: enrichedEvents });
   } catch (err) {
-    console.error('Error al buscar eventos:', err);
+
     return res.status(500).json({ ok: false, message: 'Error interno del servidor' });
   }
 };
@@ -713,7 +713,7 @@ export const getTicketMap: RequestHandler = async (req, res) => {
 
     res.status(200).json({ ok: true, data: ticketMap });
   } catch (err) {
-    console.error('Error al obtener mapa de tickets:', err);
+
     res.status(500).json({ ok: false, message: 'Error interno del servidor' });
   }
 };
@@ -792,7 +792,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
     res.status(200).json({ ok: true, data: enriched });
 
   } catch (err: any) {
-    console.error('Error al obtener eventos de la empresa:', err);
+
     res.status(500).json({ ok: false, error: 'Error interno del servidor', details: err.message });
   }
 };

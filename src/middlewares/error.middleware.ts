@@ -8,7 +8,6 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
 
-    console.error(`[Error] ${req.method} ${req.url}:`, err);
 
     res.status(statusCode).json({
         ok: false,
