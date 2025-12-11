@@ -606,3 +606,59 @@ export const resetPassword = async (req: Request, res: Response) => {
     return res.status(400).json({ message: 'El enlace ha expirado o es inválido.' });
   }
 };
+
+export const changePassword = async (req: AuthRequest, res: Response) => {
+  const { currentPassword, newPassword } = req.body;
+  const userType = req.auth?.type;
+  const userMail = req.auth?.mail;
+  const companyId = req.auth?.idOrganiser;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'La contraseña actual y la nueva son requeridas.' });
+  }
+
+  if (!isPasswordStrong(newPassword)) {
+    return res.status(400).json({ message: 'La nueva contraseña es débil. Requiere 8 caracteres, mayúscula, minúscula y número.' });
+  }
+
+  try {
+    let storedPassword = '';
+
+    if (userType === 'user' && userMail) {
+      const user = await prisma.user.findUnique({ where: { mail: userMail } });
+      if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+      storedPassword = user.password;
+    } else if (userType === 'company' && companyId) {
+      const company = await prisma.organiser.findUnique({ where: { idOrganiser: companyId } });
+      if (!company) return res.status(404).json({ message: 'Empresa no encontrada' });
+      storedPassword = company.password;
+    } else {
+      return res.status(400).json({ message: 'Tipo de usuario no identificado.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, storedPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'La contraseña actual es incorrecta.' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    if (userType === 'user' && userMail) {
+      await prisma.user.update({
+        where: { mail: userMail },
+        data: { password: hashedNewPassword }
+      });
+    } else if (userType === 'company' && companyId) {
+      await prisma.organiser.update({
+        where: { idOrganiser: companyId },
+        data: { password: hashedNewPassword }
+      });
+    }
+
+    res.json({ message: 'Contraseña actualizada correctamente.' });
+
+  } catch (error) {
+    // console.error('Error changing password:', error);
+    res.status(500).json({ message: 'Error interno al cambiar la contraseña.' });
+  }
+};

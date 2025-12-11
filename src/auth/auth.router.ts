@@ -10,7 +10,8 @@ import {
     validateSession,
     checkPasswordStrength,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    changePassword
 } from './auth.controller';
 import * as authMiddleware from './auth.middleware';
 
@@ -26,6 +27,7 @@ router.post('/check-password-strength', checkPasswordStrength);
 // Password Recovery
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.post('/change-password', authMiddleware.verifyToken, changePassword);
 
 router.put('/profile', authMiddleware.verifyToken, updateUser);
 router.delete('/profile', authMiddleware.verifyToken, removeUser);
