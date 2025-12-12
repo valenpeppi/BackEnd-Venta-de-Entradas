@@ -1,7 +1,5 @@
 
-/*Script para verificar la existencia de sectores y eventos
-asociados a un lugar específico (idPlace = 1) en la base de datos.
- */
+ 
 import { prisma } from './src/db/mysql';
 
 async function main() {

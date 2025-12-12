@@ -26,7 +26,7 @@ import {
 
 const router = Router();
 
-// Rutas Protegidas para Empresas 
+ 
 router.post(
   '/createEvent',
   verifyToken,
@@ -57,7 +57,7 @@ router.put(
   updateEvent
 );
 
-// Rutas de Admin 
+ 
 router.get('/pending', verifyToken, isAdmin, getPendingEvents);
 router.get('/all', verifyToken, isAdmin, getAdminAllEvents);
 router.patch("/:id/approve", verifyToken, isAdmin, approveEvent);
@@ -66,7 +66,7 @@ router.patch("/:id/state-delete", verifyToken, isAdmin, markEventAsDeleted);
 router.patch('/:id/feature', verifyToken, isAdmin, toggleFeatureStatus);
 
 
-// Rutas Públicas
+ 
 router.get('/event-types', getEventTypes);
 router.get('/types', getAllEventTypes);
 router.get('/featured', getFeaturedEvents);

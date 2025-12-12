@@ -82,7 +82,7 @@ export async function validateEventContent(name: string, description: string): P
       return true;
     } catch (err2) {
 
-      return true; // Fail open
+      return true;  
     }
   }
 }
@@ -104,7 +104,7 @@ router.post("/", async (req: Request, res: Response) => {
 
 
     try {
-      // Modelo de Backup: Gemma.
+       
       const replyGemma = await withTimeout(
         getAIResponse("google/gemma-3-12b-it:free", message),
         20000

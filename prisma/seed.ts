@@ -54,7 +54,7 @@ async function generateTicketsForEvent(idEvent: number, idPlace: number) {
     where: { idEvent, idPlace },
   });
 
-  // Generar tickets solo para sectores enumerados que tienen seatEvents
+   
   for (const se of seatEvents) {
     const existing = await prisma.ticket.findFirst({
       where: {
@@ -184,7 +184,7 @@ async function main() {
 
   const allSectors = await prisma.sector.findMany();
   for (const s of allSectors) {
-    await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity); // ← CAMBIO APLICADO AQUÍ
+    await ensureSeatsForSector(s.idPlace, s.idSector, s.capacity);  
   }
   console.log('Asientos cargados');
 

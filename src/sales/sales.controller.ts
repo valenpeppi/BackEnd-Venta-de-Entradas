@@ -179,9 +179,9 @@ class SalesController {
         return sale.idSale;
       });
 
-      // Send Purchase Confirmation Email
+       
       try {
-        // Fetch tickets with details for email
+         
         const boughtTickets = await prisma.ticket.findMany({
           where: { idSale: result, state: 'sold' },
           include: {
@@ -263,7 +263,7 @@ class SalesController {
 
       res.status(200).json({ data: formattedTickets });
     } catch (error: any) {
-      // console.error('Error fetching user tickets:', error);
+       
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
   }
@@ -273,12 +273,12 @@ class SalesController {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      // 1. Sales made today
+       
       const salesToday = await prisma.sale.count({
         where: { date: { gte: todayStart } },
       });
 
-      // 2. Tickets sold today
+       
       const ticketsToday = await prisma.ticket.count({
         where: {
           saleItem: {
@@ -288,7 +288,7 @@ class SalesController {
         }
       });
 
-      // 3. Total Revenue Today
+       
       const soldTicketsToday = await prisma.ticket.findMany({
         where: {
           saleItem: {
@@ -305,7 +305,7 @@ class SalesController {
 
       const revenueToday = soldTicketsToday.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
 
-      // 4. Pending Events Count
+       
       const pendingEvents = await prisma.event.count({
         where: { state: 'Pending' }
       });
@@ -318,7 +318,7 @@ class SalesController {
       });
 
     } catch (error: any) {
-      // console.error('Error fetching admin stats:', error);
+       
       res.status(500).json({ error: 'Error obteniendo estadísticas', details: error.message });
     }
   }
@@ -332,10 +332,10 @@ class SalesController {
     }
 
     try {
-      // 1. Get all events for this organiser (excluding deleted/cancelled if logical delete exists, here we just filter active states for "Active Events")
-      // Actually dashboard usually shows total impact.
+       
+       
 
-      // Active Events (Approved or Pending)
+       
       const activeEventsCount = await prisma.event.count({
         where: {
           idOrganiser,
@@ -343,7 +343,7 @@ class SalesController {
         }
       });
 
-      // 2. Total Tickets Sold (across all events of this organiser)
+       
       const soldTickets = await prisma.ticket.count({
         where: {
           event: { idOrganiser },
@@ -351,8 +351,8 @@ class SalesController {
         }
       });
 
-      // 3. Total Revenue
-      // We need to sum price of all sold tickets for events of this organiser
+       
+       
       const soldTicketsData = await prisma.ticket.findMany({
         where: {
           event: { idOrganiser },
@@ -365,7 +365,7 @@ class SalesController {
 
       const totalRevenue = soldTicketsData.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
 
-      // 4. Recent Sales (Optional, maybe just these 3 KPIs are enough for now as requested)
+       
 
       res.json({
         activeEvents: activeEventsCount,

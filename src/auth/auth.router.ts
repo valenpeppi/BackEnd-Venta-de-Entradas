@@ -24,7 +24,7 @@ router.post('/login-company', loginCompany);
 router.post('/google', googleLogin);
 router.post('/check-password-strength', checkPasswordStrength);
 
-// Password Recovery
+ 
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/change-password', authMiddleware.verifyToken, changePassword);

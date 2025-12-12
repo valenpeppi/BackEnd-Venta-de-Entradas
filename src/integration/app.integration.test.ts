@@ -48,7 +48,7 @@ describe('🧩 Test de Integración General - Backend Venta de Entradas', () => 
     expect(res.body.length).toBe(0);
   });
 
-  // Simulación de error interno 
+   
   it('GET /api/places/getPlaces maneja errores del servidor correctamente', async () => {
     (prisma.place.findMany as jest.Mock).mockRejectedValueOnce(new Error('DB Error simulado'));
 

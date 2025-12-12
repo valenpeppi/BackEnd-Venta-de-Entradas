@@ -29,7 +29,7 @@ const verifyRecaptcha = async (token: string): Promise<boolean> => {
   }
 };
 
-// Validar contraseña segura
+
 const isPasswordStrong = (pwd: string): boolean => {
   const length = pwd.length >= 8;
   const hasUpper = /[A-Z]/.test(pwd);
@@ -38,7 +38,7 @@ const isPasswordStrong = (pwd: string): boolean => {
   return length && hasUpper && hasLower && hasNumber;
 };
 
-// Password Strength Meter
+
 const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 'strong', score: number, feedback: string[] } => {
   let score = 0;
   const feedback: string[] = [];
@@ -47,14 +47,14 @@ const evaluatePasswordStrength = (pwd: string): { strength: 'weak' | 'medium' | 
     return { strength: 'weak', score: 0, feedback: ['La contraseña no puede estar vacía'] };
   }
 
-  // Check length
+
   if (pwd.length >= 8) {
     score += 30;
   } else {
     feedback.push('Mínimo 8 caracteres');
   }
 
-  // Check lowercase
+
   if (/[a-z]/.test(pwd)) {
     score += 20;
   } else {

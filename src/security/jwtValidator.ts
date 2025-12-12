@@ -1,10 +1,4 @@
-/*
-Middleware global de seguridad para validar JWTs en las peticiones entrantes. 
-
-Su función principal es interceptar el header "Authorization", extraer el token y verificarlo.
- - Si el token es válido, decodifica la información del usuario y la adjunta al objeto `req.user`.
- - Si no hay token o es inválido, permite continuar la petición (dejando `req.user` undefined), actuando como un "invitado" para rutas públicas o usuarios invitados.
- */
+ 
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 

@@ -1,4 +1,4 @@
-// src/events/events.controller.test.ts
+ 
 import type { Response, Request } from 'express';
 import {
   createEvent,
@@ -12,7 +12,7 @@ import {
 
 import type { AuthRequest } from '../auth/auth.middleware';
 
-// Mocks globales
+ 
 jest.mock('../db/mysql', () => ({
   prisma: {
     $transaction: jest.fn(),
@@ -46,14 +46,14 @@ import { prisma } from '../db/mysql';
 import { createSeatEventGridForEvent } from '../seats/seats.controller';
 import fs from 'fs';
 
-// --- 🔧 Helpers de req/res/next ---
+ 
 type UpFile = { mimetype: string; path: string; filename: string };
 
 const mockRes = () => {
   const res: Partial<Response> = {};
-  // @ts-ignore encadenamiento conveniente para tests
+   
   res.status = jest.fn().mockReturnValue(res);
-  // @ts-ignore encadenamiento conveniente para tests
+   
   res.json = jest.fn().mockReturnValue(res);
   return res as Response & { status: jest.Mock; json: jest.Mock };
 };
@@ -61,9 +61,9 @@ const mockRes = () => {
 const makeNext = () => jest.fn();
 const resetAll = () => jest.clearAllMocks();
 
-// ============================================================
-// 1) createEvent — validaciones y happy path
-// ============================================================
+ 
+ 
+ 
 describe('createEvent', () => {
   beforeEach(resetAll);
 
@@ -94,7 +94,7 @@ describe('createEvent', () => {
         date: '2025-10-10',
         idEventType: 1,
         idPlace: 2,
-        // 👇 Debe tener al menos un sector para no cortar antes
+         
         sectors: JSON.stringify([{ idSector: 1, price: 1000 }]),
       },
       file: { mimetype: 'application/pdf', path: '/tmp/x', filename: 'x.pdf' },
@@ -179,9 +179,9 @@ describe('createEvent', () => {
   });
 });
 
-// ============================================================
-// 2) getEventSummary — arma payload y minPrice/price segun placeType
-// ============================================================
+ 
+ 
+ 
 describe('getEventSummary', () => {
   beforeEach(resetAll);
 
@@ -212,8 +212,8 @@ describe('getEventSummary', () => {
     });
 
     (prisma.seatEvent.count as jest.Mock)
-      .mockResolvedValueOnce(300) // available
-      .mockResolvedValueOnce(300); // total
+      .mockResolvedValueOnce(300)  
+      .mockResolvedValueOnce(300);  
 
     (prisma.eventSector.findMany as jest.Mock).mockResolvedValue([{ price: 1234 }]);
 
@@ -226,9 +226,9 @@ describe('getEventSummary', () => {
   });
 });
 
-// ============================================================
-// 3) toggleFeatureStatus — invierte featured y responde 200
-// ============================================================
+ 
+ 
+ 
 describe('toggleFeatureStatus', () => {
   beforeEach(resetAll);
 
@@ -264,9 +264,9 @@ describe('toggleFeatureStatus', () => {
   });
 });
 
-// ============================================================
-// 4) searchEvents — filtra por nombre/tipo y calcula availableSeats/minPrice
-// ============================================================
+ 
+ 
+ 
 describe('searchEvents', () => {
   beforeEach(resetAll);
 
@@ -323,9 +323,9 @@ describe('searchEvents', () => {
   });
 });
 
-// ============================================================
-// 5) getSeatsForEventSector — devuelve asientos mapeados
-// ============================================================
+ 
+ 
+ 
 describe('getSeatsForEventSector', () => {
   beforeEach(resetAll);
 
@@ -362,9 +362,9 @@ describe('getSeatsForEventSector', () => {
   });
 });
 
-// ============================================================
-// 6) getTicketMap — arma claves place-sector-seat
-// ============================================================
+ 
+ 
+ 
 describe('getTicketMap', () => {
   beforeEach(resetAll);
 
@@ -401,9 +401,9 @@ describe('getTicketMap', () => {
   });
 });
 
-// ============================================================
-// 7) getEventSectors — mezcla metadata + precio + disponibles
-// ============================================================
+ 
+ 
+ 
 describe('getEventSectors', () => {
   beforeEach(resetAll);
 

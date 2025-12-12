@@ -38,7 +38,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       bootId?: string;
     };
 
-    //  Verificación de reinicio: el token debe traer bootId y coincidir
+     
     if (!decoded.bootId || decoded.bootId !== BOOT_ID) {
       return res.status(401).json({
         code: 'RESTART_INVALIDATED_TOKEN',

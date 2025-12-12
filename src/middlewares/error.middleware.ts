@@ -12,7 +12,7 @@ export const errorHandler = (err: AppError, req: Request, res: Response, next: N
     res.status(statusCode).json({
         ok: false,
         error: message,
-        // Solo mostrar stack en desarrollo
+         
         stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 };

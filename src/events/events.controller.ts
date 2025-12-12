@@ -14,11 +14,11 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     let idOrganiser = req.auth?.idOrganiser;
     const featured = false;
 
-    // Logic for Admin to create events
+     
     if (req.auth?.role === 'admin') {
-      // Try to find an organiser associated with the admin's email or default to ID 1
+       
       const adminOrganiser = await prisma.organiser.findUnique({
-        where: { contactEmail: req.auth.mail } // Assuming admin token has .mail
+        where: { contactEmail: req.auth.mail }  
       });
       idOrganiser = adminOrganiser?.idOrganiser ?? 1;
     }
@@ -82,7 +82,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-    // AI Validation
+     
     const isAppropriate = await validateEventContent(name, description);
     if (!isAppropriate) {
       if (imagePath && req.file) {
@@ -491,7 +491,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
         ? `${env.BACKEND_URL}${event.image}`
         : "/ticket.png",
       type: event.eventType.name,
-      displayType: event.eventType.name, // Keep existing if used, but add ID
+      displayType: event.eventType.name,  
       idEventType: event.idEventType,
       date: event.date,
       idPlace: event.idPlace,
@@ -730,10 +730,10 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
     let idOrganiser = req.auth?.idOrganiser;
     const isAdmin = req.auth?.role === 'admin';
 
-    // If Admin, try to find their linked organiser account to show ONLY their events
+     
     if (isAdmin && !idOrganiser) {
       const adminOrg = await prisma.organiser.findUnique({
-        where: { contactEmail: req.auth?.mail } // Admin token usually has .mail
+        where: { contactEmail: req.auth?.mail }  
       });
       if (adminOrg) {
         idOrganiser = adminOrg.idOrganiser;
@@ -742,7 +742,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
 
     if (!idOrganiser) {
       if (isAdmin) {
-        // Admin without organiser account -> Has no "My Events"
+         
         res.status(200).json({ ok: true, data: [] });
         return;
       }
@@ -754,7 +754,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
       where: {
         idOrganiser,
         state: { not: 'Deleted' }
-      }, // Always filter by organiser!
+      },  
       include: {
         eventType: true,
         place: true,
@@ -774,7 +774,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
       const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
       const soldSeats = totalSeats - availableSeats;
 
-      // Calculate percentage sold
+       
       const soldPercentage = totalSeats > 0 ? (soldSeats / totalSeats) * 100 : 0;
 
       let minPrice = 0;
@@ -823,15 +823,15 @@ export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Respons
       return;
     }
 
-    // Check ownership
+     
     if (!isAdmin && event.idOrganiser !== idOrganiser) {
       res.status(403).json({ ok: false, message: 'No autorizado para eliminar este evento' });
       return;
     }
 
-    // Check for sold tickets (tickets linked to seated events)
-    // Adjust logic depending on if your Ticket is linked directly to Event or SeatEvent
-    // Schema implies Ticket -> SeatEvent -> Event
+     
+     
+     
     const soldTickets = await prisma.ticket.count({
       where: {
         idEvent: idEvent
@@ -843,13 +843,13 @@ export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Respons
       return;
     }
 
-    // Transaction to delete related data
+     
     await prisma.$transaction(async (tx) => {
-      // Delete SeatEvents
+       
       await tx.seatEvent.deleteMany({ where: { idEvent } });
-      // Delete EventSectors
+       
       await tx.eventSector.deleteMany({ where: { idEvent } });
-      // Delete Event
+       
       await tx.event.delete({ where: { idEvent } });
     });
 
