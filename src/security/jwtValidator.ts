@@ -1,3 +1,10 @@
+/*
+Middleware global de seguridad para validar JWTs en las peticiones entrantes. 
+
+Su función principal es interceptar el header "Authorization", extraer el token y verificarlo.
+ - Si el token es válido, decodifica la información del usuario y la adjunta al objeto `req.user`.
+ - Si no hay token o es inválido, permite continuar la petición (dejando `req.user` undefined), actuando como un "invitado" para rutas públicas o usuarios invitados.
+ */
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -5,15 +12,6 @@ export const validateToken = (req: Request, res: Response, next: NextFunction) =
     const authHeader = req.headers['authorization'];
 
     if (!authHeader) {
-        // User is not authenticated (guest), proceed but without user info
-        // OR if requirements say "SIEMPRE se valide el jwt", maybe we should check if it's there?
-        // "validar SIEMPRE el jwt, este registrado o no" -> This means even guests might have a token? 
-        // Or it means we assume guests don't have one and we just validate IF present?
-        // "este registrado o no" likely means valid token for Registered User vs some other state, or simply that we shouldn't fail if no token?
-        // "Request interceptor on FRONT implies we ALWAYS send it if present."
-        // On BACK, "validate ALWAYS" usually means "verify signature if header is present". 
-        // If header NOT present, continue as guest (or fail if route requires it, but this middleware is global).
-        // Let's assume: If token, validate. If invalid, 401. If no token, next().
         next();
         return;
     }

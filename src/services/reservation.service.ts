@@ -1,3 +1,16 @@
+/**
+ 
+ * Servicio de Reservas de Entradas que se encarga de bloquear los asientos en la base de datos para que nadie más pueda comprarlos mientras el usuario paga.
+ 
+ * Funcionalidades:
+1. `reserveTickets`: Función principal que recibe un array de grupos de tickets y ejecuta la reserva en una transacción.
+2. Soporte para dos modos de reserva:
+    - **Asientos específicos: Para sectores numerados donde el usuario elige ubicación exacta (`reserveSpecificSeats`).
+    - **Cantidad automática: Para sectores generales (campo) o cuando no se elige asiento (`reserveAnyAvailable`).
+
+ * Todo se ejecuta bajo una transacción de Prisma para asegurar que o se reservan TODOS los tickets solicitados o ninguno, evitando inconsistencias.
+ */
+
 import { prisma } from '../db/mysql';
 
 export interface TicketGroup {
@@ -8,19 +21,7 @@ export interface TicketGroup {
     quantity?: number | string; // Cantidad para no numerados (o numerados sin selección manual, si aplica)
 }
 
-/**
- * Intenta reservar los asientos especificados de manera atómica y segura contra concurrencia.
- * Modifica el array ticketGroups asigando los IDs reservados en caso de éxito.
- * Lanza error si no se pueden asegurar los asientos.
- */
 export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<TicketGroup[]> {
-    // Procesamos cada grupo secuencialmente para evitar deadlocks complejos, 
-    // aunque idealmente se podría hacer en paralelo si son eventos distintos, 
-    // pero dentro de una tx de prisma es mejor secuencial.
-
-    // Usamos una transacción interactiva si es necesario, 
-    // pero para mayor control, haremos las operaciones y verificaremos.
-    // Nota: Prisma interactive transactions ($transaction(async tx => ...)) son buenas aqui.
 
     return await prisma.$transaction(async (tx) => {
         for (const group of ticketGroups) {
@@ -33,7 +34,7 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
                 : [];
 
             const qtyParam = Number(group.quantity);
-            // Prioridad: cantidad explícita > longitud de ids (si ids está vacío)
+            // Si ids está vacío:
             const quantity = (Number.isFinite(qtyParam) && qtyParam > 0)
                 ? qtyParam
                 : requestedIds.length;
@@ -54,8 +55,6 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
             if (isEnumerated) {
                 // Lógica para Enumerados
                 if (requestedIds.length === 0 && quantity > 0) {
-                    // Caso raro: Enumerado pero pide "dame 3 cualesquiera". 
-                    // Implementamos lógica similar a no-enumerado (buscar disponibles).
                     await reserveAnyAvailable(tx, group, idEvent, idPlace, idSector, quantity);
                 } else if (requestedIds.length > 0) {
                     // Reserva exacta de IDs
@@ -64,7 +63,7 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
                     throw new Error('Para sector enumerado se requieren IDs o cantidad > 0');
                 }
             } else {
-                // Lógica para No Enumerados (reservar cantidad X cualquiera)
+                // Lógica para No Enumerados (reservar cantidad X)
                 if (quantity <= 0) throw new Error('Cantidad debe ser mayor a 0 para no enumerados');
                 await reserveAnyAvailable(tx, group, idEvent, idPlace, idSector, quantity);
             }
@@ -76,14 +75,14 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
 }
 
 async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number, idPlace: number, idSector: number, ids: number[]) {
-    // Intentar actualizar directamente
+    // Actualizamos
     const result = await tx.seatEvent.updateMany({
         where: {
             idEvent,
             idPlace,
             idSector,
             idSeat: { in: ids },
-            state: 'available' 
+            state: 'available'
         },
         data: { state: 'reserved' }
     });
@@ -92,7 +91,7 @@ async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number
         throw new Error(`Uno o más asientos seleccionados ya no están disponibles. Solicitados: ${ids.length}, Reservados: ${result.count}`);
     }
 
-    // Asignamos los IDs confirmados al grupo (ya estaban, pero por consistencia)
+    // Asignamos los IDs confirmados al grupo
     group.ids = ids;
 }
 
@@ -105,7 +104,6 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number,
         attempt++;
 
         // 1. Buscar candidatos disponibles
-        // "SELECT id FROM SeatEvent WHERE ... LIMIT quantity"
         const candidates = await tx.seatEvent.findMany({
             where: { idEvent, idPlace, idSector, state: 'available' },
             take: quantity,
@@ -131,58 +129,9 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number,
         });
 
         if (updateResult.count === quantity) {
-            // Éxito total
             reserveds = candidateIds;
             break;
         } else {
-            // Fallo parcial: Alguien nos ganó algunos de los candidatos entre el findMany y el updateMany.
-            // Como estamos dentro de una transacción interactiva, si fallamos aquí y no lanzamos error,
-            // la tx sigue viva. Pero wait, updateMany ya ocurrió parcialmente?
-            // updateMany actualiza los que puede. SI retorna count < quantity, significa que actualizó algunos.
-            // PERO, nuestra lógica exige atomicidad exacta por grupo (o todo o nada idealmente).
-            // Si actualizó parcial, tenemos asientos reservados indeseados si no completamos el cupo?
-            // No necesariamente, pero para simplificar, lanzaremos error para rollbackear TODO el grupo y reintentar la transacción entera?
-            // No, el reintento "optimista" dentro de la tx es:
-            // Si actualicé 3 de 5... me faltan 2. Podría buscar 2 más. 
-            // PERO cuidado: los 3 que sí reservé ya son mios.
-
-            // ESTRATEGIA MEJORADA: Loop "fill up".
-            // Ya que updateMany reservó `updateResult.count`, esos son nuestros.
-            // Necesitamos `quantity - updateResult.count` más.
-
-            // Problema: no sabemos CUALES de los candidateIds fueron los exitosos. Prisma updateMany no retorna IDs.
-            // Shit. Esto complica el "fill up".
-            // Si no sabemos cuáles reservamos, no podemos ponerlos en group.ids.
-
-            // SOLUCIÓN:
-            // En este caso, lo mejor es hacer Throw Error para que ROLLBACK toda la transacción.
-            // Y que el cliente (frontend o controlador) reintente.
-            // O, hacemos el reintento manual aquí pero primero debemos deshacer lo parcial? 
-            // Si lanzamos error, el `prisma.$transaction` wrapper hace rollback automático de TODO.
-            // Así que lo más seguro es: si count != quantity -> Throw.
-            // Pero si hacemos throw, se cancela todo, incluso los grupos anteriores exitosos.
-
-            // ALTERNATIVA:
-            // Usar reintentos a nivel de LÓGICA DE NEGOCIO, no dentro de la DB.
-            // Pero queriamos Atomicidad.
-
-            // Vamos a confiar en el reintento simple:
-            // Si falla la concurrencia en un estadio "campo" (muy concurrido), es mejor fallar y que el usuario reintente
-            // a dejar estados inconsistentes.
-
-            // Sin embargo, para mitigar, podemos hacer UN reintento interno lanzando una excepcion interna? 
-            // No, en prisma tx, throw = rollback.
-
-            // Ok, aceptemos que si falla la concurrencia (race condition exacta en los mismos milisegundos en los mismos asientos random), fallamos el request.
-            // Probabilidad baja en campo grande si randomizamos? `findMany` suele devolver ordenados por ID.
-            // Eso aumenta la colisión. Todos intentan agarrar los primeros IDs disponibles.
-
-            // MEJORA: `take: quantity * 2` o algo asi? No ayuda a la actualización atómica de "esos N".
-
-            // CONCLUSIÓN:
-            // Si count != quantity, lanzamos error "Concurrency conflict".
-            // La transacción se revierte. Nadie compró nada. Seguro.
-            // El usuario recibe error y prueba de nuevo.
         }
     }
 

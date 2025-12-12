@@ -15,7 +15,7 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL es requerido'),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  MP_ACCESS_TOKEN: z.string().optional(),
+
 });
 
 const result = EnvSchema.safeParse(process.env);
@@ -32,7 +32,7 @@ if (!result.success) {
     DATABASE_URL: 'mysql://mock:mock@localhost:3306/mock_db',
     STRIPE_SECRET_KEY: 'sk_test_mock_1234567890',
     STRIPE_WEBHOOK_SECRET: 'whsec_mock_1234567890',
-    MP_ACCESS_TOKEN: 'APP_USR-mock-1234567890'
+
   };
 } else {
   envData = result.data;

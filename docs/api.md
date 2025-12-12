@@ -326,21 +326,6 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
   - `checkout.session.expired`, `...async_payment_failed`, `payment_intent.payment_failed`: libera asientos.
 - **Proteccion:** rate limit 60 req/min.
 
-## Pagos - MercadoPago 
-
-### POST `/api/mp/checkout`
-- **Descripcion:** crea una preferencia de pago y reserva asientos.
-- **Precondicion:** variables `FRONTEND_URL`, `BACKEND_URL`, `MP_ACCESS_TOKEN` deben estar configuradas.
-- **Body:** mismo contrato que Stripe (`items`, `dniClient`, `customerEmail`, `ticketGroups`).
-- **Respuesta 200:** `{ "preferenceId": "...", "init_point": "https://www.mercadopago.com/..." }`.
-
-### GET `/api/mp/confirm-payment?payment_id=...`
-- **Descripcion:** consulta el pago en MP y, si esta aprobado, confirma la venta.
-- **Respuesta 200:** `{ "confirmed": true }` o `409` si el pago aun no se aprobo.
-
-### POST `/api/mp/webhook`
-- **Descripcion:** webhook de notificacion de MP (montado como `/api/mp/webhook/`).
-- **Flujo:** responde `200` inmediatamente; luego consulta la API de MP y, segun `status`, confirma o libera tickets.
 
 ## IA
 
