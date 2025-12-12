@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../db/mysql';
 import { AuthRequest } from '../auth/auth.middleware';
+import { sendMail } from '../services/mailer.service';
+import { getContactMessageTemplate, getContactResponseTemplate } from '../services/email.templates';
 
 // Create a new message
 export const createMessage = async (req: Request, res: Response) => {
@@ -20,6 +22,14 @@ export const createMessage = async (req: Request, res: Response) => {
                 response: '' // Default empty
             }
         });
+
+        // Notify Admin
+        await sendMail({
+            to: process.env.EMAIL_USER || 'admin@ticketapp.com',
+            subject: `Nuevo Mensaje: ${title}`,
+            html: getContactMessageTemplate(senderEmail, title, description),
+            replyTo: senderEmail
+        }).catch(err => console.error('Error sending admin notification:', err));
 
         res.status(201).json(message);
     } catch (error) {
@@ -56,6 +66,13 @@ export const replyMessage = async (req: AuthRequest, res: Response) => {
                 response: responseText || "Gracias por contactarnos."
             }
         });
+
+        // Notify User of the response
+        await sendMail({
+            to: message.senderEmail,
+            subject: 'Respuesta a tu consulta - TicketApp',
+            html: getContactResponseTemplate(message.response, message.title, message.description)
+        }).catch(err => console.error('Error sending response to user:', err));
 
         res.json({ message: 'Mensaje respondido.', data: message });
     } catch (error) {

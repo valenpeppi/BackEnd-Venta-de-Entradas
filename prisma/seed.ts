@@ -351,6 +351,11 @@ async function main() {
       birthDate: new Date('2005-03-31'),
       password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user' as const, idUser: 3
     },
+    {
+      dni: 99999999, name: 'TicketAdmin', surname: 'System', mail: 'ticketapp15@gmail.com',
+      birthDate: new Date('2000-01-01'),
+      password: '$2b$10$358N2e.8s4jLmHGaFZjZSOyLIULv5d/QtgzBSHcFNFfQMBv.rBGWq', role: 'admin' as const, idUser: 4
+    },
   ];
 
   for (const u of users) {

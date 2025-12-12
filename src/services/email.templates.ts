@@ -76,6 +76,22 @@ export const getStyles = () => `
         font-size: 14px;
         color: #aaa;
     }
+    .message-box {
+        background-color: #252525;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: left;
+        margin: 20px 0;
+        border-left: 4px solid #ff0055;
+    }
+    .response-box {
+        background-color: #252525;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: left;
+        margin: 20px 0;
+        border-left: 4px solid #00d4ff;
+    }
 `;
 
 export const getWelcomeTemplate = (name: string, isCompany: boolean = false) => `
@@ -159,6 +175,66 @@ export const getRecoveryTemplate = (resetLink: string) => `
         </div>
         <div class="footer">
             &copy; ${new Date().getFullYear()} TicketApp. Seguridad ante todo.
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const getContactMessageTemplate = (senderEmail: string, title: string, description: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>${getStyles()}</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Nuevo Mensaje de Contacto</h1>
+        </div>
+        <div class="content">
+            <p>Has recibido un nuevo mensaje de <span class="highlight">${senderEmail}</span>.</p>
+            <div class="message-box">
+                <h3 style="margin-top: 0; color: #fff;">${title}</h3>
+                <p style="color: #ccc; margin-bottom: 0;">${description}</p>
+            </div>
+            <p>Puedes responder a este correo directamente o gestionarlo desde el panel de administración.</p>
+        </div>
+        <div class="footer">
+            &copy; ${new Date().getFullYear()} TicketApp. Sistema de Notificaciones.
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const getContactResponseTemplate = (responseText: string, originalTitle: string, originalDescription: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>${getStyles()}</style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Respuesta a tu Consulta</h1>
+        </div>
+        <div class="content">
+            <p>Hola,</p>
+            <p>En respuesta a tu consulta sobre <span class="highlight">"${originalTitle}"</span>:</p>
+
+            <div class="message-box" style="font-size: 14px; opacity: 0.8;">
+                <p style="margin: 0; font-style: italic;">"${originalDescription}"</p>
+            </div>
+
+            <p>Aquí tienes nuestra respuesta:</p>
+            <div class="response-box">
+                <p style="color: #ccc; margin-bottom: 0;">${responseText}</p>
+            </div>
+            <p>Gracias por contactarnos. Si tienes más dudas, no dudes en escribirnos nuevamente.</p>
+        </div>
+        <div class="footer">
+            &copy; ${new Date().getFullYear()} TicketApp. Soporte al Cliente.
         </div>
     </div>
 </body>

@@ -17,16 +17,18 @@ interface MailOptions {
     subject: string;
     text?: string;
     html?: string;
+    replyTo?: string;
 }
 
-export const sendMail = async ({ to, subject, text, html }: MailOptions) => {
+export const sendMail = async ({ to, subject, text, html, replyTo }: MailOptions) => {
     try {
         const info = await transporter.sendMail({
             from: process.env.EMAIL_USER,
             to,
             subject,
             text,
-            html
+            html,
+            replyTo
         });
         console.log('Message sent: %s', info.messageId);
         return info;
