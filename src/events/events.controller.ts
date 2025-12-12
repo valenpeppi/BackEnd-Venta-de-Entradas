@@ -14,11 +14,11 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     let idOrganiser = req.auth?.idOrganiser;
     const featured = false;
 
-     
+
     if (req.auth?.role === 'admin') {
-       
+
       const adminOrganiser = await prisma.organiser.findUnique({
-        where: { contactEmail: req.auth.mail }  
+        where: { contactEmail: req.auth.mail }
       });
       idOrganiser = adminOrganiser?.idOrganiser ?? 1;
     }
@@ -82,13 +82,17 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       imagePath = `/uploads/${req.file.filename}`;
     }
 
-     
-    const isAppropriate = await validateEventContent(name, description);
-    if (!isAppropriate) {
+
+    const validationResult = await validateEventContent(name, description, req.file?.path);
+    if (!validationResult.valid) {
       if (imagePath && req.file) {
         try { fs.unlinkSync(req.file.path); } catch { }
       }
-      res.status(400).json({ ok: false, message: 'El contenido del evento (nombre o descripción) ha sido marcado como inapropiado por nuestro sistema de moderación automática.' });
+      res.status(400).json({
+        ok: false,
+        message: `El contenido del evento ha sido rechazado: ${validationResult.reason || 'Contenido inapropiado detectado.'}`,
+        reason: validationResult.reason
+      });
       return;
     }
 
@@ -491,7 +495,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
         ? `${env.BACKEND_URL}${event.image}`
         : "/ticket.png",
       type: event.eventType.name,
-      displayType: event.eventType.name,  
+      displayType: event.eventType.name,
       idEventType: event.idEventType,
       date: event.date,
       idPlace: event.idPlace,
@@ -730,10 +734,10 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
     let idOrganiser = req.auth?.idOrganiser;
     const isAdmin = req.auth?.role === 'admin';
 
-     
+
     if (isAdmin && !idOrganiser) {
       const adminOrg = await prisma.organiser.findUnique({
-        where: { contactEmail: req.auth?.mail }  
+        where: { contactEmail: req.auth?.mail }
       });
       if (adminOrg) {
         idOrganiser = adminOrg.idOrganiser;
@@ -742,7 +746,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
 
     if (!idOrganiser) {
       if (isAdmin) {
-         
+
         res.status(200).json({ ok: true, data: [] });
         return;
       }
@@ -754,7 +758,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
       where: {
         idOrganiser,
         state: { not: 'Deleted' }
-      },  
+      },
       include: {
         eventType: true,
         place: true,
@@ -774,7 +778,7 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
       const availableSeats = seatCounts.find(sc => sc.state === 'available')?._count.idSeat || 0;
       const soldSeats = totalSeats - availableSeats;
 
-       
+
       const soldPercentage = totalSeats > 0 ? (soldSeats / totalSeats) * 100 : 0;
 
       let minPrice = 0;
@@ -823,15 +827,15 @@ export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Respons
       return;
     }
 
-     
+
     if (!isAdmin && event.idOrganiser !== idOrganiser) {
       res.status(403).json({ ok: false, message: 'No autorizado para eliminar este evento' });
       return;
     }
 
-     
-     
-     
+
+
+
     const soldTickets = await prisma.ticket.count({
       where: {
         idEvent: idEvent
@@ -843,13 +847,13 @@ export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Respons
       return;
     }
 
-     
+
     await prisma.$transaction(async (tx) => {
-       
+
       await tx.seatEvent.deleteMany({ where: { idEvent } });
-       
+
       await tx.eventSector.deleteMany({ where: { idEvent } });
-       
+
       await tx.event.delete({ where: { idEvent } });
     });
 
