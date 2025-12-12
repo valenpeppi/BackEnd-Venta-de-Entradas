@@ -17,7 +17,6 @@ import salesRoutes from './src/sales/sales.router';
 import authRoutes from './src/auth/auth.router';
 import stripeRoutes from './src/payments/stripe.routes';
 import stripeWebhookRouter from './src/payments/stripe.webhook';
-
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
 import systemRoutes from './src/system/system.router';
@@ -47,7 +46,6 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/places', placesRoutes);
 app.use('/api/stripe', stripeRoutes);
-
 app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use('/api/messages', messagesRoutes);
