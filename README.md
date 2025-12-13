@@ -38,7 +38,6 @@
   <img src="https://img.shields.io/badge/Zod-Validation-306998?style=for-the-badge" alt="Zod Badge"/>
   <img src="https://img.shields.io/badge/Multer-Uploads-4a148c?style=for-the-badge" alt="Multer Badge"/>
   <img src="https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white" alt="Stripe Badge"/>
-  <img src="https://img.shields.io/badge/Mercado%20Pago-Payments-00B1EA?style=for-the-badge&logo=mercadopago&logoColor=white" alt="MP Badge"/>
   <img src="https://img.shields.io/badge/Jest-Tests-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Badge"/>
   <img src="https://img.shields.io/badge/Supertest-HTTP%20Tests-000000?style=for-the-badge" alt="Supertest Badge"/>
 </p>
@@ -363,7 +362,7 @@
 │   ├── integration/             # Tests de integración
 │   ├── messages/                # Gestión de respuestas y mensajes
 │   ├── middlewares/             # Middlewares (auth, errores, validaciones)
-│   ├── payments/                # Integraciones de pago (Stripe, MP)
+│   ├── payments/                # Integraciones de pago (Stripe)
 │   ├── places/                  # Gestión de lugares y sectores
 │   ├── sales/                   # Lógica de ventas
 │   ├── seats/                   # Gestión de butacas
@@ -479,14 +478,6 @@
   </li>
 </ul>
 
-<h3>💳 Pagos – Mercado Pago</h3>
-
-<ul>
-  <li><code>POST /api/mp/checkout</code> – crea preferencia de pago, reserva asientos y devuelve <code>preferenceId</code> e <code>init_point</code>.</li>
-  <li><code>GET /api/mp/confirm-payment?payment_id=...</code> – consulta el pago en MP y confirma venta si está aprobado.</li>
-  <li><code>POST /api/mp/webhook</code> – notificaciones de MP, consulta estado y confirma/libera tickets.</li>
-</ul>
-
 <h3>🤖 IA</h3>
 
 <ul>
@@ -593,11 +584,6 @@ CVC: cualquier valor de 3 dígitos
       <td><code>STRIPE_WEBHOOK_SECRET</code></td>
       <td>Secreto del webhook de Stripe</td>
       <td><code>whsec_...</code></td>
-    </tr>
-    <tr>
-      <td><code>MERCADOPAGO_ACCESS_TOKEN</code></td>
-      <td>Token de API de Mercado Pago</td>
-      <td><code>APP_USR-...</code></td>
     </tr>
     <tr>
       <td><code>OPENROUTER_API_KEY</code></td>
