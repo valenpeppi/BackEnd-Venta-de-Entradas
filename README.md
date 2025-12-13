@@ -232,7 +232,7 @@
       <li>Carga variables de entorno (<code>dotenv</code>).</li>
       <li>Configura CORS en base a <code>FRONTEND_URL</code>.</li>
       <li>Configura logging (<code>morgan</code>).</li>
-      <li>Registra primero las rutas de webhooks Stripe/Mercado Pago usando <code>express.raw</code> para preservar el body.</li>
+      <li>Registra primero las rutas de webhooks Stripe usando <code>express.raw</code> para preservar el body.</li>
       <li>Aplica <code>express.json()</code> y <code>express.urlencoded()</code> luego de los webhooks.</li>
       <li>Expone rutas de dominio (<code>/api/auth</code>, <code>/api/events</code>, <code>/api/sales</code>, etc.).</li>
       <li>Sirve archivos estáticos desde <code>/uploads</code>.</li>
