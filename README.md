@@ -56,7 +56,7 @@
   <li>Lugares, sectores y asientos.</li>
   <li>Eventos con flujo de aprobación (Pending → Approved / Rejected).</li>
   <li>Reservas y ventas de tickets (hasta 6 tickets por evento por usuario).</li>
-  <li>Procesamiento de pagos con <strong>Stripe</strong> y <strong>Mercado Pago</strong>.</li>
+  <li>Procesamiento de pagos con <strong>Stripe</strong>.</li>
   <li>Confirmación de ventas vía webhooks y polling.</li>
   <li>Asistente de IA mediante integración con OpenRouter.</li>
 </ul>
