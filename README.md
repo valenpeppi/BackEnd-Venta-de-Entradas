@@ -192,16 +192,10 @@
       <td>Hasheo de contraseñas</td>
     </tr>
     <tr>
-      <td>Pagos globales</td>
+      <td>Pagos</td>
       <td>Stripe</td>
       <td>18.5.0</td>
       <td>Procesamiento internacional</td>
-    </tr>
-    <tr>
-      <td>Pagos LATAM</td>
-      <td>Mercado Pago</td>
-      <td>2.8.0</td>
-      <td>Medios locales</td>
     </tr>
     <tr>
       <td>Uploads</td>
