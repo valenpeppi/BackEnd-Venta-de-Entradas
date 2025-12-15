@@ -1,6 +1,12 @@
 <h1>🧩 TicketApp – Backend</h1>
 
 <p align="center">
+  <a href="https://github.com/valenpeppi/tp" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/🏠%20Repo%20Raíz-Info%20General-4C51BF?style=for-the-badge&logo=github&logoColor=white" alt="Repo Raíz General"/>
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/valenpeppi/BackEnd-Venta-de-Entradas" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/⚙️%20Repo%20Backend-TicketApp-0b7285?style=for-the-badge&logo=github&logoColor=white" alt="Repo Backend"/>
   </a>
@@ -54,7 +60,7 @@
 <ul>
   <li>Usuarios finales y empresas organizadoras.</li>
   <li>Lugares, sectores y asientos.</li>
-  <li>Eventos con flujo de aprobación (Pending → Approved / Rejected).</li>
+  <li>Eventos con flujo de aprobación (Pending → Approved / Rejected / Deleted).</li>
   <li>Reservas y ventas de tickets (hasta 6 tickets por evento por usuario).</li>
   <li>Procesamiento de pagos con <strong>Stripe</strong>.</li>
   <li>Confirmación de ventas vía webhooks y polling.</li>

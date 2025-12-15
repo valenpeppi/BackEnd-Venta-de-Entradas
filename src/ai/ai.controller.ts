@@ -70,7 +70,6 @@ export async function validateEventContent(name: string, description: string, im
       });
     } catch (error) {
       console.error("Error reading image for AI validation:", error);
-      // Proceed with text validation only if image fails
     }
   }
 
@@ -88,23 +87,18 @@ export async function validateEventContent(name: string, description: string, im
     );
 
     const content = response.data?.choices?.[0]?.message?.content || "";
-    // Clean code blocks if present (some models wrap json in ```json ... ```)
     const jsonStr = content.replace(/```json\n?|```/g, '').trim();
 
     try {
       const result = JSON.parse(jsonStr);
       return { valid: result.valid, reason: result.valid ? null : result.reason };
     } catch (e) {
-      // Fallback if JSON parse fails but prompt was followed
       if (content.toLowerCase().includes('"valid": true') || content.toLowerCase().includes('"valid":true')) return { valid: true, reason: null };
       return { valid: false, reason: "Error al procesar la respuesta de seguridad." };
     }
 
   } catch (err) {
     console.warn("Primary AI model failed, trying backup...", err);
-    // Backup - Simple logic for now, hard to get structured JSON reliability from small models without more work
-    // We default to allowing if primary fails to avoid blocking users, or block?
-    // Let's rely on primary. If it fails, we allow (fail open) for now or basic text check.
     return { valid: true, reason: null };
   }
 }
