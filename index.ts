@@ -15,7 +15,7 @@ import placesRoutes from './src/places/places.router';
 import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
 import authRoutes from './src/auth/auth.router';
-import stripeRoutes from './src/payments/stripe.routes';
+import stripeRoutes from './src/payments/stripe.router';
 import stripeWebhookRouter from './src/payments/stripe.webhook';
 import seatsRoutes from './src/seats/seats.router';
 import aiRoutes from "./src/ai/ai.controller";
