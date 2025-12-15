@@ -101,12 +101,11 @@ export const checkPasswordStrength = async (req: Request, res: Response) => {
 export const register = async (req: Request, res: Response) => {
   let { dni, name, surname, mail, password, birthDate, captchaToken } = req.body;
 
-  // Auto-fill surname from name if missing
   if (!surname && name && name.trim().includes(' ')) {
     const parts = name.trim().split(/\s+/);
     if (parts.length > 1) {
-      surname = parts.pop(); // Last part is surname
-      name = parts.join(' '); // Rest is name
+      surname = parts.pop();
+      name = parts.join(' ');
     }
   }
 
@@ -148,7 +147,6 @@ export const register = async (req: Request, res: Response) => {
       }
     });
 
-    // Send Welcome Email
     try {
       await sendMail({
         to: mail,
@@ -157,12 +155,10 @@ export const register = async (req: Request, res: Response) => {
       });
     } catch (emailError) {
       // console.error('Error sending welcome email to user:', emailError);
-      // Non-blocking: continue even if email fails
     }
 
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error: any) {
-    /* deleted console error */
 
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'El DNI o el Email ya están registrados.' });
@@ -172,11 +168,9 @@ export const register = async (req: Request, res: Response) => {
   }
 };
 
-// ... (existing helper functions or other exports if any, keeping file structure integrity) ...
 
 // Registro de empresa
 export const registerCompany = async (req: Request, res: Response) => {
-  // ... existing registerCompany implementation ...
   const { companyName, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
 
   const isCaptchaValid = await verifyRecaptcha(captchaToken);
@@ -229,7 +223,6 @@ export const registerCompany = async (req: Request, res: Response) => {
       }
     });
 
-    // Send Welcome Email to Company
     try {
       await sendMail({
         to: contactEmail,
@@ -328,7 +321,6 @@ export const loginUnified = async (req: Request, res: Response) => {
     return res.status(401).json({ message: 'Credenciales inválidas' });
 
   } catch (error) {
-    // console.error('[Auth] Error en login unificado:', error);
     res.status(500).json({ message: 'Error en el servidor', error });
   }
 };
@@ -361,7 +353,6 @@ export const googleLogin = async (req: Request, res: Response) => {
     });
 
     if (user) {
-      // Si existe pero no tiene googleId, lo actualizamos (linking)
       if (!user.googleId) {
         await prisma.user.update({
           where: { dni: user.dni },
@@ -388,7 +379,6 @@ export const googleLogin = async (req: Request, res: Response) => {
       });
     }
 
-    // Si NO existe el usuario, devolvemos error (no creamos cuentas automáticamente por falta de DNI/Fecha)
     return res.status(404).json({
       message: 'Usuario no encontrado',
       code: 'USER_NOT_FOUND',
@@ -397,7 +387,6 @@ export const googleLogin = async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    // console.error('[Auth] Error en Google Login:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -444,7 +433,6 @@ export const updateUser = async (req: AuthRequest, res: Response) => {
 
     res.status(400).json({ message: 'No se pudo identificar el tipo de usuario o faltan permisos' });
   } catch (error) {
-    // console.error('Error al actualizar usuario:', error);
     res.status(500).json({ message: 'Error interno al actualizar perfil' });
   }
 };
@@ -482,8 +470,6 @@ export const removeUser = async (req: AuthRequest, res: Response) => {
 
     res.status(400).json({ message: 'No se pudo identificar el tipo de usuario' });
   } catch (error: any) {
-    // console.error('Error al eliminar usuario:', error);
-    // Handle specific Prisma errors (e.g., Foreign Key Constraint)
     if (error.code === 'P2003') {
       return res.status(400).json({ message: 'No se puede eliminar la cuenta porque tiene registros asociados (entradas o eventos).' });
     }
@@ -550,7 +536,6 @@ export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({ where: { mail: email } });
     if (!user) {
-      // Security: Do not reveal user existence
       return res.status(200).json({ message: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
     }
 
@@ -658,7 +643,6 @@ export const changePassword = async (req: AuthRequest, res: Response) => {
     res.json({ message: 'Contraseña actualizada correctamente.' });
 
   } catch (error) {
-    // console.error('Error changing password:', error);
     res.status(500).json({ message: 'Error interno al cambiar la contraseña.' });
   }
 };
