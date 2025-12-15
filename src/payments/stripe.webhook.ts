@@ -54,8 +54,8 @@ router.post(
       const anySold = await prisma.seatEvent.count({
         where: {
           OR: ticketGroups.flatMap((g: any) => {
-            const idEvent = Number(g.idEvent);
-            const idPlace = Number(g.idPlace);
+            const idEvent = String(g.idEvent);
+            const idPlace = String(g.idPlace);
             const idSector = Number(g.idSector);
             const ids: number[] = Array.isArray(g.ids) ? g.ids.map(Number) : [];
             if (!idEvent || !idPlace || !idSector || ids.length === 0) return [];
@@ -88,8 +88,8 @@ router.post(
         return res.status(200).json({ released: false });
       }
       for (const g of ticketGroups) {
-        const idEvent = Number(g.idEvent);
-        const idPlace = Number(g.idPlace);
+        const idEvent = String(g.idEvent);
+        const idPlace = String(g.idPlace);
         const idSector = Number(g.idSector);
         const ids: number[] = Array.isArray(g.ids) ? g.ids.map(Number) : [];
         if (!idEvent || !idPlace || !idSector || ids.length === 0) continue;

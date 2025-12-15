@@ -1,4 +1,4 @@
- 
+
 import type { Response, Request } from 'express';
 import {
   createEvent,
@@ -12,7 +12,7 @@ import {
 
 import type { AuthRequest } from '../auth/auth.middleware';
 
- 
+
 jest.mock('../db/mysql', () => ({
   prisma: {
     $transaction: jest.fn(),
@@ -46,14 +46,14 @@ import { prisma } from '../db/mysql';
 import { createSeatEventGridForEvent } from '../seats/seats.controller';
 import fs from 'fs';
 
- 
+
 type UpFile = { mimetype: string; path: string; filename: string };
 
 const mockRes = () => {
   const res: Partial<Response> = {};
-   
+
   res.status = jest.fn().mockReturnValue(res);
-   
+
   res.json = jest.fn().mockReturnValue(res);
   return res as Response & { status: jest.Mock; json: jest.Mock };
 };
@@ -61,9 +61,9 @@ const mockRes = () => {
 const makeNext = () => jest.fn();
 const resetAll = () => jest.clearAllMocks();
 
- 
- 
- 
+
+
+
 describe('createEvent', () => {
   beforeEach(resetAll);
 
@@ -77,7 +77,7 @@ describe('createEvent', () => {
   });
 
   test('400 si faltan campos obligatorios', async () => {
-    const req = { auth: { idOrganiser: 1 }, body: {} } as unknown as AuthRequest;
+    const req = { auth: { idOrganiser: 'org-1' }, body: {} } as unknown as AuthRequest;
     const res = mockRes();
 
     await createEvent(req, res);
@@ -87,23 +87,23 @@ describe('createEvent', () => {
 
   test('rechaza imagen con mimetype inválido y hace unlink', async () => {
     const req = {
-      auth: { idOrganiser: 1 },
+      auth: { idOrganiser: 'org-1' },
       body: {
         name: 'Show',
         description: 'Desc',
         date: '2025-10-10',
-        idEventType: 1,
-        idPlace: 2,
-         
+        idEventType: 'type-1',
+        idPlace: 'place-2',
+
         sectors: JSON.stringify([{ idSector: 1, price: 1000 }]),
       },
       file: { mimetype: 'application/pdf', path: '/tmp/x', filename: 'x.pdf' },
     } as unknown as AuthRequest;
     const res = mockRes();
 
-    (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 1 });
-    (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 1 });
-    (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 2 });
+    (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 'org-1' });
+    (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 'type-1' });
+    (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 'place-2' });
 
     await createEvent(req, res);
 
@@ -114,13 +114,13 @@ describe('createEvent', () => {
 
   test('201 en happy path: crea evento, sectores, asientos y responde availableSeats', async () => {
     const req = {
-      auth: { idOrganiser: 1 },
+      auth: { idOrganiser: 'org-1' },
       body: {
         name: 'Recital',
         description: 'Grande',
         date: '2025-12-31',
-        idEventType: 3,
-        idPlace: 7,
+        idEventType: 'type-3',
+        idPlace: 'place-7',
         sectors: JSON.stringify([
           { idSector: 10, price: 5000 },
           { idSector: 11, price: 8000 },
@@ -130,20 +130,20 @@ describe('createEvent', () => {
     } as unknown as AuthRequest;
     const res = mockRes();
 
-    (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 1 });
-    (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 3 });
-    (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 7 });
+    (prisma.organiser.findUnique as jest.Mock).mockResolvedValue({ idOrganiser: 'org-1' });
+    (prisma.eventType.findUnique as jest.Mock).mockResolvedValue({ idType: 'type-3' });
+    (prisma.place.findUnique as jest.Mock).mockResolvedValue({ idPlace: 'place-7' });
 
     const fakeEvent = {
-      idEvent: 99,
+      idEvent: 'event-99',
       name: 'Recital',
       description: 'Grande',
       date: new Date('2025-12-31'),
       state: 'Pending',
-      idEventType: 3,
-      idOrganiser: 1,
+      idEventType: 'type-3',
+      idOrganiser: 'org-1',
       image: '/uploads/img.png',
-      idPlace: 7,
+      idPlace: 'place-7',
       featured: false,
     };
 
@@ -161,9 +161,9 @@ describe('createEvent', () => {
     await createEvent(req, res);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-    expect(createSeatEventGridForEvent).toHaveBeenCalledWith(99, 7);
+    expect(createSeatEventGridForEvent).toHaveBeenCalledWith('event-99', 'place-7');
     expect(prisma.seatEvent.count).toHaveBeenCalledWith({
-      where: { idEvent: 99, state: 'available' },
+      where: { idEvent: 'event-99', state: 'available' },
     });
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json.mock.calls[0][0]).toEqual(
@@ -171,7 +171,7 @@ describe('createEvent', () => {
         ok: true,
         availableSeats: 120,
         data: expect.objectContaining({
-          idEvent: 99,
+          idEvent: 'event-99',
           imageUrl: expect.stringContaining('/uploads/'),
         }),
       })
@@ -179,9 +179,9 @@ describe('createEvent', () => {
   });
 });
 
- 
- 
- 
+
+
+
 describe('getEventSummary', () => {
   beforeEach(resetAll);
 
@@ -190,8 +190,9 @@ describe('getEventSummary', () => {
     const res = mockRes();
     const next = makeNext();
 
+    (prisma.event.findUnique as jest.Mock).mockResolvedValue(null);
     await getEventSummary(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('200 nonenumerated ⇒ devuelve price', async () => {
@@ -200,11 +201,11 @@ describe('getEventSummary', () => {
     const next = makeNext();
 
     (prisma.event.findUnique as jest.Mock).mockResolvedValue({
-      idEvent: 5,
+      idEvent: 'event-5',
       name: 'Festival',
       description: 'desc',
       date: new Date('2025-01-01'),
-      idPlace: 2,
+      idPlace: 'place-2',
       image: null,
       place: { name: 'Campo', placeType: 'nonEnumerated' },
       eventType: { name: 'Recital' },
@@ -212,8 +213,8 @@ describe('getEventSummary', () => {
     });
 
     (prisma.seatEvent.count as jest.Mock)
-      .mockResolvedValueOnce(300)  
-      .mockResolvedValueOnce(300);  
+      .mockResolvedValueOnce(300)
+      .mockResolvedValueOnce(300);
 
     (prisma.eventSector.findMany as jest.Mock).mockResolvedValue([{ price: 1234 }]);
 
@@ -226,17 +227,16 @@ describe('getEventSummary', () => {
   });
 });
 
- 
- 
- 
+
+
+
 describe('toggleFeatureStatus', () => {
   beforeEach(resetAll);
 
   test('404 si no existe', async () => {
-    const req = { params: { id: '9' } } as unknown as Request;
+    const req = { params: { id: 'event-9' } } as unknown as Request;
     const res = mockRes();
     const next = makeNext();
-
     (prisma.event.findUnique as jest.Mock).mockResolvedValue(null);
     await toggleFeatureStatus(req, res, next);
 
@@ -245,17 +245,17 @@ describe('toggleFeatureStatus', () => {
   });
 
   test('200 y featured invertido', async () => {
-    const req = { params: { id: '9' } } as unknown as Request;
+    const req = { params: { id: 'event-9' } } as unknown as Request;
     const res = mockRes();
     const next = makeNext();
 
     (prisma.event.findUnique as jest.Mock).mockResolvedValue({ featured: false });
-    (prisma.event.update as jest.Mock).mockResolvedValue({ idEvent: 9, featured: true });
+    (prisma.event.update as jest.Mock).mockResolvedValue({ idEvent: 'event-9', featured: true });
 
     await toggleFeatureStatus(req, res, next);
 
     expect(prisma.event.update).toHaveBeenCalledWith({
-      where: { idEvent: 9 },
+      where: { idEvent: 'event-9' },
       data: { featured: true },
       select: { idEvent: true, featured: true },
     });
@@ -264,9 +264,9 @@ describe('toggleFeatureStatus', () => {
   });
 });
 
- 
- 
- 
+
+
+
 describe('searchEvents', () => {
   beforeEach(resetAll);
 
@@ -286,7 +286,7 @@ describe('searchEvents', () => {
 
     (prisma.event.findMany as jest.Mock).mockResolvedValue([
       {
-        idEvent: 1,
+        idEvent: 'event-1',
         name: 'Bizarrap en Rosario',
         description: 'desc',
         date: new Date('2025-11-01'),
@@ -300,7 +300,7 @@ describe('searchEvents', () => {
     ]);
 
     (prisma.seatEvent.groupBy as jest.Mock).mockImplementation(({ where: { idEvent } }: any) => {
-      if (idEvent === 1) {
+      if (idEvent === 'event-1') {
         return Promise.resolve([{ state: 'available', _count: { idSeat: 150 } }]);
       }
       return Promise.resolve([{ state: 'available', _count: { idSeat: 0 } }]);
@@ -313,7 +313,7 @@ describe('searchEvents', () => {
     expect(data).toHaveLength(1);
     expect(data[0]).toEqual(
       expect.objectContaining({
-        id: 1,
+        id: 'event-1',
         name: 'Bizarrap en Rosario',
         price: 8000,
         availableSeats: 150,
@@ -323,9 +323,9 @@ describe('searchEvents', () => {
   });
 });
 
- 
- 
- 
+
+
+
 describe('getSeatsForEventSector', () => {
   beforeEach(resetAll);
 
@@ -339,7 +339,7 @@ describe('getSeatsForEventSector', () => {
   });
 
   test('200 con asientos ordenados', async () => {
-    const req = { params: { id: '1', idSector: '2' } } as unknown as Request;
+    const req = { params: { id: 'event-1', idSector: '2' } } as unknown as Request;
     const res = mockRes();
     const next = makeNext();
 
@@ -351,7 +351,7 @@ describe('getSeatsForEventSector', () => {
     await getSeatsForEventSector(req, res, next);
 
     expect(prisma.seatEvent.findMany).toHaveBeenCalledWith({
-      where: { idEvent: 1, idSector: 2 },
+      where: { idEvent: 'event-1', idSector: 2 },
       select: { idSeat: true, state: true },
       orderBy: { idSeat: 'asc' },
     });
@@ -362,9 +362,9 @@ describe('getSeatsForEventSector', () => {
   });
 });
 
- 
- 
- 
+
+
+
 describe('getTicketMap', () => {
   beforeEach(resetAll);
 
@@ -373,8 +373,10 @@ describe('getTicketMap', () => {
     const res = mockRes();
     const next = makeNext();
 
+    (prisma.event.findUnique as jest.Mock).mockResolvedValue(null);
+
     await getTicketMap(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(404);
   });
 
   test('200 mapea asientos disponibles a {place-sector-seat: idSeat}', async () => {
@@ -382,28 +384,28 @@ describe('getTicketMap', () => {
     const res = mockRes();
     const next = makeNext();
 
-    (prisma.event.findUnique as jest.Mock).mockResolvedValue({ idPlace: 5 });
+    (prisma.event.findUnique as jest.Mock).mockResolvedValue({ idPlace: 'place-5' });
     (prisma.seatEvent.findMany as jest.Mock).mockResolvedValue([
-      { idSeat: 101, idPlace: 5, idSector: 2 },
-      { idSeat: 102, idPlace: 5, idSector: 3 },
+      { idSeat: 101, idPlace: 'place-5', idSector: 2 },
+      { idSeat: 102, idPlace: 'place-5', idSector: 3 },
     ]);
 
     await getTicketMap(req, res, next);
 
     expect(prisma.seatEvent.findMany).toHaveBeenCalledWith({
-      where: { idEvent: 77, idPlace: 5, state: 'available' },
+      where: { idEvent: '77', idPlace: 'place-5', state: 'available' },
       select: { idSeat: true, idPlace: true, idSector: true },
     });
 
     const map = res.json.mock.calls[0][0].data;
-    expect(map['5-2-101']).toBe(101);
-    expect(map['5-3-102']).toBe(102);
+    expect(map['place-5-2-101']).toBe(101);
+    expect(map['place-5-3-102']).toBe(102);
   });
 });
 
- 
- 
- 
+
+
+
 describe('getEventSectors', () => {
   beforeEach(resetAll);
 
@@ -424,7 +426,7 @@ describe('getEventSectors', () => {
     const next = makeNext();
 
     (prisma.event.findUnique as jest.Mock).mockResolvedValue({
-      idPlace: 9,
+      idPlace: 'place-9',
       place: {},
     });
     (prisma.eventSector.findMany as jest.Mock).mockResolvedValue([
@@ -449,7 +451,7 @@ describe('getEventSectors', () => {
     const data = res.json.mock.calls[0][0].data;
     expect(data).toEqual([
       {
-        idEvent: 3,
+        idEvent: '3',
         idSector: 1,
         name: 'Platea',
         price: 1000,
@@ -457,7 +459,7 @@ describe('getEventSectors', () => {
         availableTickets: 10,
       },
       {
-        idEvent: 3,
+        idEvent: '3',
         idSector: 2,
         name: 'Campo',
         price: 2000,

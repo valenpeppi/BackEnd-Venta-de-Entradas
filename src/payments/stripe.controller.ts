@@ -78,8 +78,8 @@ export class StripeController {
             let totalReleased = 0;
 
             for (const g of ticketGroups) {
-                const idEvent = Number(g.idEvent);
-                const idPlace = Number(g.idPlace);
+                const idEvent = String(g.idEvent);
+                const idPlace = String(g.idPlace);
                 const idSector = Number(g.idSector);
                 const ids: number[] = Array.isArray(g.ids) ? g.ids.map(Number).filter(Number.isFinite) : [];
 
@@ -146,8 +146,8 @@ export class StripeController {
             const anySold = await prisma.seatEvent.count({
                 where: {
                     OR: ticketGroups.flatMap((g: any) => {
-                        const idEvent = Number(g.idEvent);
-                        const idPlace = Number(g.idPlace);
+                        const idEvent = String(g.idEvent);
+                        const idPlace = String(g.idPlace);
                         const idSector = Number(g.idSector);
                         const ids: number[] = Array.isArray(g.ids) ? g.ids.map(Number) : [];
                         if (!idEvent || !idPlace || !idSector || ids.length === 0) return [];

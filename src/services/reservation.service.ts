@@ -14,8 +14,8 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
 
     return await prisma.$transaction(async (tx) => {
         for (const group of ticketGroups) {
-            const idEvent = Number(group.idEvent);
-            const idPlace = Number(group.idPlace);
+            const idEvent = String(group.idEvent);
+            const idPlace = String(group.idPlace);
             const idSector = Number(group.idSector);
 
             const requestedIds = Array.isArray(group.ids)
@@ -63,7 +63,7 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
     });
 }
 
-async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number, idPlace: number, idSector: number, ids: number[]) {
+async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: string, idPlace: string, idSector: number, ids: number[]) {
 
     const result = await tx.seatEvent.updateMany({
         where: {
@@ -84,7 +84,7 @@ async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number
     group.ids = ids;
 }
 
-async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number, idPlace: number, idSector: number, quantity: number) {
+async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: string, idPlace: string, idSector: number, quantity: number) {
     const MAX_RETRIES = 3;
     let attempt = 0;
     let reserveds: number[] = [];

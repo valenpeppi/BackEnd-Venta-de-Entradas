@@ -20,7 +20,7 @@ const mockResponse = () => {
 
 describe('seats.controller', () => {
   beforeAll(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => { });
   });
 
   beforeEach(() => jest.clearAllMocks());
@@ -38,10 +38,10 @@ describe('seats.controller', () => {
         },
       ]);
 
-      await createSeatEventGridForEvent(10, 5);
+      await createSeatEventGridForEvent('10', '5');
 
       expect(prisma.sector.findMany).toHaveBeenCalledWith({
-        where: { idPlace: 5 },
+        where: { idPlace: '5' },
         include: { seats: true },
       });
 
@@ -49,8 +49,8 @@ describe('seats.controller', () => {
       expect(prisma.seatEvent.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           create: expect.objectContaining({
-            idEvent: 10,
-            idPlace: 5,
+            idEvent: '10',
+            idPlace: '5',
             idSector: 1,
             idSeat: 101,
             state: 'available',
@@ -62,7 +62,7 @@ describe('seats.controller', () => {
     it('debería manejar error en findMany (lanzar excepción)', async () => {
       (prisma.sector.findMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
-      await expect(createSeatEventGridForEvent(10, 5)).rejects.toThrow('DB Error');
+      await expect(createSeatEventGridForEvent('10', '5')).rejects.toThrow('DB Error');
     });
   });
 
@@ -79,7 +79,7 @@ describe('seats.controller', () => {
       await getSeatsForSector(req, res);
 
       expect(prisma.seatEvent.findMany).toHaveBeenCalledWith({
-        where: { idEvent: 10, idSector: 1 },
+        where: { idEvent: '10', idSector: 1 },
         include: { seat: true },
         orderBy: { idSeat: 'asc' },
       });

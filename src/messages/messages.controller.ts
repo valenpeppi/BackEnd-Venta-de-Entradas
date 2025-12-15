@@ -4,7 +4,7 @@ import { AuthRequest } from '../auth/auth.middleware';
 import { sendMail } from '../services/mailer.service';
 import { getContactMessageTemplate, getContactResponseTemplate } from '../services/email.templates';
 
- 
+
 export const createMessage = async (req: Request, res: Response) => {
     const { title, description, senderEmail } = req.body;
 
@@ -19,11 +19,11 @@ export const createMessage = async (req: Request, res: Response) => {
                 description,
                 senderEmail,
                 state: 'unread',
-                response: ''  
+                response: ''
             }
         });
 
-         
+
         await sendMail({
             to: process.env.EMAIL_USER || 'admin@ticketapp.com',
             subject: `Nuevo Mensaje: ${title}`,
@@ -38,7 +38,7 @@ export const createMessage = async (req: Request, res: Response) => {
     }
 };
 
- 
+
 export const getMessages = async (req: AuthRequest, res: Response) => {
     try {
         const messages = await prisma.message.findMany({
@@ -53,21 +53,21 @@ export const getMessages = async (req: AuthRequest, res: Response) => {
     }
 };
 
- 
+
 export const replyMessage = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const { responseText } = req.body;
 
     try {
         const message = await prisma.message.update({
-            where: { idMessage: Number(id) },
+            where: { idMessage: String(id) },
             data: {
                 state: 'answered',
                 response: responseText || "Gracias por contactarnos."
             }
         });
 
-         
+
         await sendMail({
             to: message.senderEmail,
             subject: 'Respuesta a tu consulta - TicketApp',
@@ -76,41 +76,41 @@ export const replyMessage = async (req: AuthRequest, res: Response) => {
 
         res.json({ message: 'Mensaje respondido.', data: message });
     } catch (error) {
-         
+
         res.status(500).json({ message: 'Error al responder el mensaje.' });
     }
 };
 
- 
+
 export const rejectMessage = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     try {
         const message = await prisma.message.update({
-            where: { idMessage: Number(id) },
+            where: { idMessage: String(id) },
             data: { state: 'rejected' }
         });
 
         res.json({ message: 'Mensaje rechazado.', data: message });
     } catch (error) {
-         
+
         res.status(500).json({ message: 'Error al rechazar el mensaje.' });
     }
 };
 
- 
+
 export const discardMessage = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
 
     try {
         const message = await prisma.message.update({
-            where: { idMessage: Number(id) },
+            where: { idMessage: String(id) },
             data: { state: 'discarded' }
         });
 
         res.json({ message: 'Mensaje descartado.', data: message });
     } catch (error) {
-         
+
         res.status(500).json({ message: 'Error al descartar el mensaje.' });
     }
 };

@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'secreto_super_seguro';
 
 export interface AuthRequest extends Request {
   auth?: {
-    idOrganiser?: number;
+    idOrganiser?: string;
     dni?: number;
     mail?: string;
     contactEmail?: string;
@@ -29,7 +29,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as {
-      idOrganiser?: number;
+      idOrganiser?: string;
       dni?: number;
       mail?: string;
       contactEmail?: string;
@@ -38,7 +38,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       bootId?: string;
     };
 
-     
+
     if (!decoded.bootId || decoded.bootId !== BOOT_ID) {
       return res.status(401).json({
         code: 'RESTART_INVALIDATED_TOKEN',

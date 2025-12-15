@@ -9,7 +9,7 @@ datasource db {
 }
 
 model Event {
-  idEvent      Int        @id @default(autoincrement()) @map("idEvent")
+  idEvent      String     @id @default(uuid()) @map("idEvent")
   name         String     @db.VarChar(45)
   description  String     @db.VarChar(255)
   date         DateTime   @db.DateTime
@@ -17,9 +17,9 @@ model Event {
   image        String?    @db.VarChar(255)
   featured     Boolean    @default(false)
 
-  idEventType  Int        @map("idEventType")
-  idOrganiser  Int        @map("idOrganiser")
-  idPlace      Int
+  idEventType  String     @map("idEventType")
+  idOrganiser  String     @map("idOrganiser")
+  idPlace      String
 
   place        Place      @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
   eventType    EventType  @relation(fields: [idEventType], references: [idType])
@@ -36,8 +36,8 @@ model Event {
 }
 
 model EventSector {
-  idEvent   Int     @map("idEvent")
-  idPlace   Int     @map("idPlace")
+  idEvent   String  @map("idEvent")
+  idPlace   String  @map("idPlace")
   idSector  Int     @map("idSector")
   price     Decimal @db.Decimal(10, 2)
 
@@ -51,7 +51,7 @@ model EventSector {
 }
 
 model EventType {
-  idType  Int     @id @default(autoincrement()) @map("idType")
+  idType  String  @id @default(uuid()) @map("idType")
   name    String  @db.VarChar(45)
   events  Event[]
 
@@ -59,7 +59,7 @@ model EventType {
 }
 
 model Organiser {
-  idOrganiser   Int      @id @default(autoincrement()) @map("idOrganiser")
+  idOrganiser   String   @id @default(uuid()) @map("idOrganiser")
   companyName   String?  @map("company_name") @db.VarChar(100)
   cuil          String?  @unique @map("cuil") @db.VarChar(20)
   contactEmail  String?  @unique @map("contact_email") @db.VarChar(100)
@@ -73,7 +73,7 @@ model Organiser {
 }
 
 model Place {
-  idPlace   Int      @id @default(autoincrement()) @map("idPlace")
+  idPlace   String   @id @default(uuid()) @map("idPlace")
   name      String   @db.VarChar(45)
   totalCap  Int      @map("totalCap")
   address   String   @db.VarChar(45)
@@ -86,8 +86,8 @@ model Place {
 }
 
 model SaleItem {
-  idSale        Int      @map("idSale")
-  lineNumber    Int      @map("lineNumber")
+  idSale        String @map("idSale")
+  lineNumber    Int    @map("lineNumber")
   quantity      Int
 
   sale          Sale      @relation(fields: [idSale], references: [idSale])
@@ -100,9 +100,9 @@ model SaleItem {
 }
 
 model Sale {
-  idSale    Int        @id @default(autoincrement()) @map("idSale")
+  idSale    String     @id @default(uuid()) @map("idSale")
   date      DateTime   @db.DateTime
-  idUserClient Int        @map("idUserClient")
+  idUserClient String  @map("idUserClient")
  
   client    User       @relation(fields: [idUserClient], references: [idUser])
   saleItems SaleItem[]
@@ -112,9 +112,9 @@ model Sale {
 }
 
 model Seat {
-  idSeat    Int  @map("idSeat")
-  idSector  Int  @map("idSector")
-  idPlace   Int  @map("idPlace")
+  idSeat    Int     @map("idSeat")
+  idSector  Int     @map("idSector")
+  idPlace   String  @map("idPlace")
 
   sector     Sector    @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
   tickets    Ticket[]
@@ -127,13 +127,13 @@ model Seat {
 }
 
 model SeatEvent {
-  idEvent        Int
-  idPlace        Int
+  idEvent        String
+  idPlace        String
   idSector       Int
   idSeat         Int     @map("idSeat")
   state          String  @db.VarChar(45) @default("available")
 
-  idSale         Int?
+  idSale         String?
   lineNumber     Int?     @map("lineNumber")
 
   event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
@@ -149,7 +149,7 @@ model SeatEvent {
 
 model Sector {
   idSector   Int     @map("idSector")
-  idPlace    Int     @map("idPlace")
+  idPlace    String  @map("idPlace")
   name       String  @db.VarChar(45)
   sectorType String  @db.VarChar(45)
   capacity   Int
@@ -164,14 +164,14 @@ model Sector {
 }
 
 model Ticket {
-  idEvent       Int        @map("idEvent")
-  idPlace       Int        @map("idPlace")
+  idEvent       String     @map("idEvent")
+  idPlace       String     @map("idPlace")
   idSector      Int        @map("idSector")
   idTicket      Int        @map("idTicket")
   state         String     @db.VarChar(45) @default("available")
   idSeat        Int        @map("idSeat")
   lineNumber    Int?       @map("lineNumber")
-  idSale        Int?       @map("idSale")
+  idSale        String?    @map("idSale")
 
   event        Event       @relation(fields: [idEvent], references: [idEvent])
   eventSector  EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
@@ -187,7 +187,7 @@ model Ticket {
 }
 
 model User {
-  idUser    Int      @id @default(autoincrement()) @map("id_user")
+  idUser    String   @id @default(uuid()) @map("id_user")
   dni       Int      @unique @map("dni")
   name      String   @db.VarChar(25)
   surname   String   @db.VarChar(25)
@@ -208,7 +208,7 @@ enum Role {
 }
 
 model Message {
-  idMessage   Int      @id @default(autoincrement()) @map("idMessage")
+  idMessage   String   @id @default(uuid()) @map("idMessage")
   title       String   @db.VarChar(100)
   response    String   @db.VarChar(255)
   state       String   @default("unread") @db.VarChar(20)

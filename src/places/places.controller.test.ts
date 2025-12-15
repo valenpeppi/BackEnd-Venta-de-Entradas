@@ -23,14 +23,14 @@ describe('place.controller', () => {
   describe('getPlaces', () => {
     it('debería devolver una lista ordenada de lugares', async () => {
       const mockLugares = [
-        { idPlace: 1, name: 'Estadio River' },
-        { idPlace: 2, name: 'Luna Park' },
+        { idPlace: 'place-1', name: 'Estadio River' },
+        { idPlace: 'place-2', name: 'Luna Park' },
       ];
       (prisma.place.findMany as jest.Mock).mockResolvedValue(mockLugares);
 
       const res = mockResponse();
 
-      await getPlaces({} as any, res, (() => {}) as any);
+      await getPlaces({} as any, res, (() => { }) as any);
 
       expect(prisma.place.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } });
       expect(res.status).toHaveBeenCalledWith(200);
@@ -41,7 +41,7 @@ describe('place.controller', () => {
       (prisma.place.findMany as jest.Mock).mockRejectedValue(new Error('DB Error'));
       const res = mockResponse();
 
-      await getPlaces({} as any, res, (() => {}) as any);
+      await getPlaces({} as any, res, (() => { }) as any);
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
@@ -55,24 +55,24 @@ describe('place.controller', () => {
 
   describe('getSectorsByPlace', () => {
     it('debería devolver los sectores de un lugar dado', async () => {
-      const req = { params: { idPlace: '1' } } as any;
+      const req = { params: { idPlace: 'place-1' } } as any;
       const res = mockResponse();
       const mockSectores = [
-        { idSector: 1, name: 'Campo', idPlace: 1 },
-        { idSector: 2, name: 'Platea', idPlace: 1 },
+        { idSector: 1, name: 'Campo', idPlace: 'place-1' },
+        { idSector: 2, name: 'Platea', idPlace: 'place-1' },
       ];
 
       (prisma.sector.findMany as jest.Mock).mockResolvedValue(mockSectores);
 
       await getSectorsByPlace(req, res);
 
-      expect(prisma.sector.findMany).toHaveBeenCalledWith({ where: { idPlace: 1 } });
+      expect(prisma.sector.findMany).toHaveBeenCalledWith({ where: { idPlace: 'place-1' } });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(mockSectores);
     });
 
     it('debería manejar errores en la búsqueda de sectores', async () => {
-      const req = { params: { idPlace: '2' } } as any;
+      const req = { params: { idPlace: 'place-2' } } as any;
       const res = mockResponse();
 
       (prisma.sector.findMany as jest.Mock).mockRejectedValue(new Error('Sector Error'));

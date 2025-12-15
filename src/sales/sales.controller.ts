@@ -21,12 +21,12 @@ class SalesController {
         return;
       }
 
-      const eventQtyMap = new Map<number, number>();
-      const requestedSeatsByEvent = new Map<number, { idPlace: number; idSector: number; ids: number[] }[]>();
+      const eventQtyMap = new Map<string, number>();
+      const requestedSeatsByEvent = new Map<string, { idPlace: string; idSector: number; ids: number[] }[]>();
 
       for (const group of tickets) {
-        const idEvent = Number(group.idEvent);
-        const idPlace = Number(group.idPlace);
+        const idEvent = String(group.idEvent);
+        const idPlace = String(group.idPlace);
         const idSector = Number(group.idSector);
         const ids: number[] = Array.isArray(group.ids) ? group.ids.map(Number) : [];
 
@@ -50,7 +50,7 @@ class SalesController {
       for (const [idEvent, reqQty] of eventQtyMap.entries()) {
         const alreadyBought = await prisma.ticket.count({
           where: {
-            idSale: { in: saleIds.length ? saleIds : [-1] },
+            idSale: { in: saleIds.length ? saleIds : ['00000000-0000-0000-0000-000000000000'] },
             idEvent,
             state: 'sold',
           },
@@ -66,8 +66,8 @@ class SalesController {
 
       const allTicketKeys = tickets.flatMap((group: any) =>
         (group.ids || []).map((idSeat: number) => ({
-          idEvent: Number(group.idEvent),
-          idPlace: Number(group.idPlace),
+          idEvent: String(group.idEvent),
+          idPlace: String(group.idPlace),
           idSector: Number(group.idSector),
           idSeat: Number(idSeat),
         }))
@@ -109,8 +109,8 @@ class SalesController {
         let lineNumber = 1;
 
         for (const group of tickets) {
-          const idEvent = Number(group.idEvent);
-          const idPlace = Number(group.idPlace);
+          const idEvent = String(group.idEvent);
+          const idPlace = String(group.idPlace);
           const idSector = Number(group.idSector);
           const ids: number[] = Array.isArray(group.ids) ? group.ids.map(Number) : [];
           if (!ids.length) continue;
@@ -179,9 +179,9 @@ class SalesController {
         return sale.idSale;
       });
 
-       
+
       try {
-         
+
         const boughtTickets = await prisma.ticket.findMany({
           where: { idSale: result, state: 'sold' },
           include: {
@@ -263,7 +263,7 @@ class SalesController {
 
       res.status(200).json({ data: formattedTickets });
     } catch (error: any) {
-       
+
       res.status(500).json({ error: 'Error interno del servidor', details: error.message });
     }
   }
@@ -273,12 +273,12 @@ class SalesController {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-       
+
       const salesToday = await prisma.sale.count({
         where: { date: { gte: todayStart } },
       });
 
-       
+
       const ticketsToday = await prisma.ticket.count({
         where: {
           saleItem: {
@@ -288,7 +288,7 @@ class SalesController {
         }
       });
 
-       
+
       const soldTicketsToday = await prisma.ticket.findMany({
         where: {
           saleItem: {
@@ -305,7 +305,7 @@ class SalesController {
 
       const revenueToday = soldTicketsToday.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
 
-       
+
       const pendingEvents = await prisma.event.count({
         where: { state: 'Pending' }
       });
@@ -318,7 +318,7 @@ class SalesController {
       });
 
     } catch (error: any) {
-       
+
       res.status(500).json({ error: 'Error obteniendo estadísticas', details: error.message });
     }
   }
@@ -332,10 +332,10 @@ class SalesController {
     }
 
     try {
-       
-       
 
-       
+
+
+
       const activeEventsCount = await prisma.event.count({
         where: {
           idOrganiser,
@@ -343,7 +343,7 @@ class SalesController {
         }
       });
 
-       
+
       const soldTickets = await prisma.ticket.count({
         where: {
           event: { idOrganiser },
@@ -351,8 +351,8 @@ class SalesController {
         }
       });
 
-       
-       
+
+
       const soldTicketsData = await prisma.ticket.findMany({
         where: {
           event: { idOrganiser },
@@ -365,7 +365,7 @@ class SalesController {
 
       const totalRevenue = soldTicketsData.reduce((sum, t) => sum + Number(t.eventSector.price), 0);
 
-       
+
 
       res.json({
         activeEvents: activeEventsCount,

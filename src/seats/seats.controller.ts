@@ -8,7 +8,7 @@ type SeatParams = {
 };
 
 
-export async function createSeatEventGridForEvent(idEvent: number, idPlace: number): Promise<void> {
+export async function createSeatEventGridForEvent(idEvent: string, idPlace: string): Promise<void> {
   const sectors = await prisma.sector.findMany({
     where: { idPlace },
     include: { seats: true },
@@ -44,7 +44,7 @@ export const getSeatsForSector = async (req: Request<SeatParams>, res: Response)
 
     const seats = await prisma.seatEvent.findMany({
       where: {
-        idEvent: Number(idEvent),
+        idEvent: String(idEvent),
         idSector: Number(idSector),
       },
       include: { seat: true },

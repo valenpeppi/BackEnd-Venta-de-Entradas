@@ -50,14 +50,14 @@ describe('SalesController.getUserTickets', () => {
     const req = { auth: { dni: '12345678' } } as any;
     const res = mockResponse();
 
-    (prisma.sale.findMany as jest.Mock).mockResolvedValue([{ idSale: 1 }]);
+    (prisma.sale.findMany as jest.Mock).mockResolvedValue([{ idSale: 'sale-1' }]);
 
     (prisma.ticket.findMany as jest.Mock).mockResolvedValue([
       {
-        idEvent: 10,
+        idEvent: 'event-10',
         idTicket: 1,
         idSeat: 5,
-        idSale: 1,
+        idSale: 'sale-1',
         state: 'sold',
         event: {
           name: 'Bizarrap en River',
@@ -74,7 +74,7 @@ describe('SalesController.getUserTickets', () => {
     await SalesController.getUserTickets(req, res);
 
     expect(prisma.ticket.findMany).toHaveBeenCalledWith({
-      where: { idSale: { in: [1] }, state: 'sold' },
+      where: { idSale: { in: ['sale-1'] }, state: 'sold' },
       include: {
         event: { include: { place: true } },
         eventSector: { include: { sector: true } },

@@ -20,7 +20,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       const adminOrganiser = await prisma.organiser.findUnique({
         where: { contactEmail: req.auth.mail }
       });
-      idOrganiser = adminOrganiser?.idOrganiser ?? 1;
+      idOrganiser = adminOrganiser?.idOrganiser ?? '550e8400-e29b-41d4-a716-446655440020';
     }
 
     if (!idOrganiser) {
@@ -61,12 +61,12 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const etype = await prisma.eventType.findUnique({ where: { idType: Number(idEventType) } });
+    const etype = await prisma.eventType.findUnique({ where: { idType: String(idEventType) } });
     if (!etype) {
       res.status(400).json({ ok: false, message: 'El tipo de evento no existe' });
       return;
     }
-    const place = await prisma.place.findUnique({ where: { idPlace: Number(idPlace) } });
+    const place = await prisma.place.findUnique({ where: { idPlace: String(idPlace) } });
     if (!place) {
       res.status(400).json({ ok: false, message: 'El lugar no existe' });
       return;
@@ -103,10 +103,10 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
           description,
           date: parsedDate,
           state,
-          idEventType: Number(idEventType),
+          idEventType: String(idEventType),
           idOrganiser,
           image: imagePath,
-          idPlace: Number(idPlace),
+          idPlace: String(idPlace),
           featured,
         }
       });
@@ -115,7 +115,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
         await tx.eventSector.create({
           data: {
             idEvent: event.idEvent,
-            idPlace: Number(idPlace),
+            idPlace: String(idPlace),
             idSector: Number(sector.idSector),
             price: parseFloat(sector.price)
           }
@@ -124,7 +124,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return event;
     });
 
-    await createSeatEventGridForEvent(result.idEvent, Number(idPlace));
+    await createSeatEventGridForEvent(result.idEvent, String(idPlace));
 
     const availableSeats = await prisma.seatEvent.count({
       where: { idEvent: result.idEvent, state: 'available' },
@@ -262,7 +262,7 @@ export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
 
 export const approveEvent: RequestHandler = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = String(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
       data: { state: "Approved" },
@@ -285,7 +285,7 @@ export const approveEvent: RequestHandler = async (req, res, next) => {
 
 export const rejectEvent: RequestHandler = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = String(req.params.id);
     const updated = await prisma.event.update({
       where: { idEvent: id },
       data: { state: "Rejected" },
@@ -404,7 +404,7 @@ export const getApprovedEvents: RequestHandler = async (_req, res, next) => {
 
 export const toggleFeatureStatus: RequestHandler = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = String(req.params.id);
 
     const currentEvent = await prisma.event.findUnique({
       where: { idEvent: id },
@@ -432,7 +432,7 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
   try {
     const events = await prisma.event.findMany({
       where: {
-        idPlace: Number(idPlace),
+        idPlace: String(idPlace),
         state: {
           in: ['Approved', 'Pending'],
         },
@@ -450,11 +450,7 @@ export const getAvailableDatesByPlace: RequestHandler = async (req, res, next) =
 
 export const getEventSummary: RequestHandler = async (req, res) => {
   try {
-    const idEvent = Number(req.params.id);
-    if (Number.isNaN(idEvent)) {
-      res.status(400).json({ ok: false, message: 'Invalid id' });
-      return;
-    }
+    const idEvent = String(req.params.id);
 
     const event = await prisma.event.findUnique({
       where: { idEvent },
@@ -520,11 +516,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
 
 export const getEventSectors: RequestHandler = async (req, res) => {
   try {
-    const idEvent = Number(req.params.id);
-    if (Number.isNaN(idEvent)) {
-      res.status(400).json({ ok: false, message: 'Invalid id' });
-      return;
-    }
+    const idEvent = String(req.params.id);
 
     const ev = await prisma.event.findUnique({
       where: { idEvent },
@@ -583,10 +575,10 @@ export const getEventSectors: RequestHandler = async (req, res) => {
 
 export const getSeatsForEventSector: RequestHandler = async (req, res) => {
   try {
-    const idEvent = Number(req.params.id);
+    const idEvent = String(req.params.id);
     const idSector = Number(req.params.idSector);
 
-    if (Number.isNaN(idEvent) || Number.isNaN(idSector)) {
+    if (!idEvent || Number.isNaN(idSector)) {
       res.status(400).json({ ok: false, message: 'ID de evento o sector inválido' });
       return;
     }
@@ -686,11 +678,7 @@ export const searchEvents: RequestHandler = async (req, res, next) => {
 
 export const getTicketMap: RequestHandler = async (req, res) => {
   try {
-    const idEvent = Number(req.params.id);
-    if (Number.isNaN(idEvent)) {
-      res.status(400).json({ ok: false, message: 'Invalid event id' });
-      return;
-    }
+    const idEvent = String(req.params.id);
 
     const event = await prisma.event.findUnique({
       where: { idEvent },
@@ -812,11 +800,11 @@ export const getEventsByOrganiser: RequestHandler = async (req: AuthRequest, res
 
 export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const idEvent = Number(req.params.id);
+    const idEvent = String(req.params.id);
     const idOrganiser = req.auth?.idOrganiser;
     const isAdmin = req.auth?.role === 'admin';
 
-    if (isNaN(idEvent)) {
+    if (!idEvent) {
       res.status(400).json({ ok: false, message: 'ID inválido' });
       return;
     }
@@ -867,12 +855,12 @@ export const deleteEvent: RequestHandler = async (req: AuthRequest, res: Respons
 
 export const updateEvent: RequestHandler = async (req: AuthRequest, res: Response) => {
   try {
-    const idEvent = Number(req.params.id);
+    const idEvent = String(req.params.id);
     const idOrganiser = req.auth?.idOrganiser;
     const isAdmin = req.auth?.role === 'admin';
     const { name, description, date, idEventType, idPlace } = req.body;
 
-    if (isNaN(idEvent)) {
+    if (!idEvent) {
       res.status(400).json({ ok: false, message: 'ID inválido' });
       return;
     }
@@ -905,8 +893,8 @@ export const updateEvent: RequestHandler = async (req: AuthRequest, res: Respons
         name: name || event.name,
         description: description || event.description,
         date: date ? new Date(date) : event.date,
-        idEventType: idEventType ? Number(idEventType) : event.idEventType,
-        idPlace: idPlace ? Number(idPlace) : event.idPlace,
+        idEventType: idEventType ? String(idEventType) : event.idEventType,
+        idPlace: idPlace ? String(idPlace) : event.idPlace,
         image: imagePath
       }
     });
@@ -928,9 +916,9 @@ export const updateEvent: RequestHandler = async (req: AuthRequest, res: Respons
 
 export const markEventAsDeleted: RequestHandler = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = String(req.params.id);
 
-    if (isNaN(id)) {
+    if (!id) {
       res.status(400).json({ ok: false, message: 'ID invalido' });
       return;
     }
