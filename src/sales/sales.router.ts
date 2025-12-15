@@ -5,10 +5,7 @@ import { prisma } from '../db/mysql';
 
 const router: Router = Router();
 
-router.post('/confirm', (req, res, next) => {
-  console.log('📩 /api/sales/confirm recibido:', req.body);
-  next();
-}, SalesController.confirmSale);
+router.post('/confirm', SalesController.confirmSale);
 
 router.get('/my-tickets', verifyToken, SalesController.getUserTickets);
 router.get('/stats', verifyToken, isAdmin, SalesController.getAdminStats);

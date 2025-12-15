@@ -1,4 +1,4 @@
- 
+
 
 import { prisma } from '../db/mysql';
 
@@ -6,8 +6,8 @@ export interface TicketGroup {
     idEvent: number | string;
     idPlace: number | string;
     idSector: number | string;
-    ids?: (number | string)[];  
-    quantity?: number | string;  
+    ids?: (number | string)[];
+    quantity?: number | string;
 }
 
 export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<TicketGroup[]> {
@@ -23,7 +23,7 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
                 : [];
 
             const qtyParam = Number(group.quantity);
-             
+
             const quantity = (Number.isFinite(qtyParam) && qtyParam > 0)
                 ? qtyParam
                 : requestedIds.length;
@@ -32,7 +32,7 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
                 throw new Error('Grupo de tickets inválido: faltan IDs');
             }
 
-             
+
             const sector = await tx.sector.findUnique({
                 where: { idSector_idPlace: { idSector, idPlace } },
                 select: { sectorType: true }
@@ -42,29 +42,29 @@ export async function reserveTickets(ticketGroups: TicketGroup[]): Promise<Ticke
             const isEnumerated = sector.sectorType.toLowerCase() === 'enumerated';
 
             if (isEnumerated) {
-                 
+
                 if (requestedIds.length === 0 && quantity > 0) {
                     await reserveAnyAvailable(tx, group, idEvent, idPlace, idSector, quantity);
                 } else if (requestedIds.length > 0) {
-                     
+
                     await reserveSpecificSeats(tx, group, idEvent, idPlace, idSector, requestedIds);
                 } else {
                     throw new Error('Para sector enumerado se requieren IDs o cantidad > 0');
                 }
             } else {
-                 
+
                 if (quantity <= 0) throw new Error('Cantidad debe ser mayor a 0 para no enumerados');
                 await reserveAnyAvailable(tx, group, idEvent, idPlace, idSector, quantity);
             }
         }
         return ticketGroups;
     }, {
-        timeout: 10000  
+        timeout: 10000
     });
 }
 
 async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number, idPlace: number, idSector: number, ids: number[]) {
-     
+
     const result = await tx.seatEvent.updateMany({
         where: {
             idEvent,
@@ -80,7 +80,7 @@ async function reserveSpecificSeats(tx: any, group: TicketGroup, idEvent: number
         throw new Error(`Uno o más asientos seleccionados ya no están disponibles. Solicitados: ${ids.length}, Reservados: ${result.count}`);
     }
 
-     
+
     group.ids = ids;
 }
 
@@ -92,7 +92,7 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number,
     while (attempt < MAX_RETRIES) {
         attempt++;
 
-         
+
         const candidates = await tx.seatEvent.findMany({
             where: { idEvent, idPlace, idSector, state: 'available' },
             take: quantity,
@@ -105,7 +105,7 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number,
 
         const candidateIds = candidates.map((c: any) => c.idSeat);
 
-         
+
         const updateResult = await tx.seatEvent.updateMany({
             where: {
                 idEvent,
@@ -121,6 +121,8 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: number,
             reserveds = candidateIds;
             break;
         } else {
+            // Concurrency conflict (some seats taken), retrying...
+            await new Promise((r) => setTimeout(r, 50 + Math.random() * 50));
         }
     }
 
