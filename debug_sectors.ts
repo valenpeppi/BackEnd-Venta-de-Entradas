@@ -1,5 +1,9 @@
 
- 
+
+/**
+ * Script de depuración para verificar la consistencia de sectores y eventos en la base de datos.
+ * Uso: npx ts-node debug_sectors.ts
+ */
 import { prisma } from './src/db/mysql';
 
 async function main() {

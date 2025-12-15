@@ -1,6 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 if (!fs.existsSync(uploadDir)) {
@@ -12,7 +13,7 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (_req, file, cb) => {
-        const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const unique = crypto.randomUUID();
         const ext = path.extname(file.originalname);
         cb(null, `event-${unique}${ext}`);
     },
