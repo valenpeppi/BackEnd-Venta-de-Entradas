@@ -1,10 +1,16 @@
 <h1>🧩 TicketApp – Backend</h1>
 
 <p align="center">
+  <a href="https://github.com/valenpeppi/tp" target="_blank" style="text-decoration: none;">
+    <img src="https://img.shields.io/badge/🏠%20Repo%20Raíz-Info%20General-4C51BF?style=for-the-badge&logo=github&logoColor=white" alt="Repo Raíz General"/>
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/valenpeppi/BackEnd-Venta-de-Entradas" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/⚙️%20Repo%20Backend-TicketApp-0b7285?style=for-the-badge&logo=github&logoColor=white" alt="Repo Backend"/>
   </a>
-  <a href="https://github.com/valenpeppi/FrontEnd-Venta-de-Entradas" target="_blank" style="text-decoration: none;">
+  <a href="https://github.com/agussantinelli/FrontEnd-Venta-de-Entradas" target="_blank" style="text-decoration: none;">
     <img src="https://img.shields.io/badge/💻%20Repo%20Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=000000" alt="Repo Frontend"/>
   </a>
   <a href="https://drive.google.com/file/d/1JQ4jZBuJwJ3PSq4Bxjy0-jp5qHoPxyZK/view" target="_blank" style="text-decoration: none;">
