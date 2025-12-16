@@ -595,34 +595,55 @@ CVC: cualquier valor de 3 dígitos
     </tr>
     <tr>
       <td><code>FRONTEND_URL</code></td>
-      <td>Origen permitido para CORS</td>
+      <td>Origen permitido para CORS (Frontend)</td>
       <td><code>http://localhost:5173</code></td>
+    </tr>
+    <tr>
+      <td><code>BACKEND_URL</code></td>
+      <td>URL pública del propio backend (para webhooks/redirects)</td>
+      <td><code>http://localhost:3000</code></td>
+    </tr>
+    <tr>
+      <td><code>GOOGLE_CLIENT_ID</code></td>
+      <td>Client ID para autenticación con Google</td>
+      <td><code>740798...apps.googleusercontent.com</code></td>
+    </tr>
+    <tr>
+      <td><code>RECAPTCHA_SECRET_KEY</code></td>
+      <td>Clave secreta para validar reCAPTCHA</td>
+      <td><code>6LeIxAcTAAAA...</code></td>
+    </tr>
+    <tr>
+      <td><code>MP_ACCESS_TOKEN</code></td>
+      <td>Token de acceso de MercadoPago (si aplica)</td>
+      <td><code>APP_USR-...</code></td>
+    </tr>
+    <tr>
+      <td><code>STRIPE_SECRET_KEY</code></td>
+      <td>Clave secreta de Stripe</td>
+      <td><code>sk_test_...</code></td>
+    </tr>
+    <tr>
+      <td><code>STRIPE_WEBHOOK_SECRET</code></td>
+      <td>Secreto del Webhook de Stripe</td>
+      <td><code>whsec_...</code></td>
+    </tr>
+    <tr>
+      <td><code>OPENROUTER_API_KEY</code></td>
+      <td>API Key de OpenRouter (IA)</td>
+      <td><code>sk-or-v1-...</code></td>
+    </tr>
+    <tr>
+      <td><code>EMAIL_USER</code> / <code>EMAIL_PASS</code></td>
+      <td>Credenciales para envío de correos (Nodemailer)</td>
+      <td><code>ticketapp15@gmail.com</code></td>
     </tr>
     <tr>
       <td><code>JWT_SECRET</code></td>
       <td>Clave para firmar JWT</td>
       <td><code>super-secret-key</code></td>
     </tr>
-    <tr>
-      <td><code>STRIPE_SECRET_KEY</code></td>
-      <td>API key de Stripe</td>
-      <td><code>sk_test_...</code></td>
-    </tr>
-    <tr>
-      <td><code>STRIPE_WEBHOOK_SECRET</code></td>
-      <td>Secreto del webhook de Stripe</td>
-      <td><code>whsec_...</code></td>
-    </tr>
-    <tr>
-      <td><code>OPENROUTER_API_KEY</code></td>
-      <td>Clave para el asistente de IA</td>
-      <td><code>sk-or-...</code></td>
-    </tr>
-    <tr>
-      <td><code>NODE_ENV</code></td>
-      <td>Modo de ejecución</td>
-      <td><code>development</code> / <code>production</code> / <code>test</code></td>
-    </tr>
+
   </tbody>
 </table>
 
