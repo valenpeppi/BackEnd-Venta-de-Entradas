@@ -11,7 +11,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
   try {
     const { name, description, date, idEventType, idPlace, sectors } = req.body;
     const state = 'Pending';
-    let idOrganiser = req.auth?.idOrganiser;
+    let idOrganiser: string | null | undefined = req.auth?.idOrganiser;
     let idCreatorUser: string | undefined = undefined;
     const featured = false;
 
@@ -105,12 +105,12 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
           date: parsedDate,
           state,
           idEventType: String(idEventType),
-          idOrganiser,
+          idOrganiser: idOrganiser as any,
           idCreatorUser,
           image: imagePath,
           idPlace: String(idPlace),
           featured,
-        }
+        } as any
       });
 
       for (const sector of parsedSectors) {
