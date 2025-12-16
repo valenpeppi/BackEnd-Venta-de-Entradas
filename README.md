@@ -74,6 +74,15 @@
 
 <hr/>
 
+
+<h2>💼 Modelo de Negocio</h2>
+
+<p>
+  TicketApp opera bajo un modelo de Marketplace de Eventos, funcionando como una plataforma intermediaria que conecta a dos audiencias principales para generar valor mutuo. Por un lado, permite a las empresas organizadoras publicar, gestionar y monetizar sus espectáculos, brindándoles herramientas administrativas y acceso a estadísticas de venta. Por otro lado, ofrece a los asistentes un entorno seguro y eficiente para descubrir experiencias de entretenimiento, realizar pagos protegidos a través de Stripe y recibir sus entradas digitales en formato PDF de manera inmediata. Además, incorpora un rol de administrador que actúa como garante de calidad, supervisando la veracidad de los eventos y brindando soporte a ambas partes del ecosistema.
+</p>
+
+<hr/>
+
 <h2>🌐 Base URL, autenticación y formato de errores</h2>
 
 <h3>Base URL</h3>
