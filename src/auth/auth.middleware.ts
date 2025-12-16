@@ -13,6 +13,7 @@ export interface AuthRequest extends Request {
     role?: string;
     type?: 'user' | 'company';
     bootId?: string;
+    idUser?: string;
   };
 }
 
@@ -36,6 +37,7 @@ export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction)
       role?: string;
       type?: 'user' | 'company';
       bootId?: string;
+      idUser?: string;
     };
 
 

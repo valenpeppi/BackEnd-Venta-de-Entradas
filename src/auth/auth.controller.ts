@@ -264,7 +264,7 @@ export const loginUnified = async (req: Request, res: Response) => {
       const validPassword = await bcrypt.compare(password, user.password);
       if (validPassword) {
         const token = jwt.sign(
-          { mail: user.mail, role: user.role, dni: user.dni, type: 'user', bootId: BOOT_ID },
+          { mail: user.mail, role: user.role, dni: user.dni, idUser: user.idUser, type: 'user', bootId: BOOT_ID },
           JWT_SECRET,
           { expiresIn: '2h' }
         );
@@ -361,7 +361,7 @@ export const googleLogin = async (req: Request, res: Response) => {
       }
 
       const token = jwt.sign(
-        { mail: user.mail, role: user.role, dni: user.dni, type: 'user', bootId: BOOT_ID },
+        { mail: user.mail, role: user.role, dni: user.dni, idUser: user.idUser, type: 'user', bootId: BOOT_ID },
         JWT_SECRET,
         { expiresIn: '2h' }
       );

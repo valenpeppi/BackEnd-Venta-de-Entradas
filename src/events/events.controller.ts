@@ -12,19 +12,18 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     const { name, description, date, idEventType, idPlace, sectors } = req.body;
     const state = 'Pending';
     let idOrganiser = req.auth?.idOrganiser;
+    let idCreatorUser: string | undefined = undefined;
     const featured = false;
 
 
     if (req.auth?.role === 'admin') {
 
-      const adminOrganiser = await prisma.organiser.findUnique({
-        where: { contactEmail: req.auth.mail }
-      });
-      idOrganiser = adminOrganiser?.idOrganiser ?? '550e8400-e29b-41d4-a716-446655440020';
+      idCreatorUser = req.auth?.idUser;
+      idOrganiser = null;
     }
 
-    if (!idOrganiser) {
-      res.status(403).json({ ok: false, message: 'No autorizado: el token no pertenece a un organizador válido.' });
+    if (!idOrganiser && !idCreatorUser) {
+      res.status(403).json({ ok: false, message: 'No autorizado: Usuario sin permisos de creación.' });
       return;
     }
 
@@ -55,10 +54,12 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const org = await prisma.organiser.findUnique({ where: { idOrganiser } });
-    if (!org) {
-      res.status(400).json({ ok: false, message: 'El organizador no existe' });
-      return;
+    if (idOrganiser) {
+      const org = await prisma.organiser.findUnique({ where: { idOrganiser } });
+      if (!org) {
+        res.status(400).json({ ok: false, message: 'El organizador no existe' });
+        return;
+      }
     }
 
     const etype = await prisma.eventType.findUnique({ where: { idType: String(idEventType) } });
@@ -105,6 +106,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
           state,
           idEventType: String(idEventType),
           idOrganiser,
+          idCreatorUser,
           image: imagePath,
           idPlace: String(idPlace),
           featured,
