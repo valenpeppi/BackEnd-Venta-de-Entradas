@@ -373,13 +373,11 @@
 ├── .env                         # Variables de entorno
 ├── .env.test                    # Variables para testing
 ├── .gitignore                   # Archivos ignorados por Git
-├── debug_sectors.ts             # Script de utilidad para debug
 ├── index.ts                     # Punto de entrada de la aplicación
 ├── jest.config.ts               # Configuración de tests (Jest)
 ├── package-lock.json            # Árbol de dependencias exacto
 ├── package.json                 # Dependencias y scripts
 ├── README.md                    # Documentación
-├── simulate_purchase.ts         # Script de simulación de compras
 └── tsconfig.json                # Configuración de TypeScript
 </code></pre>
 
@@ -400,9 +398,14 @@
   <li><code>POST /api/auth/register-company</code> – registro de empresa organizadora.</li>
   <li><code>POST /api/auth/login</code> – login usuario final, devuelve <code>token</code> y payload básico.</li>
   <li><code>POST /api/auth/login-company</code> – login de empresa organizadora.</li>
+  <li><code>POST /api/auth/google</code> – login con Google.</li>
+  <li><code>POST /api/auth/check-password-strength</code> – verificación de fortaleza de contraseña.</li>
+  <li><code>POST /api/auth/forgot-password</code> – solicitud de recuperación de contraseña.</li>
+  <li><code>POST /api/auth/reset-password</code> – restablecimiento de contraseña.</li>
+  <li><code>POST /api/auth/change-password</code> – cambio de contraseña (autenticado).</li>
+  <li><code>PUT /api/auth/profile</code> – actualizar perfil de usuario.</li>
+  <li><code>DELETE /api/auth/profile</code> – eliminar cuenta de usuario.</li>
   <li><code>GET /api/auth/validate</code> – valida token y retorna el payload.</li>
-  <li><code>GET /api/users/</code> – listado de usuarios (uso interno/tests).</li>
-  <li><code>POST /api/users/</code> – alta de usuario sin reCAPTCHA (tests).</li>
 </ul>
 
 <h3>📍 Lugares y sectores</h3>
@@ -437,6 +440,10 @@
   <li><code>GET /api/events/events/:id/sectors/:idSector/seats</code> – estado de asientos del sector.</li>
   <li><code>GET /api/events/events/:id/tickets/map</code> – mapa rápido de disponibilidad (<code>"idPlace-idSector-idSeat": numero</code>).</li>
   <li><code>GET /api/events/search?query=texto</code> – buscador (prefijo en nombre / tipo exacto).</li>
+  <li><code>GET /api/events/company</code> – lista de eventos de la empresa autenticada.</li>
+  <li><code>PUT /api/events/:id</code> – actualiza datos de un evento (empresa).</li>
+  <li><code>DELETE /api/events/:id</code> – elimina un evento (empresa).</li>
+  <li><code>PATCH /api/events/:id/state-delete</code> – borrado lógico de evento (admin).</li>
 </ul>
 
 <h3>💺 Asientos</h3>
@@ -456,6 +463,8 @@
     </ul>
   </li>
   <li><code>GET /api/sales/my-tickets</code> – tickets del usuario autenticado (para sección “Mis Entradas”).</li>
+  <li><code>GET /api/sales/stats</code> – estadísticas de ventas (admin).</li>
+  <li><code>GET /api/sales/company-stats</code> – estadísticas de ventas (empresa).</li>
   <li><code>GET /api/sales/check?dniClient=...</code> – verifica si existe una venta confirmada reciente (usado en <code>/pay/processing</code>).</li>
 </ul>
 
@@ -476,6 +485,16 @@
       <li>Confirma o libera asientos según estado del pago.</li>
     </ul>
   </li>
+</ul>
+
+<h3>📨 Mensajes y Soporte</h3>
+
+<ul>
+  <li><code>POST /api/messages</code> – envío de mensaje de contacto (público).</li>
+  <li><code>GET /api/messages</code> – listado de mensajes (admin).</li>
+  <li><code>PUT /api/messages/:id/reply</code> – responder mensaje (admin).</li>
+  <li><code>PUT /api/messages/:id/reject</code> – rechazar mensaje (admin).</li>
+  <li><code>PUT /api/messages/:id/discard</code> – descartar mensaje (admin).</li>
 </ul>
 
 <h3>🤖 IA</h3>
@@ -628,7 +647,6 @@ JWT_SECRET=super-secret-key
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 
-MERCADOPAGO_ACCESS_TOKEN=
 
 OPENROUTER_API_KEY=
 </code></pre>
