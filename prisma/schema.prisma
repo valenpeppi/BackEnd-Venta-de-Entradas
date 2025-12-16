@@ -19,12 +19,12 @@ model Event {
 
   idCreatorUser String?    @map("id_creator_user")
   idEventType  String     @map("idEventType")
-  idOrganiser  String     @map("idOrganiser")
+  idOrganiser  String?    @map("idOrganiser")
   idPlace      String
 
   place        Place      @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
   eventType    EventType  @relation(fields: [idEventType], references: [idType])
-  organiser    Organiser  @relation(fields: [idOrganiser], references: [idOrganiser])
+  organiser    Organiser? @relation(fields: [idOrganiser], references: [idOrganiser])
   creatorUser  User?      @relation("UserCreatedEvents", fields: [idCreatorUser], references: [idUser])
 
   eventSectors EventSector[]
