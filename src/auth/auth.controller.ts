@@ -128,7 +128,7 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    // Validar unicidad cruzada: Verificar si el email ya existe como empresa
+    // Verify if the email already exists as a company
     const existingOrganiser = await prisma.organiser.findUnique({ where: { contactEmail: mail } });
     if (existingOrganiser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Empresa.' });
@@ -153,9 +153,7 @@ export const register = async (req: Request, res: Response) => {
         subject: '¡Bienvenido a TicketApp!',
         html: getWelcomeTemplate(name, false)
       });
-    } catch (emailError) {
-      // console.error('Error sending welcome email to user:', emailError);
-    }
+    } catch (emailError) { }
 
     res.status(201).json({ message: 'Usuario registrado correctamente.' });
   } catch (error: any) {
@@ -169,7 +167,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 
-// Registro de empresa
+// Company registration
 export const registerCompany = async (req: Request, res: Response) => {
   const { companyName, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
 
@@ -187,7 +185,7 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    // Validar unicidad cruzada: Verificar si el email ya existe como usuario
+    //Verify if the email already exists as a user
     const existingUser = await prisma.user.findUnique({ where: { mail: contactEmail } });
     if (existingUser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Usuario.' });
@@ -230,12 +228,10 @@ export const registerCompany = async (req: Request, res: Response) => {
         html: getWelcomeTemplate(companyName, true)
       });
     } catch (emailError) {
-      // console.error('Error sending welcome email to company:', emailError);
     }
 
     res.status(201).json({ message: 'Empresa registrada exitosamente' });
   } catch (error: any) {
-    // console.error('[Auth] Error en registro de empresa:', error);
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'Ya existe una empresa con ese CUIL o Email de contacto.' });
     }
@@ -244,13 +240,8 @@ export const registerCompany = async (req: Request, res: Response) => {
 };
 
 
-
-
-
-
-
 export const loginUnified = async (req: Request, res: Response) => {
-  const { email, password } = req.body; // Usamos 'email' genérico
+  const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: 'Email y contraseña requeridos' });
@@ -342,7 +333,7 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     const { email, sub: googleId } = payload;
 
-    // Buscar si ya existe un usuario con este googleId
+    // Check if a user with this googleId already exists
     let user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -521,7 +512,7 @@ export const validateSession = async (req: AuthRequest, res: Response) => {
 
     return res.status(400).json({ valid: false, message: 'Token inválido o tipo de usuario desconocido' });
   } catch (error) {
-    // console.error('Error en validación de sesión:', error);
+    // console.error('Error in session validation:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };

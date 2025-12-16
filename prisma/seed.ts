@@ -391,11 +391,6 @@ async function main() {
       password: '$2b$10$hMdQajMzMI1W6a4bysyO/ujN9Ug9tfV0uA5pskfeJKaTUsrFsH63a', role: 'user' as const, idUser: IDS.USERS.USER_GIAN
     },
     {
-      dni: 46497046, name: 'Valentina', surname: 'Pepper', mail: 'maiusbrolla@gmail.com',
-      birthDate: new Date('2005-03-31'),
-      password: '$2b$10$LWfwZicvt64Tzk7I/PJd3e/VosjjA7r594X6gDPMdFi5vHJ7XYIcO', role: 'user' as const, idUser: IDS.USERS.USER_VALEN
-    },
-    {
       dni: 99999999, name: 'TicketAdmin', surname: 'System', mail: 'ticketapp15@gmail.com',
       birthDate: new Date('2000-01-01'),
       password: '$2b$10$358N2e.8s4jLmHGaFZjZSOyLIULv5d/QtgzBSHcFNFfQMBv.rBGWq', role: 'admin' as const, idUser: IDS.USERS.ADMIN_SYSTEM
