@@ -17,6 +17,7 @@ model Event {
   image        String?    @db.VarChar(255)
   featured     Boolean    @default(false)
 
+  idCreatorUser String?    @map("id_creator_user")
   idEventType  String     @map("idEventType")
   idOrganiser  String     @map("idOrganiser")
   idPlace      String
@@ -24,6 +25,7 @@ model Event {
   place        Place      @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
   eventType    EventType  @relation(fields: [idEventType], references: [idType])
   organiser    Organiser  @relation(fields: [idOrganiser], references: [idOrganiser])
+  creatorUser  User?      @relation("UserCreatedEvents", fields: [idCreatorUser], references: [idUser])
 
   eventSectors EventSector[]
   seatEvents   SeatEvent[]
@@ -198,6 +200,7 @@ model User {
   role      Role     @default(user)
 
   sales     Sale[]
+  createdEvents Event[] @relation("UserCreatedEvents")
 
   @@map("users")
 }
