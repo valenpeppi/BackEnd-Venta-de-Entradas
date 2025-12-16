@@ -666,29 +666,47 @@ CVC: cualquier valor de 3 dígitos
 cd BackEnd-Venta-de-Entradas
 </code></pre>
 
-<h3>3️⃣ Configurar <code>.env</code></h3>
+<h3>3️⃣ Configurar backend (.env)</h3>
 
-<pre><code>DATABASE_URL="mysql://root:password@localhost:3306/ticketapp"
-PORT=3000
+<pre><code>OPENROUTER_API_KEY=tu_api_key_ai
+GOOGLE_CLIENT_ID=tu_google_client_id
+
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=ticketapp
+DATABASE_URL="mysql://root:password@localhost:3306/ticketapp"
+
 FRONTEND_URL=http://localhost:5173
+BACKEND_URL=http://localhost:3000
 
+RECAPTCHA_SECRET_KEY=tu_recaptcha_secret
+STRIPE_SECRET_KEY=tu_stripe_secret
+STRIPE_WEBHOOK_SECRET=tu_stripe_webhook_secret
+
+EMAIL_USER=ticketapp15@gmail.com
+EMAIL_PASS="bbkawrefeqezufei"
 JWT_SECRET=super-secret-key
-
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
-
-
-OPENROUTER_API_KEY=
 </code></pre>
 
-<h3>4️⃣ Migraciones y seed</h3>
+<h3>4️⃣ Configurar frontend (.env)</h3>
+<p>Crear archivo <code>.env</code> en <code>FrontEnd-Venta-de-Entradas/</code>:</p>
+
+<pre><code>VITE_API_BASE=http://localhost:3000/api
+VITE_BACKEND_URL=http://localhost:3000
+VITE_GOOGLE_CLIENT_ID=tu_google_client_id
+VITE_RECAPTCHA_SITE_KEY=tu_recaptcha_site_key
+</code></pre>
+
+<h3>5️⃣ Migraciones y seed</h3>
 
 <pre><code>npm install
 npx prisma migrate deploy
 npx prisma db seed
 </code></pre>
 
-<h3>5️⃣ Ejecutar servidor</h3>
+<h3>6️⃣ Ejecutar servidor</h3>
 
 <pre><code># Desarrollo (hot reload)
 npm run dev
