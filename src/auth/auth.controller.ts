@@ -128,7 +128,7 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    // Verify if the email already exists as a company
+    
     const existingOrganiser = await prisma.organiser.findUnique({ where: { contactEmail: mail } });
     if (existingOrganiser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Empresa.' });
@@ -167,7 +167,7 @@ export const register = async (req: Request, res: Response) => {
 };
 
 
-// Company registration
+
 export const registerCompany = async (req: Request, res: Response) => {
   const { companyName, cuil, contactEmail, password, phone, address, captchaToken } = req.body;
 
@@ -185,7 +185,7 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    //Verify if the email already exists as a user
+    
     const existingUser = await prisma.user.findUnique({ where: { mail: contactEmail } });
     if (existingUser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Usuario.' });

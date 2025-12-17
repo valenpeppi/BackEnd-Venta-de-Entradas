@@ -11,7 +11,7 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 ### Autenticacion
 
 - Se utiliza JWT con esquema `Authorization: Bearer <token>`.
-- Los tokens de usuarios finales se obtienen en `POST /api/auth/login`.
+- Los tokens de usuarios finales se obtienen en `POST /api/auth/login` o `POST /api/auth/google`.
 - Los tokens de empresas organizadoras se obtienen en `POST /api/auth/login-company`.
 - Endpoints protegidos agregan `verifyToken`; algunos requieren ademas `isCompany` o `isAdmin`.
 - Los tokens incluyen un `bootId`. Si el servidor se reinicia y cambia el `bootId`, los tokens previos quedan invalidados (respuesta `401` con codigo `RESTART_INVALIDATED_TOKEN`).
@@ -53,6 +53,7 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
   - `201` registro exitoso (`{ "message": "Usuario registrado correctamente." }`).
   - `400` campos faltantes o DNI invalido / CAPTCHA invalido.
   - `409` DNI o email repetido.
+  - `500` error interno.
 
 ### POST `/api/auth/register-company`
 - **Descripcion:** alta de empresa organizadora con reCAPTCHA.
@@ -68,7 +69,7 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     "captchaToken": "<token_recaptcha_v2>"
   }
   ```
-- **Respuestas:** `201` exito, `400` faltante, `409` CUIL o email repetido.
+- **Respuestas:** `201` exito, `400` faltante, `409` CUIL o email repetido, `500` error interno.
 
 ### POST `/api/auth/login`
 - **Descripcion:** login de usuario final.
@@ -85,18 +86,63 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     }
   }
   ```
-- **Errores:** `400` faltan credenciales, `401` credenciales invalidas.
+- **Errores:** `400` faltan credenciales, `401` credenciales invalidas, `500` error interno.
 
 ### POST `/api/auth/login-company`
 - **Descripcion:** login de empresas organizadoras.
 - **Body:** `{ "contactEmail": "contacto@eventos.com", "password": "Clave123" }`.
 - **Respuesta 200:** token y datos basicos de la empresa.
+- **Errores:** `400` faltan credenciales, `401` credenciales invalidas, `500` error interno.
+
+### POST `/api/auth/google`
+- **Descripcion:** Login o registro con credenciales de Google OAuth.
+- **Body:** `{ "credential": "<token_google_jwt>" }`.
+- **Respuesta 200:** Misma estructura que `/login`, devuelve token JWT y datos de usuario.
+- **Errores:** `400` falta credencial, `401` token Google invalido, `404` usuario no encontrado (si no hay coincidencia de email/googleId), `500` error interno.
+
+### POST `/api/auth/check-password-strength`
+- **Descripcion:** verifica la fortaleza de una contraseña.
+- **Body:** `{ "password": "..." }`.
+- **Respuesta 200:** `{ "strength": "strong", "score": 80, "feedback": [] }`.
+
+### POST `/api/auth/forgot-password`
+- **Descripcion:** solicita email de recuperacion de contraseña.
+- **Body:** `{ "email": "..." }`.
+- **Respuesta 200:** `{ "message": "Si el correo existe, se ha enviado un enlace de recuperación" }`.
+- **Errores:** `400` faltan credenciales, `500` error interno.
+
+### POST `/api/auth/reset-password`
+- **Descripcion:** establece nueva contraseña con token del email.
+- **Body:** `{ "token": "...", "newPassword": "..." }`.
+- **Respuesta 200:** `{ "message": "Contraseña actualizada correctamente" }`.
+- **Errores:** `400` enlace ha expirado, token inválido, contraseña debil, falta token o contraseña.
+
+
+### POST `/api/auth/change-password`
+- **Descripcion:** cambia contraseña (autenticado).
+- **Auth:** requiere token.
+- **Body:** `{ "currentPassword": "...", "newPassword": "..." }`.
+- **Respuesta 200:** `{ "message": "Contraseña actualizada correctamente" }`.
+- **Errores:** `400` contraseña debil, falta contraseña actual o nueva, `401` token invalido, `500` error interno.
+
+### PUT `/api/auth/profile`
+- **Descripcion:** actualiza datos del perfil.
+- **Auth:** requiere token.
+- **Body:** `{ "name": "...", "surname": "...", "phone": "..." }`.
+- **Respuesta 200:** `{ "ok": true, "message": "Perfil actualizado", "user": { ... } }`.
+- **Errores:** `400` faltan credenciales, `500` error interno.
+
+### DELETE `/api/auth/profile`
+- **Descripcion:** elimina la cuenta del usuario/empresa.
+- **Auth:** requiere token.
+- **Respuesta 200:** `{ "ok": true, "message": "Cuenta eliminada" }`.
+- **Errores:**  `400` faltan credenciales, `500` error interno.
 
 ### GET `/api/auth/validate`
 - **Descripcion:** valida un token vigente y devuelve el payload.
 - **Auth:** requiere `Authorization` con JWT valido.
 - **Respuesta 200:** `{ "valid": true, "user": { ...payload } }`.
-- **Errores:** `401` token faltante o `403` token invalido/expirado.
+- **Errores:** `400` token faltante o `404` empresa o usuario no encontrado, `500` error interno.
 
 ### GET `/api/users/`
 - **Descripcion:** lista completa de usuarios (pensado para uso interno/admin).
@@ -274,6 +320,16 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 - **Auth:** requiere token de usuario (el DNI se toma del JWT).
 - **Respuesta 200:** `{ "data": [ { "id": "5-1", "eventId": 5, "sectorType": "enumerated", "seatNumber": 101, ... } ] }`.
 
+### GET `/api/sales/stats`
+- **Descripcion:** estadisticas globales para pantalla admin.
+- **Auth:** requiere `isAdmin`.
+- **Respuesta 200:** `{ "salesToday": 10, "revenueToday": 50000, "pendingEvents": 2, ... }`.
+
+### GET `/api/sales/company-stats`
+- **Descripcion:** estadisticas propias de la empresa autenticada.
+- **Auth:** requiere `isCompany`.
+- **Respuesta 200:** `{ "activeEvents": 5, "ticketsSold": 100, "totalRevenue": 200000 }`.
+
 ### GET `/api/sales/check?dniClient=12345678`
 - **Descripcion:** verifica si existe una venta confirmada para ese DNI en los ultimos 5 minutos (se usa tras checkout).
 - **Respuesta 200:** `{ "confirmed": true, "idSale": 987 }` o `{ "confirmed": false }`.
@@ -326,6 +382,29 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
   - `checkout.session.expired`, `...async_payment_failed`, `payment_intent.payment_failed`: libera asientos.
 - **Proteccion:** rate limit 60 req/min.
 
+## Mensajes (Contacto)
+
+### POST `/api/messages`
+- **Descripcion:** envia un mensaje nuevo.
+- **Body:** `{ "title": "Asunto", "description": "Mensaje...", "senderEmail": "..." }`.
+- **Respuesta 201:** `created`.
+
+### GET `/api/messages`
+- **Descripcion:** lista mensajes recibidos (admin).
+- **Auth:** requiere `isAdmin`.
+
+### PUT `/api/messages/:id/reply`
+- **Descripcion:** responde el mensaje via email.
+- **Auth:** requiere `isAdmin`.
+- **Body:** `{ "responseText": "..." }`.
+
+### PUT `/api/messages/:id/reject`
+- **Descripcion:** cambia estado a rechazado.
+- **Auth:** requiere `isAdmin`.
+
+### PUT `/api/messages/:id/discard`
+- **Descripcion:** descarta el mensaje.
+- **Auth:** requiere `isAdmin`.
 
 ## IA
 
