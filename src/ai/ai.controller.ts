@@ -137,4 +137,42 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/generate-reply", async (req: Request, res: Response) => {
+  const { userMessage } = req.body;
+  console.log("DEBUG: /generate-reply called with:", userMessage);
+
+  if (!userMessage) {
+    console.log("DEBUG: No userMessage provided");
+    return res.status(400).json({ reply: "No se recibió el mensaje del usuario." });
+  }
+
+  const prompt = `Actúa como un agente de soporte técnico amable y profesional para la plataforma 'TicketApp'. 
+  Tu tarea es redactar una respuesta breve, cordial y útil para el siguiente mensaje de un usuario:
+  "${userMessage}"
+  
+  La respuesta debe estar en español y lista para ser enviada. No incluyas saludos genéricos como "Aquí tienes tu respuesta", solo el texto del mensaje.`;
+
+  try {
+    const reply = await withTimeout(
+      getAIResponse("deepseek/deepseek-chat-v3.1:free", prompt),
+      15000
+    );
+    console.log("DEBUG: AI reply generated:", reply);
+    return res.json({ reply });
+  } catch (err: any) {
+    console.error("DEBUG: Primary model failed, trying fallback:", err.message);
+    try {
+        const replyFallback = await withTimeout(
+            getAIResponse("google/gemma-3-12b-it:free", prompt),
+            20000
+        );
+        console.log("DEBUG: AI reply generated (fallback):", replyFallback);
+        return res.json({ reply: replyFallback });
+    } catch (err2: any) {
+        console.error("DEBUG: All models failed:", err2.message);
+        return res.status(500).json({ reply: "No se pudo generar la respuesta. Intenta de nuevo más tarde." });
+    }
+  }
+});
+
 export default router;
