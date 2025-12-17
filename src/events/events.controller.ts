@@ -471,7 +471,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
     });
 
     if (!event) {
-      res.status(404).json({ ok: false, message: 'Event not found' });
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
       return;
     }
 
@@ -519,7 +519,7 @@ export const getEventSummary: RequestHandler = async (req, res) => {
     res.status(200).json({ ok: true, data: payload });
   } catch (err) {
 
-    res.status(500).json({ ok: false, message: 'Internal error' });
+    res.status(500).json({ ok: false, message: 'Error interno' });
   }
 };
 
@@ -532,7 +532,7 @@ export const getEventSectors: RequestHandler = async (req, res) => {
       include: { place: true },
     });
     if (!ev || ev.state === 'Deleted') {
-      res.status(404).json({ ok: false, message: 'Event not found' });
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
       return;
     }
 
@@ -695,7 +695,7 @@ export const getTicketMap: RequestHandler = async (req, res) => {
     });
 
     if (!event) {
-      res.status(404).json({ ok: false, message: 'Event not found' });
+      res.status(404).json({ ok: false, message: 'Evento no encontrado' });
       return;
     }
 

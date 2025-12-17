@@ -144,15 +144,6 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 - **Respuesta 200:** `{ "valid": true, "user": { ...payload } }`.
 - **Errores:** `400` token faltante o `404` empresa o usuario no encontrado, `500` error interno.
 
-### GET `/api/users/`
-- **Descripcion:** lista completa de usuarios (pensado para uso interno/admin).
-- **Auth:** no protegida en el router actual.
-- **Respuesta 200:** array de registros de la tabla `user`.
-
-### POST `/api/users/`
-- **Descripcion:** crea un usuario sin reCAPTCHA (utilizado por herramientas internas o tests).
-- **Body:** debe incluir `dni`, `name`, `surname`, `mail`, `birthDate`, `password`.
-- **Respuestas:** `201` con `message` e `userId`, `400` campos faltantes, `409` duplicado (codigo Prisma `P2002`), `500` error interno.
 
 ## Lugares y sectores
 
@@ -160,11 +151,13 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 - **Descripcion:** devuelve lugares ordenados alfabeticamente.
 - **Auth:** no requiere.
 - **Respuesta 200:** array de objetos `place`.
+- **Errores:** `500` error interno.
 
 ### GET `/api/places/:idPlace/sectors`
 - **Descripcion:** sectores definidos para un lugar (con campos crudos de la tabla `sector`).
 - **Auth:** no requiere.
 - **Respuesta 200:** array de sectores.
+- **Errores:** `500` error interno.
 
 
 ## Eventos
@@ -195,23 +188,41 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
   ```
 - **Errores:** `400` validacion, `403` token no autorizado o sin rol company, `500` errores al guardar o generar asientos.
 
-### GET `/api/events/event-types`
-- **Descripcion:** lista simple de tipos de evento.
-- **Auth:** publica.
-- **Respuesta 200:** array crudo de `eventType`.
+### GET `/api/events/company`
+- **Descripcion:** eventos de la empresa (cualquier estado).
+- **Auth:** requiere `verifyToken` + `isCompany`.
+- **Respuesta 200:** `{ "ok": true, "data": [ { ...evento, "imageUrl": "..."} ] }`.
+- **Errores:** `403` token no autorizado o sin rol company, `500` error interno.
 
-### GET `/api/events/types`
-- **Descripcion:** lista de tipos de evento con envoltura `{ ok, data }`.
-- **Auth:** publica.
+### DELETE `/api/events/:id`
+- **Descripcion:** elimina un evento.
+- **Auth:** requiere `verifyToken` + `isCompany`.
+- **Respuesta 200:** `{ "ok": true, "message": "Evento eliminado exitosamente" }`.
+- **Errores:** `403` token no autorizado o sin rol company, `400` ID inválido o hay entradas vendidas, `404` evento no encontrado, `500` error interno.
+
+### PUT `/api/events/:id`
+- **Descripcion:** actualiza un evento (solo empresas).
+- **Auth:** requiere `verifyToken` + `isCompany`.
+- **Body:** `multipart/form-data` con:
+  - Campos de texto: `name`, `description`, `date` (ISO o formato parseable por JS), `idEventType`, `idPlace`.
+  - `sectors`: cadena JSON con formato `[{ "idSector": 1, "price": 1500.0 }]`.
+  - `image` (opcional): archivo JPG/PNG/GIF/WEBP <= 5 MB.
+- **Respuesta 200:** `{ "ok": true, "message": "Evento actualizado exitosamente" }`.
+- **Errores:** `403` token no autorizado o sin rol company, `400` validacion, `404` evento no encontrado, `500` error interno.
+
+
 
 ### GET `/api/events/pending`
 - **Descripcion:** eventos pendientes de aprobacion para pantalla de admin.
 - **Auth:** requiere token de usuario con rol `admin`.
 - **Respuesta 200:** `{ "ok": true, "data": [ { ...evento, "imageUrl": "..."} ] }`.
 
+
 ### GET `/api/events/all`
 - **Descripcion:** todos los eventos (cualquier estado) para admin.
 - **Auth:** requiere `admin`.
+- **Respuesta 200:** `{ "ok": true, "data": [ { ...evento, "imageUrl": "..."} ] }`.
+
 
 ### PATCH `/api/events/:id/approve`
 - **Descripcion:** marca un evento como `Approved`.
@@ -221,11 +232,32 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 ### PATCH `/api/events/:id/reject`
 - **Descripcion:** marca un evento como `Rejected`.
 - **Auth:** requiere `admin`.
+- **Respuesta 200:** `{ "ok": true, "data": { "idEvent": 1, "state": "Rejected", "imageUrl": "..." } }`.
 
 ### PATCH `/api/events/:id/feature`
 - **Descripcion:** alterna el flag `featured` del evento.
 - **Auth:** requiere `admin`.
 - **Respuesta 200:** `{ "ok": true, "data": { "idEvent": 1, "featured": true } }`.
+
+### PATCH `/api/events/:id/state-delete`
+- **Descripcion:** alterna el flag `state` del evento.
+- **Auth:** requiere `admin`.
+- **Respuesta 200:** `{ "ok": true, "data": { "idEvent": 1, "state": "Deleted" } }`.
+- **Errores:** `404` evento no encontrado, `400` ID invalido.
+
+
+
+### GET `/api/events/event-types`
+- **Descripcion:** lista simple de tipos de evento.
+- **Auth:** publica.
+- **Respuesta 200:** array crudo de `eventType`.
+- **Errores:** `500` error interno.
+
+### GET `/api/events/types`
+- **Descripcion:** lista de tipos de evento con envoltura `{ ok, data }`.
+- **Auth:** publica.
+- **Respuesta 200:** `{ "ok": true, "data": [ ... ] }`.
+- **Errores:** `500` error interno.
 
 ### GET `/api/events/featured`
 - **Descripcion:** eventos aprobados y destacados.
@@ -233,13 +265,18 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 - **Respuesta 200:** `{ "ok": true, "data": [ { "availableSeats": 50, "minPrice": 1500, "agotado": false, ... } ] }`.
 
 ### GET `/api/events/approved`
-- **Descripcion:** eventos aprobados con stock disponible.
+- **Descripcion:** eventos aprobados con stock disponible (se filtran los agotados).
 - **Auth:** publica.
-- **Respuesta 200:** `{ "ok": true, "data": [ ... ] }` (se filtran los agotados).
+- **Respuesta 200:** `{ "ok": true, "data": [ ... ] }` .
 
 ### GET `/api/events/available-dates/:idPlace`
 - **Descripcion:** fechas ocupadas (Approved o Pending) para un lugar.
 - **Respuesta 200:** `{ "ok": true, "data": ["2025-10-20", "2025-10-21"] }`.
+
+### GET `/api/events/search?query=texto`
+- **Descripcion:** buscador (prefijo en nombre del evento o match exacto en tipo).
+- **Respuesta 200:** `{ "ok": true, "data": [ { "id": 5, "name": "...", "price": 2500, "availableSeats": 30, "agotado": false } ] }`.
+- **Errores:** `400` consulta demasiado corta, `500` error interno.
 
 ### GET `/api/events/events/:id`
 - **Descripcion:** resumen para la ficha del evento.
@@ -262,23 +299,23 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     }
   }
   ```
+- **Errores:** `404` evento no encontrado, `500` error interno.
 
 ### GET `/api/events/events/:id/sectors`
 - **Descripcion:** sectores del evento con precio y disponibilidad.
 - **Respuesta 200:** `{ "ok": true, "data": [ { "idSector": 1, "name": "...", "price": 3500, "enumerated": true, "availableTickets": 20 } ] }`.
+- **Errores:** `404` evento no encontrado, `500` error interno.
 
 ### GET `/api/events/events/:id/sectors/:idSector/seats`
 - **Descripcion:** estados de los asientos del sector respecto del evento.
 - **Respuesta 200:** `{ "ok": true, "data": [ { "id": 12, "state": "available", "label": "12" } ] }`.
+- **Errores:** `400` ID de evento o sector inválido, `500` error interno.
 
 ### GET `/api/events/events/:id/tickets/map`
 - **Descripcion:** mapa de asientos disponibles para key rapida (`"<idPlace>-<idSector>-<idSeat>"`).
 - **Respuesta 200:** `{ "ok": true, "data": { "1-2-15": 15, "1-2-16": 16 } }`.
+- **Errores:** `404` evento no encontrado, `500` error interno.
 
-### GET `/api/events/search?query=texto`
-- **Descripcion:** buscador (prefijo en nombre del evento o match exacto en tipo).
-- **Respuesta 200:** `{ "ok": true, "data": [ { "id": 5, "name": "...", "price": 2500, "availableSeats": 30, "agotado": false } ] }`.
-- **Errores:** `400` consulta demasiado corta.
 
 ## Asientos
 
@@ -292,6 +329,7 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     ]
   }
   ```
+- **Errores:** `500` error interno.
 
 ## Ventas
 
@@ -319,21 +357,24 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
 - **Descripcion:** devuelve tickets vendidos al usuario autenticado.
 - **Auth:** requiere token de usuario (el DNI se toma del JWT).
 - **Respuesta 200:** `{ "data": [ { "id": "5-1", "eventId": 5, "sectorType": "enumerated", "seatNumber": 101, ... } ] }`.
+- **Errores:** `401` token invalido, `500` error al confirmar.
 
 ### GET `/api/sales/stats`
 - **Descripcion:** estadisticas globales para pantalla admin.
 - **Auth:** requiere `isAdmin`.
 - **Respuesta 200:** `{ "salesToday": 10, "revenueToday": 50000, "pendingEvents": 2, ... }`.
+- **Errores:** `500` error al confirmar.
 
 ### GET `/api/sales/company-stats`
 - **Descripcion:** estadisticas propias de la empresa autenticada.
 - **Auth:** requiere `isCompany`.
 - **Respuesta 200:** `{ "activeEvents": 5, "ticketsSold": 100, "totalRevenue": 200000 }`.
+- **Errores:** `403` token invalido, `500` error al confirmar.
 
 ### GET `/api/sales/check?dniClient=12345678`
 - **Descripcion:** verifica si existe una venta confirmada para ese DNI en los ultimos 5 minutos (se usa tras checkout).
 - **Respuesta 200:** `{ "confirmed": true, "idSale": 987 }` o `{ "confirmed": false }`.
-- **Errores:** `400` DNI invalido.
+- **Errores:** `400` DNI invalido, `500` error al confirmar.
 
 ## Pagos - Stripe
 
@@ -368,10 +409,12 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
 - **Descripcion:** libera manualmente reservas (por ejemplo tras cancelar el flujo).
 - **Body:** `{ "ticketGroups": [ { "idEvent": 5, "idPlace": 2, "idSector": 1, "ids": [101, 102] } ] }`.
 - **Respuesta 200:** `{ "released": 2 }`.
+- **Errores:** `500` error al confirmar, `400` datos incompletos.
 
 ### GET `/api/stripe/confirm-session?session_id=...`
 - **Descripcion:** fuerza la confirmacion de venta si el webhook no llego.
-- **Respuesta 200:** `{ "confirmed": true }` o `409` si el pago aun no esta `paid`.
+- **Respuesta 200:** `{ "confirmed": true }` 
+- **Errores:** `500` error al confirmar, `400` datos incompletos, `404` session inexistente, `409` pago no confirmado.
 
 ### POST `/api/stripe/webhook`
 - **Descripcion:** endpoint para webhooks de Stripe (montado como `/api/stripe/webhook/`).
@@ -388,23 +431,33 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
 - **Descripcion:** envia un mensaje nuevo.
 - **Body:** `{ "title": "Asunto", "description": "Mensaje...", "senderEmail": "..." }`.
 - **Respuesta 201:** `created`.
+- **Errores:** `500` error al confirmar, `400` datos incompletos.
 
 ### GET `/api/messages`
 - **Descripcion:** lista mensajes recibidos (admin).
 - **Auth:** requiere `isAdmin`.
+- **Respuesta 200:** `{ "data": [ { "id": 1, "title": "Asunto", "description": "Mensaje...", "senderEmail": "..." } ] }`.
+- **Errores:** `500` error al confirmar.
 
 ### PUT `/api/messages/:id/reply`
 - **Descripcion:** responde el mensaje via email.
 - **Auth:** requiere `isAdmin`.
 - **Body:** `{ "responseText": "..." }`.
+- **Respuesta 200:** `{ message: 'Mensaje respondido.', data: message }`.
+- **Errores:** `500` error al confirmar.
 
 ### PUT `/api/messages/:id/reject`
 - **Descripcion:** cambia estado a rechazado.
 - **Auth:** requiere `isAdmin`.
+- **Respuesta 200:** `{ message: 'Mensaje rechazado.', data: message }`.
+- **Errores:** `500` error al confirmar.
 
 ### PUT `/api/messages/:id/discard`
 - **Descripcion:** descarta el mensaje.
 - **Auth:** requiere `isAdmin`.
+- **Respuesta 200:** `{ message: 'Mensaje descartado.', data: message }`.
+- **Errores:** `500` error al confirmar.
+
 
 ## IA
 

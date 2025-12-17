@@ -27,35 +27,13 @@ import {
 const router = Router();
 
  
-router.post(
-  '/createEvent',
-  verifyToken,
-  isCompany,
-  upload.single('image'),
-  createEvent
-);
+router.post('/createEvent',verifyToken,isCompany,upload.single('image'),createEvent);
 
-router.get(
-  '/company',
-  verifyToken,
-  isCompany,
-  getEventsByOrganiser
-);
+router.get('/company',verifyToken,isCompany,getEventsByOrganiser);
 
-router.delete(
-  '/:id',
-  verifyToken,
-  isCompany,
-  deleteEvent
-);
+router.delete('/:id',verifyToken,isCompany,deleteEvent);
 
-router.put(
-  '/:id',
-  verifyToken,
-  isCompany,
-  upload.single('image'),
-  updateEvent
-);
+router.put('/:id',verifyToken,isCompany,upload.single('image'),updateEvent);
 
  
 router.get('/pending', verifyToken, isAdmin, getPendingEvents);

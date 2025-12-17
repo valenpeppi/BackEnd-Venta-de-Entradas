@@ -333,9 +333,6 @@ class SalesController {
 
     try {
 
-
-
-
       const activeEventsCount = await prisma.event.count({
         where: {
           idOrganiser,
