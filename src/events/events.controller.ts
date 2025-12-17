@@ -10,7 +10,7 @@ import { validateEventContent } from '../ai/ai.controller';
 export const createEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { name, description, date, idEventType, idPlace, sectors } = req.body;
-    const state = 'Pending';
+    let state = 'Pending';
     let idOrganiser: string | null | undefined = req.auth?.idOrganiser;
     let idCreatorUser: string | undefined = undefined;
     const featured = false;
@@ -20,6 +20,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
 
       idCreatorUser = req.auth?.idUser;
       idOrganiser = null;
+      state = 'Approved';
     }
 
     if (!idOrganiser && !idCreatorUser) {
@@ -214,6 +215,9 @@ export const getPendingEvents: RequestHandler = async (_req, res, next) => {
         idEvent: true, name: true, description: true, date: true,
         image: true, idEventType: true, state: true, idOrganiser: true,
         featured: true,
+        organiser: {
+          select: { companyName: true, contactEmail: true }
+        }
       },
       orderBy: {
         date: 'desc'
@@ -243,6 +247,9 @@ export const getAdminAllEvents: RequestHandler = async (_req, res, next) => {
         idEvent: true, name: true, description: true, date: true,
         image: true, idEventType: true, state: true, idOrganiser: true,
         featured: true,
+        organiser: {
+          select: { companyName: true, contactEmail: true }
+        }
       },
       orderBy: {
         date: 'desc'
