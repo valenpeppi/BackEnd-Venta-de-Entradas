@@ -47,7 +47,6 @@ router.post(
     const confirm = async () => {
       const { dniClient, ticketGroups } = parseMetadata();
       if (!dniClient || !Array.isArray(ticketGroups) || ticketGroups.length === 0) {
-        console.warn('⚠️ Metadata incompleta. No confirmo venta.');
         return res.status(200).json({ ignored: true, reason: 'incomplete-metadata' });
       }
 

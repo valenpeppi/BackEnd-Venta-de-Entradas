@@ -2,6 +2,8 @@ import express, { Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
 import { env } from "../config/env";
+import fs from 'fs';
+
 
 dotenv.config();
 const router = express.Router();
@@ -43,7 +45,6 @@ export async function getAIResponse(model: string, message: string) {
   );
 }
 
-import fs from 'fs';
 
 export async function validateEventContent(name: string, description: string, imagePath?: string): Promise<{ valid: boolean; reason: string | null }> {
   const messages: any[] = [
@@ -162,15 +163,15 @@ router.post("/generate-reply", async (req: Request, res: Response) => {
   } catch (err: any) {
     console.error("DEBUG: Primary model failed, trying fallback:", err.message);
     try {
-        const replyFallback = await withTimeout(
-            getAIResponse("google/gemma-3-12b-it:free", prompt),
-            20000
-        );
-        console.log("DEBUG: AI reply generated (fallback):", replyFallback);
-        return res.json({ reply: replyFallback });
+      const replyFallback = await withTimeout(
+        getAIResponse("google/gemma-3-12b-it:free", prompt),
+        20000
+      );
+      console.log("DEBUG: AI reply generated (fallback):", replyFallback);
+      return res.json({ reply: replyFallback });
     } catch (err2: any) {
-        console.error("DEBUG: All models failed:", err2.message);
-        return res.status(500).json({ reply: "No se pudo generar la respuesta. Intenta de nuevo más tarde." });
+      console.error("DEBUG: All models failed:", err2.message);
+      return res.status(500).json({ reply: "No se pudo generar la respuesta. Intenta de nuevo más tarde." });
     }
   }
 });
