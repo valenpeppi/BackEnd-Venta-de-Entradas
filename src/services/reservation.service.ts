@@ -121,7 +121,7 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: string,
             reserveds = candidateIds;
             break;
         } else {
-            // Concurrency conflict (some seats taken), retrying...
+
             await new Promise((r) => setTimeout(r, 50 + Math.random() * 50));
         }
     }

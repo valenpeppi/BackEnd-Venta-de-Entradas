@@ -128,7 +128,7 @@ export const register = async (req: Request, res: Response) => {
   }
 
   try {
-    
+
     const existingOrganiser = await prisma.organiser.findUnique({ where: { contactEmail: mail } });
     if (existingOrganiser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Empresa.' });
@@ -185,7 +185,7 @@ export const registerCompany = async (req: Request, res: Response) => {
   }
 
   try {
-    
+
     const existingUser = await prisma.user.findUnique({ where: { mail: contactEmail } });
     if (existingUser) {
       return res.status(409).json({ message: 'El correo electrónico ya está registrado como Usuario.' });
@@ -333,7 +333,7 @@ export const googleLogin = async (req: Request, res: Response) => {
 
     const { email, sub: googleId } = payload;
 
-    // Check if a user with this googleId already exists
+
     let user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -512,7 +512,7 @@ export const validateSession = async (req: AuthRequest, res: Response) => {
 
     return res.status(400).json({ valid: false, message: 'Token inválido o tipo de usuario desconocido' });
   } catch (error) {
-    // console.error('Error in session validation:', error);
+
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -546,7 +546,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Si el correo existe, se ha enviado un enlace de recuperación.' });
   } catch (error) {
-    // console.error('Error in forgotPassword:', error);
+
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
@@ -578,7 +578,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Contraseña actualizada correctamente.' });
   } catch (error) {
-    // console.error('Error in resetPassword:', error);
+
     return res.status(400).json({ message: 'El enlace ha expirado o es inválido.' });
   }
 };
