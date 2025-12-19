@@ -49,11 +49,8 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     "captchaToken": "<token_recaptcha_v2>"
   }
   ```
-- **Respuestas:**
-  - `201` registro exitoso (`{ "message": "Usuario registrado correctamente." }`).
-  - `400` campos faltantes o DNI invalido / CAPTCHA invalido.
-  - `409` DNI o email repetido.
-  - `500` error interno.
+- **Respuestas:** `201` registro exitoso (`{ "message": "Usuario registrado correctamente." }`).
+- **Errores:** `400` campos faltantes o DNI invalido / CAPTCHA invalido,`409` DNI o email repetido,`500` error interno.
 
 ### POST `/api/auth/register-company`
 - **Descripcion:** alta de empresa organizadora con reCAPTCHA.
@@ -69,7 +66,8 @@ Documentacion funcional de la API expuesta por el backend Express + Prisma.
     "captchaToken": "<token_recaptcha_v2>"
   }
   ```
-- **Respuestas:** `201` exito, `400` faltante, `409` CUIL o email repetido, `500` error interno.
+- **Respuestas:** `201` exito, 
+- **Errores:** `400` faltante, `409` CUIL o email repetido, `500` error interno.
 
 ### POST `/api/auth/login`
 - **Descripcion:** login de usuario final.
@@ -465,6 +463,12 @@ Las rutas de Stripe no exigen autenticacion porque son consumidas por el fronten
 - **Descripcion:** proxy que reenvia prompts a OpenRouter (Deepseek/Gemma).
 - **Body:** `{ "message": "texto libre" }`.
 - **Respuesta 200:** `{ "reply": "respuesta del modelo" }`.
+- **Errores:** `400` sin mensaje, `504` timeout en ambos modelos.
+
+### POST `/api/ai/generate-reply`
+- **Descripcion:** genera una respuesta sugerida  actuando como soporte técnico.
+- **Body:** `{ "userMessage": "mensaje del usuario a responder" }`.
+- **Respuesta 200:** `{ "reply": "respuesta generada por IA..." }`.
 - **Errores:** `400` sin mensaje, `504` timeout en ambos modelos.
 
 ## Notas adicionales
