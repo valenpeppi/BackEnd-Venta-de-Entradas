@@ -43,6 +43,10 @@
   <img src="https://img.shields.io/badge/bcrypt-Passwords-35495E?style=for-the-badge" alt="bcrypt Badge"/>
   <img src="https://img.shields.io/badge/Zod-Validation-306998?style=for-the-badge" alt="Zod Badge"/>
   <img src="https://img.shields.io/badge/Multer-Uploads-4a148c?style=for-the-badge" alt="Multer Badge"/>
+  <img src="https://img.shields.io/badge/Nodemailer-Emails-007ACC?style=for-the-badge" alt="Nodemailer Badge"/>
+  <img src="https://img.shields.io/badge/Google%20Auth-Login-4285F4?style=for-the-badge&logo=google&logoColor=white" alt="Google Auth Badge"/>
+  <img src="https://img.shields.io/badge/Helmet-Security-000000?style=for-the-badge" alt="Helmet Badge"/>
+  <img src="https://img.shields.io/badge/Morgan-Logging-F44D27?style=for-the-badge" alt="Morgan Badge"/>
   <img src="https://img.shields.io/badge/Stripe-Payments-635BFF?style=for-the-badge&logo=stripe&logoColor=white" alt="Stripe Badge"/>
   <img src="https://img.shields.io/badge/Jest-Tests-C21325?style=for-the-badge&logo=jest&logoColor=white" alt="Jest Badge"/>
   <img src="https://img.shields.io/badge/Supertest-HTTP%20Tests-000000?style=for-the-badge" alt="Supertest Badge"/>
@@ -211,6 +215,24 @@
       <td>Stripe</td>
       <td>18.5.0</td>
       <td>Procesamiento internacional</td>
+    </tr>
+    <tr>
+      <td>Email</td>
+      <td>Nodemailer</td>
+      <td>7.0.11</td>
+      <td>Envío de correos electrónicos</td>
+    </tr>
+    <tr>
+      <td>Logging</td>
+      <td>Morgan</td>
+      <td>1.10.1</td>
+      <td>Logs de peticiones HTTP</td>
+    </tr>
+    <tr>
+      <td>Seguridad</td>
+      <td>Helmet / Google Auth</td>
+      <td>8.1.0</td>
+      <td>Protección de headers y Auth Social</td>
     </tr>
     <tr>
       <td>Uploads</td>
