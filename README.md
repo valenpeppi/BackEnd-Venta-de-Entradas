@@ -748,7 +748,7 @@ npm start
 
 <p>
   <a href="https://youtu.be/UICpO64qw9c" target="_blank">
-    ▶️ Ver demo completa de TicketApp (Front + Back) en YouTube
+    <img src="https://img.shields.io/badge/🎥%20Ver%20Video%20Demo-YouTube-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Video Demo"/>
   </a>
 </p>
 
