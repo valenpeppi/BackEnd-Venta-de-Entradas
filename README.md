@@ -532,6 +532,7 @@
 
 <ul>
   <li><code>POST /api/ai/</code> – proxy que reenvía prompts a OpenRouter (Deepseek/Gemma) y devuelve <code>{ reply }</code>.</li>
+  <li><code>POST /api/ai/generate-reply</code> – genera una respuesta sugerida para soporte técnico basada en el mensaje del usuario.</li>
 </ul>
 
 <hr/>
