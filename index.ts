@@ -10,7 +10,7 @@ dotenv.config();
 
 const app: Application = express();
 
-
+import { errorHandler } from './src/middlewares/error.middleware';
 import placesRoutes from './src/places/places.router';
 import eventRoutes from './src/events/events.router';
 import salesRoutes from './src/sales/sales.router';
@@ -47,7 +47,6 @@ app.use('/api/seats', seatsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use('/api/messages', messagesRoutes);
 
-import { errorHandler } from './src/middlewares/error.middleware';
 app.use(errorHandler);
 
 if (env.NODE_ENV !== 'test') {
