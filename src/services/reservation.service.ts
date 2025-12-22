@@ -122,7 +122,7 @@ async function reserveAnyAvailable(tx: any, group: TicketGroup, idEvent: string,
             break;
         } else {
 
-            await new Promise((r) => setTimeout(r, 50 + Math.random() * 50));
+            //await new Promise((r) => setTimeout(r, 50 + Math.random() * 50));
         }
     }
 
