@@ -1,17 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to alter the column `date` on the `event` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - The primary key for the `saleitem` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to drop the column `dateSaleItem` on the `saleitem` table. All the data in the column will be lost.
-  - You are about to alter the column `date` on the `sales` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - You are about to drop the column `dateSaleItem` on the `seat_event` table. All the data in the column will be lost.
-  - You are about to drop the column `dateSaleItem` on the `ticket` table. All the data in the column will be lost.
-  - You are about to drop the column `reservedAt` on the `ticket` table. All the data in the column will be lost.
-  - A unique constraint covering the columns `[idEvent,idPlace,idSector,idSeat]` on the table `ticket` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `lineNumber` to the `saleitem` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- DropForeignKey
 ALTER TABLE `seat_event` DROP FOREIGN KEY `seat_event_idSale_dateSaleItem_fkey`;
 

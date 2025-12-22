@@ -1,16 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to alter the column `date` on the `event` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - The primary key for the `prices` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to alter the column `dateSince` on the `prices` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - The primary key for the `saleitem` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to alter the column `dateSaleItem` on the `saleitem` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - You are about to alter the column `date` on the `sales` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - You are about to alter the column `dateSaleItem` on the `ticket` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - Added the required column `idPlace` to the `event` table without a default value. This is not possible if the table is not empty.
-
-*/
 -- DropForeignKey
 ALTER TABLE `ticket` DROP FOREIGN KEY `ticket_idSale_dateSaleItem_fkey`;
 

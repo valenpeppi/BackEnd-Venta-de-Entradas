@@ -1,23 +1,3 @@
-/*
-  Warnings:
-
-  - The primary key for the `event` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to alter the column `date` on the `event` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - The primary key for the `event_sector` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `eventtype` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `messages` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `organiser_company` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `places` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `saleitem` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `sales` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to alter the column `date` on the `sales` table. The data in that column could be lost. The data in that column will be cast from `DateTime(0)` to `DateTime`.
-  - The primary key for the `seat_event` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `seats` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `sectors` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `ticket` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - The primary key for the `users` table will be changed. If it partially fails, the table could be left without primary key constraint.
-
-*/
 -- DropForeignKey
 ALTER TABLE `event` DROP FOREIGN KEY `Event_idEventType_fkey`;
 
