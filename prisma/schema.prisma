@@ -213,7 +213,7 @@ enum Role {
 model Message {
   idMessage   String   @id @default(uuid()) @map("idMessage")
   title       String   @db.VarChar(100)
-  response    String   @db.VarChar(255)
+  response    String   @db.Text
   state       String   @default("unread") @db.VarChar(20)
   date        DateTime @default(now())
   description String   @db.Text
