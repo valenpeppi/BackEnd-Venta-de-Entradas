@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/💻%20Repo%20Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=000000" alt="Repo Frontend"/>
   </a>
   <a href="https://drive.google.com/file/d/1JQ4jZBuJwJ3PSq4Bxjy0-jp5qHoPxyZK/view" target="_blank" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/🗺️%20Modelo%20ER-DER-ff9800?style=for-the-badge&logo=googledrive&logoColor=white" alt="DER TicketApp"/>
+    <img src="https://img.shields.io/badge/🗺️%20Modelo%20DER-DER-ff9800?style=for-the-badge&logo=googledrive&logoColor=white" alt="DER TicketApp"/>
   </a>
 </p>
 
