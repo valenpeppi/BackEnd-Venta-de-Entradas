@@ -53,9 +53,7 @@
 </p>
 
 <div align="center">
-    <a href="https://opensource.org/licenses/MIT">
-        <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License: MIT"/>
-    </a>
+  <img src="https://img.shields.io/badge/Copyright-All_Rights_Reserved-red?style=for-the-badge&logo=copyright&logoColor=white" alt="Copyright Badge"/>
 </div>
 <hr/>
 
@@ -782,33 +780,34 @@ npm start
 </p>
 
 <hr/>
-
-<h2>🤝 Contribuir</h2>
-
-<ol>
-  <li>Hacer <strong>fork</strong> del repositorio.</li>
-  <li>Crear una rama <code>feature/...</code> o <code>fix/...</code>.</li>
-  <li>Aplicar cambios siguiendo la estructura de módulos (auth, events, sales, etc.).</li>
-  <li>Agregar tests unitarios / de integración cuando corresponda.</li>
-  <li>Abrir un <strong>Pull Request</strong> describiendo el alcance de los cambios.</li>
-</ol>
-
-<hr/>
-
-<h2 align="left">⚖️ Licencia</h2>
+<h2 align="left">⚖️ Licencia y Propiedad Intelectual</h2>
 
 <p align="left">
-  Este proyecto está bajo la <b>Licencia MIT</b>. Para más detalles, puedes consultar el archivo 
-  <a href="LICENSE"><code>LICENSE</code></a> incluido en la raíz de este repositorio.
+  Este proyecto es <b>propiedad intelectual privada</b> de Agustín Santinelli, Martin Ratti, Valentin Peppino y Gianlucas Zabaleta. No se otorga ninguna licencia de uso abierto. Puedes consultar los términos detallados en el archivo 
+  <a href="LICENSE"><code>LICENSE</code></a> incluido en este repositorio.
 </p>
 
 <p align="left">
   <i>
-    La licencia MIT permite el uso, copia, modificación y distribución del software de forma gratuita, 
-    siempre que se incluya el aviso de copyright original.
+    ⚠️ <b>Restricción Firme:</b> Queda terminantemente prohibida la copia, reproducción, distribución o modificación de este código sin autorización expresa del autor. Este repositorio se publica exclusivamente como exhibición de portafolio profesional.
   </i>
 </p>
-<hr>
+<hr />
+
+<h2 align="left">🚫 Copyright Total</h2>
+
+<p align="left">
+  Este proyecto es propiedad intelectual exclusiva de <b>Agustín Santinelli</b>. No se aceptan contribuciones externas o forks para su uso público sin previo acuerdo por escrito.
+</p>
+
+<p align="left">
+  Si tienes sugerencias directas o deseas explorar colaboraciones comerciales, por favor contacta al autor: 
+  <a href="mailto:agustinsantinelli@gmail.com">agustinsantinelli@gmail.com</a>.
+</p>
+
+<hr />
 <p/>
-  <em>TicketApp – Backend de la plataforma de venta de entradas.</em>
+  <em>TicketApp – BackEnd de Venta de Entradas para el TP de Desarrollo de Software 2025.
+
+</em>
 </p>
