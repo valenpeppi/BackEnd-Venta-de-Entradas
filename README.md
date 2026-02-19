@@ -807,5 +807,7 @@ npm start
 
 <hr />
 <p/>
-  <em>TicketApp – Backend de la plataforma de venta de entradas.</em>
+  <em>TicketApp – BackEnd de Venta de Entradas para el TP de Desarrollo de Software 2025.
+
+</em>
 </p>
