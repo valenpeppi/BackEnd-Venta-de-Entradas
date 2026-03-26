@@ -1,0 +1,223 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Event {
+  idEvent      String     @id @default(uuid()) @map("idEvent")
+  name         String     @db.VarChar(45)
+  description  String     @db.VarChar(255)
+  date         DateTime   @db.DateTime
+  state        String     @db.VarChar(45)
+  image        String?    @db.VarChar(255)
+  featured     Boolean    @default(false)
+
+  idCreatorUser String?    @map("id_creator_user")
+  idEventType  String     @map("idEventType")
+  idOrganiser  String?    @map("idOrganiser")
+  idPlace      String
+
+  place        Place      @relation(fields: [idPlace], references: [idPlace], onDelete: Restrict, onUpdate: Cascade)
+  eventType    EventType  @relation(fields: [idEventType], references: [idType])
+  organiser    Organiser? @relation(fields: [idOrganiser], references: [idOrganiser])
+  creatorUser  User?      @relation("UserCreatedEvents", fields: [idCreatorUser], references: [idUser])
+
+  eventSectors EventSector[]
+  seatEvents   SeatEvent[]
+  tickets      Ticket[]
+
+  @@index([idPlace])
+  @@index([idEventType])
+  @@index([idOrganiser])
+  @@map("Event")
+}
+
+model EventSector {
+  idEvent   String  @map("idEvent")
+  idPlace   String  @map("idPlace")
+  idSector  Int     @map("idSector")
+  price     Decimal @db.Decimal(10, 2)
+
+  event     Event   @relation(fields: [idEvent], references: [idEvent])
+  sector    Sector  @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets   Ticket[]
+
+  @@id([idEvent, idPlace, idSector])
+  @@index([idSector, idPlace])
+  @@map("event_sector")
+}
+
+model EventType {
+  idType  String  @id @default(uuid()) @map("idType")
+  name    String  @db.VarChar(45)
+  events  Event[]
+
+  @@map("eventtype")
+}
+
+model Organiser {
+  idOrganiser   String   @id @default(uuid()) @map("idOrganiser")
+  companyName   String?  @map("company_name") @db.VarChar(100)
+  cuil          String?  @unique @map("cuil") @db.VarChar(20)
+  contactEmail  String?  @unique @map("contact_email") @db.VarChar(100)
+  password      String   @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  address       String?  @db.VarChar(100)
+
+  events        Event[]
+
+  @@map("organiser_company")
+}
+
+model Place {
+  idPlace   String   @id @default(uuid()) @map("idPlace")
+  name      String   @db.VarChar(45)
+  totalCap  Int      @map("totalCap")
+  address   String   @db.VarChar(45)
+  placeType String   @db.VarChar(45)
+
+  events    Event[]
+  sectors   Sector[]
+
+  @@map("places")
+}
+
+model SaleItem {
+  idSale        String @map("idSale")
+  lineNumber    Int    @map("lineNumber")
+  quantity      Int
+
+  sale          Sale      @relation(fields: [idSale], references: [idSale])
+  tickets       Ticket[]
+  seatEvents    SeatEvent[] @relation("SeatEventToSaleItem")
+
+  @@id([idSale, lineNumber])
+  @@index([idSale])
+  @@map("saleitem")
+}
+
+model Sale {
+  idSale    String     @id @default(uuid()) @map("idSale")
+  date      DateTime   @db.DateTime
+  idUserClient String  @map("idUserClient")
+ 
+  client    User       @relation(fields: [idUserClient], references: [idUser])
+  saleItems SaleItem[]
+
+  @@index([idUserClient])
+  @@map("sales")
+}
+
+model Seat {
+  idSeat    Int     @map("idSeat")
+  idSector  Int     @map("idSector")
+  idPlace   String  @map("idPlace")
+
+  sector     Sector    @relation(fields: [idSector, idPlace], references: [idSector, idPlace])
+  tickets    Ticket[]
+  seatEvents SeatEvent[]
+
+  @@id([idSeat, idSector, idPlace])
+  @@unique([idPlace, idSector, idSeat])
+  @@index([idSector, idPlace])
+  @@map("seats")
+}
+
+model SeatEvent {
+  idEvent        String
+  idPlace        String
+  idSector       Int
+  idSeat         Int     @map("idSeat")
+  state          String  @db.VarChar(45) @default("available")
+
+  idSale         String?
+  lineNumber     Int?     @map("lineNumber")
+
+  event          Event     @relation(fields: [idEvent], references: [idEvent], onDelete: Cascade)
+  seat           Seat      @relation(fields: [idSeat, idSector, idPlace], references: [idSeat, idSector, idPlace], onDelete: Cascade)
+  saleItem       SaleItem? @relation("SeatEventToSaleItem", fields: [idSale, lineNumber], references: [idSale, lineNumber])
+
+  @@id([idEvent, idPlace, idSector, idSeat])
+  @@index([idSeat, idSector, idPlace])
+  @@index([idSale, lineNumber])
+  @@map("seat_event")
+}
+
+
+model Sector {
+  idSector   Int     @map("idSector")
+  idPlace    String  @map("idPlace")
+  name       String  @db.VarChar(45)
+  sectorType String  @db.VarChar(45)
+  capacity   Int
+
+  place        Place       @relation(fields: [idPlace], references: [idPlace])
+  eventSectors EventSector[]
+  seats        Seat[]
+
+  @@id([idSector, idPlace])
+  @@index([idPlace])
+  @@map("sectors")
+}
+
+model Ticket {
+  idEvent       String     @map("idEvent")
+  idPlace       String     @map("idPlace")
+  idSector      Int        @map("idSector")
+  idTicket      Int        @map("idTicket")
+  state         String     @db.VarChar(45) @default("available")
+  idSeat        Int        @map("idSeat")
+  lineNumber    Int?       @map("lineNumber")
+  idSale        String?    @map("idSale")
+
+  event        Event       @relation(fields: [idEvent], references: [idEvent])
+  eventSector  EventSector @relation(fields: [idEvent, idPlace, idSector], references: [idEvent, idPlace, idSector])
+  saleItem     SaleItem?   @relation(fields: [idSale, lineNumber], references: [idSale, lineNumber])
+  seat         Seat        @relation(fields: [idPlace, idSector, idSeat], references: [idPlace, idSector, idSeat])
+
+  @@unique([idEvent, idPlace, idSector, idSeat], name: "ticket_by_seat")
+
+  @@id([idEvent, idPlace, idSector, idTicket])
+  @@index([idSale, lineNumber])
+  @@index([idPlace, idSector, idSeat])
+  @@map("ticket")
+}
+
+model User {
+  idUser    String   @id @default(uuid()) @map("id_user")
+  dni       Int      @unique @map("dni")
+  name      String   @db.VarChar(25)
+  surname   String   @db.VarChar(25)
+  mail      String   @unique @db.VarChar(60)
+  birthDate DateTime @db.Date
+  password  String   @db.VarChar(255)
+  googleId  String?  @unique @map("google_id")
+  role      Role     @default(user)
+
+  sales     Sale[]
+  createdEvents Event[] @relation("UserCreatedEvents")
+
+  @@map("users")
+}
+
+enum Role {
+  user
+  admin
+}
+
+model Message {
+  idMessage   String   @id @default(uuid()) @map("idMessage")
+  title       String   @db.VarChar(100)
+  response    String   @db.Text
+  state       String   @default("unread") @db.VarChar(20)
+  date        DateTime @default(now())
+  description String   @db.Text
+  senderEmail String   @map("sender_email") @db.VarChar(100)
+
+  @@map("messages")
+}
