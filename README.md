@@ -14,7 +14,7 @@
     <img src="https://img.shields.io/badge/💻%20Repo%20Frontend-React%20%7C%20Vite-61DAFB?style=for-the-badge&logo=react&logoColor=000000" alt="Repo Frontend"/>
   </a>
   <a href="https://drive.google.com/file/d/1JQ4jZBuJwJ3PSq4Bxjy0-jp5qHoPxyZK/view" target="_blank" style="text-decoration: none;">
-    <img src="https://img.shields.io/badge/🗺️%20Modelo%20ER-DER-ff9800?style=for-the-badge&logo=googledrive&logoColor=white" alt="DER TicketApp"/>
+    <img src="https://img.shields.io/badge/🗺️%20Modelo%20DER-DER-ff9800?style=for-the-badge&logo=googledrive&logoColor=white" alt="DER TicketApp"/>
   </a>
 </p>
 
@@ -52,6 +52,9 @@
   <img src="https://img.shields.io/badge/Supertest-HTTP%20Tests-000000?style=for-the-badge" alt="Supertest Badge"/>
 </p>
 
+<div align="center">
+  <img src="https://img.shields.io/badge/Copyright-All_Rights_Reserved-red?style=for-the-badge&logo=copyright&logoColor=white" alt="Copyright Badge"/>
+</div>
 <hr/>
 
 <h2>🎯 Objetivo y alcance</h2>
@@ -777,25 +780,34 @@ npm start
 </p>
 
 <hr/>
+<h2 align="left">⚖️ Licencia y Propiedad Intelectual</h2>
 
-<h2>🤝 Contribuir</h2>
-
-<ol>
-  <li>Hacer <strong>fork</strong> del repositorio.</li>
-  <li>Crear una rama <code>feature/...</code> o <code>fix/...</code>.</li>
-  <li>Aplicar cambios siguiendo la estructura de módulos (auth, events, sales, etc.).</li>
-  <li>Agregar tests unitarios / de integración cuando corresponda.</li>
-  <li>Abrir un <strong>Pull Request</strong> describiendo el alcance de los cambios.</li>
-</ol>
-
-<hr/>
-
-<h2>⚖️ Licencia</h2>
-
-<p>
-  La licencia del proyecto se detalla en el archivo <code>LICENSE</code> de este repositorio (si corresponde).
+<p align="left">
+  Este proyecto es <b>propiedad intelectual privada</b> de Agustín Santinelli, Martin Ratti, Valentin Peppino y Gianlucas Zabaleta. No se otorga ninguna licencia de uso abierto. Puedes consultar los términos detallados en el archivo 
+  <a href="LICENSE"><code>LICENSE</code></a> incluido en este repositorio.
 </p>
 
-<p>
-  <em>TicketApp – Backend de la plataforma de venta de entradas.</em>
+<p align="left">
+  <i>
+    ⚠️ <b>Restricción Firme:</b> Queda terminantemente prohibida la copia, reproducción, distribución o modificación de este código sin autorización expresa del autor. Este repositorio se publica exclusivamente como exhibición de portafolio profesional.
+  </i>
+</p>
+<hr />
+
+<h2 align="left">🚫 Copyright Total</h2>
+
+<p align="left">
+  Este proyecto es propiedad intelectual exclusiva de <b>Agustín Santinelli, Martin Ratti, Valentin Peppino y Gianlucas Zabaleta</b>. No se aceptan contribuciones externas o forks para su uso público sin previo acuerdo por escrito.
+</p>
+
+<p align="left">
+  Si tienes sugerencias directas o deseas explorar colaboraciones comerciales, por favor contacta a: 
+  <a href="mailto:agustinsantinelli@gmail.com">agustinsantinelli@gmail.com</a>.
+</p>
+
+<hr />
+<p/>
+  <em>TicketApp – BackEnd de Venta de Entradas para el TP de Desarrollo de Software 2025.
+
+</em>
 </p>
